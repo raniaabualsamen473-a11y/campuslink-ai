@@ -55,7 +55,12 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-campus-blue to-campus-teal bg-clip-text text-transparent">
+              <img 
+                src="/lovable-uploads/dc5cb723-ad37-4e19-95d2-a95bb0b92e31.png" 
+                alt="CampusLink AI Logo" 
+                className="h-10 w-10"
+              />
+              <span className="text-2xl font-bold bg-gradient-to-r from-campus-purple to-campus-lightPurple bg-clip-text text-transparent">
                 CampusLink AI
               </span>
             </Link>
@@ -67,9 +72,9 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-base font-medium transition-colors hover:text-campus-teal ${
+                className={`text-base font-medium transition-colors hover:text-campus-purple ${
                   location.pathname === link.path
-                    ? "text-campus-teal border-b-2 border-campus-teal"
+                    ? "text-campus-purple border-b-2 border-campus-purple"
                     : "text-campus-darkGray"
                 }`}
               >
@@ -79,7 +84,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
             {isLoggedIn ? (
               <Button variant="outline">Sign Out</Button>
             ) : (
-              <Button asChild variant="default">
+              <Button asChild variant="default" className="bg-campus-purple hover:bg-campus-darkPurple">
                 <Link to="/auth">Sign In</Link>
               </Button>
             )}
@@ -112,9 +117,9 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`py-2 text-lg font-medium transition-colors hover:text-campus-teal ${
+                className={`py-2 text-lg font-medium transition-colors hover:text-campus-purple ${
                   location.pathname === link.path
-                    ? "text-campus-teal"
+                    ? "text-campus-purple"
                     : "text-campus-darkGray"
                 }`}
               >
@@ -134,7 +139,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 <Button
                   asChild
                   variant="default"
-                  className="w-full"
+                  className="w-full bg-campus-purple hover:bg-campus-darkPurple"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Link to="/auth">Sign In</Link>

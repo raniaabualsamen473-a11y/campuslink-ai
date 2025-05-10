@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const SwapRequests = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [requestType, setRequestType] = useState("swap");
+  const [semester, setSemester] = useState("regular");
   
   // Sample data - in a real app this would come from backend
   const courses = [
@@ -37,6 +39,13 @@ const SwapRequests = () => {
       { id: "AA-1", name: "Section 1", schedule: "Monday/Wednesday 9:00 AM" },
       { id: "AA-2", name: "Section 2", schedule: "Sunday/Tuesday/Thursday 11:00 AM" },
     ],
+  };
+
+  // Summer semester section options
+  const summerSections = {
+    everyday: "Every day (Sun-Thu)",
+    firstTwoDays: "First two days (Sun-Mon)",
+    lastThreeDays: "Last three days (Tue-Thu)"
   };
 
   const activeRequests = [
@@ -68,10 +77,65 @@ const SwapRequests = () => {
     }, 1500);
   };
 
+  const handleSemesterChange = (value: string) => {
+    setSemester(value);
+  };
+
+  const renderSectionOptions = () => {
+    if (semester === "summer") {
+      return (
+        <div className="space-y-4">
+          <Label className="text-sm font-medium">Days Format</Label>
+          <RadioGroup defaultValue="everyday" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
+              <RadioGroupItem value="everyday" id="everyday" />
+              <Label htmlFor="everyday" className="cursor-pointer">Every day (Sun-Thu)</Label>
+            </div>
+            <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
+              <RadioGroupItem value="firstTwoDays" id="firstTwoDays" />
+              <Label htmlFor="firstTwoDays" className="cursor-pointer">First two days (Sun-Mon)</Label>
+            </div>
+            <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
+              <RadioGroupItem value="lastThreeDays" id="lastThreeDays" />
+              <Label htmlFor="lastThreeDays" className="cursor-pointer">Last three days (Tue-Thu)</Label>
+            </div>
+          </RadioGroup>
+        </div>
+      );
+    } else {
+      return (
+        <div className="space-y-2">
+          <Label>Days Pattern</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="radio" 
+                id="mw" 
+                name="days" 
+                className="text-campus-purple focus:ring-campus-purple" 
+                defaultChecked 
+              />
+              <Label htmlFor="mw" className="font-normal">Monday/Wednesday</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <input 
+                type="radio" 
+                id="stt" 
+                name="days" 
+                className="text-campus-purple focus:ring-campus-purple" 
+              />
+              <Label htmlFor="stt" className="font-normal">Sunday/Tuesday/Thursday</Label>
+            </div>
+          </div>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Class Swap Requests</h1>
+        <h1 className="text-3xl font-bold mb-2 text-campus-darkPurple">Class Swap Requests</h1>
         <p className="text-gray-600">
           Submit and manage your class section swap requests
         </p>
@@ -80,9 +144,9 @@ const SwapRequests = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Request Form */}
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="border-campus-purple/20">
             <CardHeader>
-              <CardTitle>New Request</CardTitle>
+              <CardTitle className="text-campus-darkPurple">New Request</CardTitle>
               <CardDescription>
                 Create a new class section swap or petition request
               </CardDescription>
@@ -97,6 +161,20 @@ const SwapRequests = () => {
             <form onSubmit={handleSwapSubmit}>
               <CardContent>
                 <div className="space-y-6">
+                  {/* Semester Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="semester">Semester</Label>
+                    <Select defaultValue="regular" onValueChange={handleSemesterChange}>
+                      <SelectTrigger id="semester">
+                        <SelectValue placeholder="Select semester" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="regular">Regular Semester</SelectItem>
+                        <SelectItem value="summer">Summer Semester</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Course Selection */}
                   <div className="space-y-2">
                     <Label htmlFor="course">Course</Label>
@@ -163,30 +241,7 @@ const SwapRequests = () => {
                     <>
                       {/* New Section Petition */}
                       <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Desired Section Days</Label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="flex items-center space-x-2">
-                              <input 
-                                type="radio" 
-                                id="mw" 
-                                name="days" 
-                                className="text-campus-teal focus:ring-campus-teal" 
-                                defaultChecked 
-                              />
-                              <Label htmlFor="mw" className="font-normal">Monday/Wednesday</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <input 
-                                type="radio" 
-                                id="stt" 
-                                name="days" 
-                                className="text-campus-teal focus:ring-campus-teal" 
-                              />
-                              <Label htmlFor="stt" className="font-normal">Sunday/Tuesday/Thursday</Label>
-                            </div>
-                          </div>
-                        </div>
+                        {renderSectionOptions()}
 
                         <div className="space-y-2">
                           <Label htmlFor="time">Preferred Time</Label>
@@ -245,7 +300,11 @@ const SwapRequests = () => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button type="submit" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="bg-campus-purple hover:bg-campus-darkPurple"
+                >
                   {isLoading 
                     ? requestType === "swap" ? "Submitting Request..." : "Creating Petition..." 
                     : requestType === "swap" ? "Submit Swap Request" : "Create Petition"
@@ -258,9 +317,9 @@ const SwapRequests = () => {
 
         {/* Active Requests */}
         <div className="lg:col-span-1">
-          <Card>
+          <Card className="border-campus-purple/20">
             <CardHeader>
-              <CardTitle>Your Active Requests</CardTitle>
+              <CardTitle className="text-campus-darkPurple">Your Active Requests</CardTitle>
               <CardDescription>
                 View and manage your current swap requests
               </CardDescription>
@@ -271,7 +330,7 @@ const SwapRequests = () => {
                   activeRequests.map((request) => (
                     <div key={request.id} className="border rounded-lg p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-campus-blue">
+                        <h3 className="font-semibold text-campus-purple">
                           {request.course}
                         </h3>
                         <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">

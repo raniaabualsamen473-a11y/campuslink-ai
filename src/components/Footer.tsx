@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-campus-blue text-white">
+    <footer className="bg-campus-darkPurple text-white">
       <div className="container mx-auto px-4 sm:px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
@@ -40,7 +40,7 @@ const Footer = () => {
             </p>
             <a
               href="mailto:support@campuslinkAI.edu"
-              className="text-sm text-campus-teal hover:underline"
+              className="text-sm text-campus-lightPurple hover:underline"
             >
               support@campuslinkAI.edu
             </a>

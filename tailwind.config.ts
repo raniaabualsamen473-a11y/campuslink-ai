@@ -59,6 +59,9 @@ export default {
 					lightBlue: '#4299E1',
 					gray: '#F7FAFC',
 					darkGray: '#2D3748',
+					purple: '#9b30ff',
+					lightPurple: '#b980ff',
+					darkPurple: '#7a1dce'
 				}
 			},
 			borderRadius: {
