@@ -61,7 +61,11 @@ export default {
 					darkGray: '#2D3748',
 					purple: '#9b30ff',
 					lightPurple: '#b980ff',
-					darkPurple: '#7a1dce'
+					darkPurple: '#7a1dce',
+					deepPurple: '#4a0e8f',
+					nearBlack: '#1A1F2C',
+					galaxyPurple: '#8B5CF6',
+					twilight: '#6E59A5'
 				}
 			},
 			borderRadius: {
@@ -103,13 +107,26 @@ export default {
 					'100%': {
 						transform: 'translateX(0)'
 					}
+				},
+				'star-twinkle': {
+					'0%, 100%': {
+						opacity: '1'
+					},
+					'50%': {
+						opacity: '0.5'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.5s ease-out',
-				'slide-in': 'slide-in 0.5s ease-out'
+				'slide-in': 'slide-in 0.5s ease-out',
+				'twinkle': 'star-twinkle 4s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'galaxy-gradient': 'linear-gradient(to right, #1A1F2C, #4a0e8f)',
+				'purple-gradient': 'linear-gradient(to bottom right, #9b30ff, #4a0e8f)'
 			}
 		}
 	},
