@@ -7,10 +7,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Switch } from "@/components/ui/switch";
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ const Auth = () => {
           <TabsContent value="signin">
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+                <CardTitle className="text-2xl font-bold text-campus-darkPurple">Sign In</CardTitle>
                 <CardDescription>
                   Enter your credentials to access your account
                 </CardDescription>
@@ -56,7 +58,7 @@ const Auth = () => {
               <form onSubmit={handleSignIn}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">University Email</Label>
                     <Input id="email" type="email" placeholder="your.email@university.edu" required />
                   </div>
                   <div className="space-y-2">
@@ -64,7 +66,7 @@ const Auth = () => {
                       <Label htmlFor="password">Password</Label>
                       <a 
                         href="#" 
-                        className="text-xs text-campus-teal hover:underline"
+                        className="text-xs text-campus-purple hover:underline"
                       >
                         Forgot password?
                       </a>
@@ -75,7 +77,7 @@ const Auth = () => {
                 <CardFooter>
                   <Button 
                     type="submit" 
-                    className="w-full" 
+                    className="w-full bg-campus-purple hover:bg-campus-darkPurple" 
                     disabled={isLoading}
                   >
                     {isLoading ? "Signing In..." : "Sign In"}
@@ -88,7 +90,7 @@ const Auth = () => {
           <TabsContent value="signup">
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+                <CardTitle className="text-2xl font-bold text-campus-darkPurple">Create Account</CardTitle>
                 <CardDescription>
                   Create a new account to start using CampusLink AI
                 </CardDescription>
@@ -100,6 +102,14 @@ const Auth = () => {
                     <Input id="fullname" placeholder="John Doe" required />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="university-id">University ID</Label>
+                    <Input 
+                      id="university-id" 
+                      placeholder="Your student ID number" 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="signup-email">University Email</Label>
                     <Input 
                       id="signup-email" 
@@ -109,6 +119,23 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
+                    <Label htmlFor="personal-email">Personal Email (Optional)</Label>
+                    <Input 
+                      id="personal-email" 
+                      type="email" 
+                      placeholder="your.email@example.com" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="telegram">Telegram Username</Label>
+                    <Input 
+                      id="telegram" 
+                      placeholder="@username" 
+                      required 
+                    />
+                    <p className="text-xs text-gray-500">Required for contact when a match is found</p>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
                     <Input id="signup-password" type="password" required />
                   </div>
@@ -116,11 +143,26 @@ const Auth = () => {
                     <Label htmlFor="confirm-password">Confirm Password</Label>
                     <Input id="confirm-password" type="password" required />
                   </div>
+                  <div className="flex items-center space-x-4 pt-2">
+                    <Switch
+                      id="anonymous"
+                      checked={isAnonymous}
+                      onCheckedChange={setIsAnonymous}
+                    />
+                    <div>
+                      <Label htmlFor="anonymous" className="font-medium">
+                        Remain Anonymous
+                      </Label>
+                      <p className="text-sm text-gray-500">
+                        Your name won't be visible to other students
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter>
                   <Button 
                     type="submit"
-                    className="w-full"
+                    className="w-full bg-campus-purple hover:bg-campus-darkPurple"
                     disabled={isLoading}
                   >
                     {isLoading ? "Creating Account..." : "Create Account"}

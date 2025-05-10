@@ -10,12 +10,16 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import MatchResults from "@/components/MatchResults";
 
 const SwapRequests = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [requestType, setRequestType] = useState("swap");
   const [semester, setSemester] = useState("regular");
+  const [editingRequestId, setEditingRequestId] = useState<number | null>(null);
   
   // Sample data - in a real app this would come from backend
   const courses = [
@@ -74,11 +78,30 @@ const SwapRequests = () => {
     setTimeout(() => {
       setIsLoading(false);
       toast.success("Swap request submitted successfully!");
+      // Reset editing state if we were editing
+      if (editingRequestId) {
+        setEditingRequestId(null);
+      }
     }, 1500);
   };
 
   const handleSemesterChange = (value: string) => {
     setSemester(value);
+  };
+  
+  const handleDeleteRequest = (id: number) => {
+    // In a real app, this would delete the request from backend
+    toast.success(`Request ${id} deleted successfully!`);
+  };
+  
+  const handleEditRequest = (id: number) => {
+    // In a real app, this would load the request data into the form
+    setEditingRequestId(id);
+    toast(`Editing request ${id}`, {
+      description: "You can now modify your request and resubmit it."
+    });
+    // Scroll to form
+    document.getElementById("request-form")?.scrollIntoView({ behavior: "smooth" });
   };
 
   const renderSectionOptions = () => {
@@ -141,14 +164,19 @@ const SwapRequests = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* Request Form */}
-        <div className="lg:col-span-2">
+        <div id="request-form">
           <Card className="border-campus-purple/20">
             <CardHeader>
-              <CardTitle className="text-campus-darkPurple">New Request</CardTitle>
+              <CardTitle className="text-campus-darkPurple">
+                {editingRequestId ? "Edit Request" : "New Request"}
+              </CardTitle>
               <CardDescription>
-                Create a new class section swap or petition request
+                {editingRequestId 
+                  ? "Modify your existing class section swap or petition request" 
+                  : "Create a new class section swap or petition request"
+                }
               </CardDescription>
               <Tabs defaultValue="swap" className="mt-4" onValueChange={(value) => setRequestType(value)}>
                 <TabsList className="grid w-full grid-cols-2">
@@ -265,11 +293,45 @@ const SwapRequests = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="reason">Reason for Petition (Optional)</Label>
-                          <Input id="reason" placeholder="Why do you need this section?" />
+                          <Label htmlFor="reason">Reason for Petition</Label>
+                          <Textarea 
+                            id="reason" 
+                            placeholder="Why do you need this section?" 
+                            className="min-h-[100px]"
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Explaining your reason may help gather support for your petition
+                          </p>
                         </div>
                       </div>
                     </>
+                  )}
+
+                  {/* Additional Notes */}
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                    <Textarea 
+                      id="notes" 
+                      placeholder="Any additional information or preferences..."
+                    />
+                  </div>
+
+                  {/* Flexible Options (for petitions) */}
+                  {requestType === "petition" && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="flexible-time" />
+                        <Label htmlFor="flexible-time" className="font-normal">
+                          I'm flexible with the time
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="flexible-days" />
+                        <Label htmlFor="flexible-days" className="font-normal">
+                          I'm flexible with the days
+                        </Label>
+                      </div>
+                    </div>
                   )}
 
                   {/* Contact Method */}
@@ -300,14 +362,31 @@ const SwapRequests = () => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
+                {editingRequestId && (
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditingRequestId(null)}
+                  >
+                    Cancel
+                  </Button>
+                )}
                 <Button 
                   type="submit" 
                   disabled={isLoading}
-                  className="bg-campus-purple hover:bg-campus-darkPurple"
+                  className={`${editingRequestId ? '' : 'ml-auto'} bg-campus-purple hover:bg-campus-darkPurple`}
                 >
                   {isLoading 
-                    ? requestType === "swap" ? "Submitting Request..." : "Creating Petition..." 
-                    : requestType === "swap" ? "Submit Swap Request" : "Create Petition"
+                    ? editingRequestId 
+                      ? "Saving Changes..." 
+                      : requestType === "swap" 
+                        ? "Submitting Request..." 
+                        : "Creating Petition..." 
+                    : editingRequestId
+                      ? "Save Changes"
+                      : requestType === "swap" 
+                        ? "Submit Swap Request" 
+                        : "Create Petition"
                   }
                 </Button>
               </CardFooter>
@@ -315,8 +394,13 @@ const SwapRequests = () => {
           </Card>
         </div>
 
+        {/* Match Results */}
+        <div>
+          <MatchResults />
+        </div>
+
         {/* Active Requests */}
-        <div className="lg:col-span-1">
+        <div>
           <Card className="border-campus-purple/20">
             <CardHeader>
               <CardTitle className="text-campus-darkPurple">Your Active Requests</CardTitle>
@@ -348,7 +432,22 @@ const SwapRequests = () => {
                       <Separator className="my-2" />
                       <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
                         <span>Created: {request.dateCreated}</span>
-                        <Button size="sm" variant="destructive">Cancel</Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => handleEditRequest(request.id)}
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => handleDeleteRequest(request.id)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))
