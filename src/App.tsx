@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import SwapRequests from "./pages/SwapRequests";
 import Petitions from "./pages/Petitions";
 import Auth from "./pages/Auth";
+import ClassSwap from "./pages/ClassSwap";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/swap-requests" element={<SwapRequests />} />
             <Route path="/petitions" element={<Petitions />} />
+            <Route path="/class-swap" element={<ClassSwap />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
