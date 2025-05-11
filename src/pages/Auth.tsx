@@ -1,6 +1,5 @@
 
-import AuthForm from "@/components/AuthForm";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,13 +10,15 @@ import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useState } from "react";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 // Form validation schema
 const authSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  fullName: z.string().optional(),
+  universityId: z.string().optional(),
+  telegramUsername: z.string().optional(),
 });
 
 type AuthFormValues = z.infer<typeof authSchema>;
@@ -34,12 +35,16 @@ const Auth = () => {
     defaultValues: {
       email: "",
       password: "",
+      fullName: "",
+      universityId: "",
+      telegramUsername: "",
     },
   });
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Check if user is already logged in and redirect
     if (user) {
+      console.log("User is logged in, redirecting to swap-requests");
       navigate("/swap-requests");
     }
   }, [user, navigate]);
@@ -48,9 +53,22 @@ const Auth = () => {
     setIsSubmitting(true);
     try {
       if (authMode === "signin") {
-        await signInWithEmail(values.email, values.password);
+        const result = await signInWithEmail(values.email, values.password);
+        if (result.data) {
+          navigate("/swap-requests");
+        }
       } else {
-        await signUpWithEmail(values.email, values.password);
+        // For signup, include additional user data
+        const userData = {
+          full_name: values.fullName,
+          university_id: values.universityId,
+          telegram_username: values.telegramUsername,
+        };
+        
+        const result = await signUpWithEmail(values.email, values.password, userData);
+        if (result.data) {
+          navigate("/swap-requests");
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -119,6 +137,64 @@ const Auth = () => {
                     </FormItem>
                   )}
                 />
+
+                {authMode === "signup" && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-black">Full Name</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="John Doe" 
+                              {...field} 
+                              className="text-black"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="universityId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-black">University ID</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Your student ID number" 
+                              {...field} 
+                              className="text-black"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="telegramUsername"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-black">Telegram Username</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="@username" 
+                              {...field} 
+                              className="text-black"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
                 
                 <Button 
                   type="submit" 
@@ -128,7 +204,7 @@ const Auth = () => {
                   {isSubmitting ? (
                     <span className="flex items-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {authMode === "signin" ? "Signing in..." : "Signing up..."}
+                      {authMode === "signin" ? "Signing in..." : "Creating account..."}
                     </span>
                   ) : (
                     <>{authMode === "signin" ? "Sign In" : "Create Account"}</>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,11 @@ interface AuthContextType {
     error: Error | null;
     data: Session | null;
   }>;
-  signUpWithEmail: (email: string, password: string) => Promise<{
+  signUpWithEmail: (email: string, password: string, userData?: {
+    telegram_username?: string;
+    full_name?: string;
+    university_id?: string;
+  }) => Promise<{
     error: Error | null;
     data: Session | null;
   }>;
@@ -39,6 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
+        console.log("Auth state changed:", event);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         setIsLoading(false);
@@ -47,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      console.log("Initial session check:", currentSession ? "Session found" : "No session");
       setSession(currentSession);
       setUser(currentSession?.user ?? null);
       setIsLoading(false);
@@ -83,20 +88,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string, userData?: {
+    telegram_username?: string;
+    full_name?: string;
+    university_id?: string;
+  }) => {
     try {
+      // Prepare metadata with user profile information
+      const metadata = {
+        telegram_username: userData?.telegram_username || null,
+        full_name: userData?.full_name || null,
+        university_id: userData?.university_id || null,
+      };
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: metadata,
+        },
       });
 
       if (error) {
         toast.error(error.message || "Failed to sign up");
+        console.error("Sign up error:", error);
         return { error, data: null };
       }
 
-      toast.success("Account created! Please check your email for verification");
-      return { data: data.session, error: null };
+      // If email confirmation is not required, we'll have a session
+      if (data.session) {
+        toast.success("Account created! You are now logged in.");
+        return { data: data.session, error: null };
+      }
+      
+      // Otherwise, show a message about email confirmation
+      toast.success("Account created! Check your email for verification.", {
+        duration: 6000,
+      });
+      
+      return { data: null, error: null };
     } catch (error) {
       console.error("Sign up error:", error);
       toast.error("An unexpected error occurred");

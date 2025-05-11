@@ -14,7 +14,14 @@ import Auth from "./pages/Auth";
 import ClassSwap from "./pages/ClassSwap";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
