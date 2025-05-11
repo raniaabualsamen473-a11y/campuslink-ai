@@ -16,29 +16,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import MatchResults from "@/components/MatchResults";
+import { SwapRequest } from "@/types/swap";
 
 // Define types for swap requests
-export interface SwapRequest {
-  id: string;
-  user_id: string;
-  anonymous: boolean;
-  petition: boolean;
-  telegram_username: string | null;
-  desired_course: string | null;
-  current_section: string | null;
-  desired_section: string | null;
-  notes: string | null;
-  university_id: number | null;
-  full_name: string | null;
-  email: string | null;
-  flexible_time?: boolean | null;
-  flexible_days?: boolean | null;
-  reason?: string | null;
-  summer_format?: string | null;
-  days_pattern?: string | null;
-  preferred_time?: string | null;
-  created_at?: string;
-}
+
 
 const SwapRequests = () => {
   const { user } = useAuth();
