@@ -17,6 +17,29 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import MatchResults from "@/components/MatchResults";
 
+// Define types for swap requests
+export interface SwapRequest {
+  id: string;
+  user_id: string;
+  anonymous: boolean;
+  petition: boolean;
+  telegram_username: string | null;
+  desired_course: string | null;
+  current_section: string | null;
+  desired_section: string | null;
+  notes: string | null;
+  university_id: number | null;
+  full_name: string | null;
+  email: string | null;
+  flexible_time?: boolean | null;
+  flexible_days?: boolean | null;
+  reason?: string | null;
+  summer_format?: string | null;
+  days_pattern?: string | null;
+  preferred_time?: string | null;
+  created_at?: string;
+}
+
 const SwapRequests = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -35,7 +58,7 @@ const SwapRequests = () => {
   const [customTargetSection, setCustomTargetSection] = useState("");
   const [telegramUsername, setTelegramUsername] = useState("");
   const [notes, setNotes] = useState("");
-  const [activeRequests, setActiveRequests] = useState<any[]>([]);
+  const [activeRequests, setActiveRequests] = useState<SwapRequest[]>([]);
   const [days, setDays] = useState("mw");
   const [preferredTime, setPreferredTime] = useState("");
   const [reason, setReason] = useState("");
@@ -98,7 +121,7 @@ const SwapRequests = () => {
         
       if (error) throw error;
       
-      setActiveRequests(data || []);
+      setActiveRequests(data as SwapRequest[] || []);
     } catch (error: any) {
       console.error("Error fetching user requests:", error);
       toast.error("Failed to load your requests");
@@ -164,7 +187,7 @@ const SwapRequests = () => {
     }
     
     try {
-      const requestData = {
+      const requestData: SwapRequest = {
         id: editingRequestId || uuidv4(),
         user_id: user.id,
         anonymous: isAnonymous,
@@ -731,7 +754,7 @@ const SwapRequests = () => {
                       </p>
                       <Separator className="my-2" />
                       <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
-                        <span>Created: {new Date(request.created_at).toLocaleDateString()}</span>
+                        <span>Created: {new Date(request.created_at || "").toLocaleDateString()}</span>
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
