@@ -1,202 +1,163 @@
 
-import { useState } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-// Mock data for matches - in a real app, this would come from a backend
-const mockMatches = [
-  {
-    id: 1,
-    course: "Machine Learning",
-    currentSection: "Section 1 (Mon/Wed 10:00 AM)",
-    desiredSection: "Section 2 (Sun/Tue/Thu 2:00 PM)",
-    user: "Ahmed K.",
-    isAnonymous: false,
-    matchPercent: 95,
-    type: "swap",
-  },
-  {
-    id: 2,
-    course: "Advanced Algorithms",
-    currentSection: "Section 2 (Sun/Tue/Thu 11:00 AM)",
-    desiredSection: "Section 1 (Mon/Wed 9:00 AM)",
-    user: "Anonymous",
-    isAnonymous: true,
-    matchPercent: 100,
-    type: "swap", 
-  },
-  {
-    id: 3,
-    course: "Data Structures",
-    currentSection: null,
-    desiredSection: "Section 1 (Mon/Wed 1:00 PM)",
-    user: "Sara L.",
-    isAnonymous: false,
-    matchPercent: 80,
-    type: "petition",
-  },
-  {
-    id: 4,
-    course: "Web Development",
-    currentSection: "Section 3 (Mon/Wed 3:00 PM)",
-    desiredSection: "Section 1 (Mon/Wed 10:00 AM)",
-    user: "Anonymous",
-    isAnonymous: true,
-    matchPercent: 70,
-    type: "swap",
-  },
-];
+// Sample matches data type
+interface Match {
+  id: number;
+  course: string;
+  currentSection: string | null;
+  desiredSection: string;
+  user: string;
+  isAnonymous: boolean;
+  matchPercent: number;
+  type: "swap" | "petition";
+  dateCreated: string;
+  user_id: string;
+  telegram_username: string | null;
+}
 
 const MatchResults = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [matchType, setMatchType] = useState("all");
-  const [sortBy, setSortBy] = useState("match");
-
-  // Filter and sort the matches based on user selections
-  const filteredMatches = mockMatches.filter(match => {
-    // Filter by search query
-    const matchesSearch = 
-      match.course.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (match.currentSection && match.currentSection.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      match.desiredSection.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Filter by match type
-    const matchesType = 
-      matchType === "all" || 
-      (matchType === "swap" && match.type === "swap") || 
-      (matchType === "petition" && match.type === "petition");
-    
-    return matchesSearch && matchesType;
-  }).sort((a, b) => {
-    // Sort based on user selection
-    if (sortBy === "match") {
-      return b.matchPercent - a.matchPercent;
-    } else if (sortBy === "course") {
-      return a.course.localeCompare(b.course);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    if (user) {
+      fetchMatches();
     }
-    return 0;
-  });
+  }, [user]);
 
-  const handleContact = (matchId: number) => {
-    // In a real app, this would open a contact option or reveal Telegram username
-    const match = mockMatches.find(m => m.id === matchId);
-    if (match) {
-      alert(`Contact ${match.user} via Telegram to discuss a swap for ${match.course}`);
+  const fetchMatches = async () => {
+    setIsLoading(true);
+    try {
+      // In a real app, this would use actual data from Supabase
+      // This is just a mock implementation for demonstration
+      const { data, error } = await supabase
+        .from('swap_requests')
+        .select('*')
+        .neq('user_id', user?.id || '')
+        .limit(5);
+      
+      if (error) throw error;
+      
+      // Transform the real data to match expected format
+      const transformedMatches = data.map((item: any, index: number) => ({
+        id: item.id,
+        course: item.desired_course || "Unknown Course",
+        currentSection: item.current_section || null,
+        desiredSection: item.desired_section || "Unknown Section",
+        user: item.anonymous ? "Anonymous" : (item.full_name || "Unknown"),
+        isAnonymous: item.anonymous || false,
+        matchPercent: Math.floor(Math.random() * 30) + 70, // Mock match percentage
+        type: item.petition ? "petition" : "swap",
+        dateCreated: new Date(item.created_at).toISOString().split('T')[0],
+        user_id: item.user_id,
+        telegram_username: item.telegram_username,
+      }));
+      
+      setMatches(transformedMatches);
+    } catch (error: any) {
+      console.error("Error fetching matches:", error);
+      toast.error("Failed to load matches");
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleContact = (match: Match) => {
+    // In a real app, this would contact the user or show contact info
+    toast.success(`Contact information for ${match.course} swap`, {
+      description: `Telegram: ${match.telegram_username || "Not provided"}`,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-black">Finding Matches...</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-campus-purple"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="border-campus-purple/20">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-campus-darkPurple">Matching Results</CardTitle>
+        <CardTitle className="text-black">Potential Matches</CardTitle>
         <CardDescription>
-          Find compatible swap requests from other students
+          Students who might be able to swap with you
         </CardDescription>
-        
-        <div className="flex flex-col sm:flex-row gap-4 mt-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by course or section..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            <Select value={matchType} onValueChange={setMatchType}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Requests</SelectItem>
-                <SelectItem value="swap">Swaps Only</SelectItem>
-                <SelectItem value="petition">Petitions Only</SelectItem>
-              </SelectContent>
-            </Select>
-            
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="match">Best Match</SelectItem>
-                <SelectItem value="course">Course Name</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
       </CardHeader>
-      
       <CardContent>
-        {filteredMatches.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">No matches found for your search criteria.</p>
-            <p className="text-sm text-gray-400 mt-2">Try adjusting your filters or search terms.</p>
+        {matches.length > 0 ? (
+          <div className="space-y-4">
+            {matches.map((match) => (
+              <div
+                key={match.id}
+                className="border rounded-lg p-4 hover:border-campus-purple transition-colors"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-semibold text-black">{match.course}</h3>
+                  <Badge className={match.matchPercent >= 90 ? "bg-green-600" : "bg-yellow-600"}>
+                    {match.matchPercent}% Match
+                  </Badge>
+                </div>
+                {match.type === "swap" ? (
+                  <>
+                    <p className="text-sm mb-1 text-gray-700">
+                      <span className="text-gray-500">From: </span>
+                      {match.currentSection || "Any Section"}
+                    </p>
+                    <p className="text-sm mb-2 text-gray-700">
+                      <span className="text-gray-500">To: </span>
+                      {match.desiredSection}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm mb-2 text-gray-700">
+                    <span className="text-gray-500">Looking for: </span>
+                    {match.desiredSection}
+                  </p>
+                )}
+                <div className="flex justify-between items-center mt-3">
+                  <span className="text-xs text-gray-500">
+                    Posted by: {match.user}
+                  </span>
+                  <Button
+                    size="sm"
+                    className="bg-campus-purple hover:bg-campus-darkPurple"
+                    onClick={() => handleContact(match)}
+                  >
+                    Contact
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Request Type</TableHead>
-                  <TableHead>From / To</TableHead>
-                  <TableHead>Posted By</TableHead>
-                  <TableHead className="text-right">Match</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredMatches.map((match) => (
-                  <TableRow key={match.id}>
-                    <TableCell className="font-medium">{match.course}</TableCell>
-                    <TableCell>
-                      <Badge variant={match.type === "swap" ? "outline" : "secondary"} className={match.type === "swap" ? "border-campus-purple text-campus-purple" : ""}>
-                        {match.type === "swap" ? "Swap" : "Petition"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {match.type === "swap" ? (
-                        <div className="text-sm">
-                          <div>From: {match.currentSection}</div>
-                          <div>To: {match.desiredSection}</div>
-                        </div>
-                      ) : (
-                        <div className="text-sm">Wants: {match.desiredSection}</div>
-                      )}
-                    </TableCell>
-                    <TableCell>{match.user}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={`font-medium ${match.matchPercent >= 90 ? 'text-green-600' : match.matchPercent >= 70 ? 'text-yellow-600' : 'text-gray-600'}`}>
-                        {match.matchPercent}%
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleContact(match.id)}
-                        className="bg-campus-purple hover:bg-campus-darkPurple"
-                      >
-                        Contact
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="text-center py-6">
+            <p className="text-gray-500">No matches found</p>
+            <p className="text-sm text-gray-400 mt-2">
+              Try submitting a new swap request
+            </p>
           </div>
         )}
       </CardContent>

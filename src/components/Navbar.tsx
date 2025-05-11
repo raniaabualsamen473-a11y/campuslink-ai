@@ -1,155 +1,182 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User, LogOut, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface NavbarProps {
   isMobileMenuOpen: boolean;
-  setIsMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsMobileMenuOpen: (isOpen: boolean) => void;
 }
 
 const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
+  const navigate = useNavigate();
   const location = useLocation();
-  const [isScrolled, setIsScrolled] = useState(false);
+  const { user, signOut } = useAuth();
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    setEmail(user?.email || null);
+  }, [user]);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.classList.add("overflow-hidden");
-    } else {
-      document.body.classList.remove("overflow-hidden");
-    }
-  }, [isMobileMenuOpen]);
+    // Close mobile menu when route changes
+    setIsMobileMenuOpen(false);
+  }, [location.pathname, setIsMobileMenuOpen]);
 
-  const isLoggedIn = false; // Replace with actual authentication logic
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
   const navLinks = [
     { name: "Home", path: "/" },
-    { name: "Dashboard", path: "/dashboard", protected: true },
-    { name: "Swap Requests", path: "/swap-requests", protected: true },
-    { name: "Petitions", path: "/petitions", protected: true },
+    { name: "Dashboard", path: "/dashboard", authRequired: true },
+    { name: "Swap Requests", path: "/swap-requests", authRequired: true },
+    { name: "Petitions", path: "/petitions", authRequired: true },
+    { name: "Class Swap", path: "/class-swap", authRequired: true },
   ];
 
-  const filteredNavLinks = isLoggedIn
-    ? navLinks
-    : navLinks.filter((link) => !link.protected);
-
   return (
-    <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled
-          ? "bg-white bg-opacity-95 backdrop-blur-sm shadow-sm"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <img 
-                src="/lovable-uploads/dc5cb723-ad37-4e19-95d2-a95bb0b92e31.png" 
-                alt="CampusLink AI Logo" 
-                className="h-10 w-10"
-              />
-              <span className="text-2xl font-bold bg-gradient-to-r from-campus-purple to-campus-lightPurple bg-clip-text text-transparent">
-                CampusLink AI
-              </span>
+    <nav className="bg-white shadow-sm sticky top-0 z-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          {/* Logo and Brand Name */}
+          <div className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex items-center gap-1.5">
+              <span className="text-xl font-bold text-campus-darkPurple">CampusLink</span>
+              <span className="text-lg font-semibold text-campus-purple">AI</span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            {filteredNavLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`text-base font-medium transition-colors hover:text-campus-purple ${
-                  location.pathname === link.path
-                    ? "text-campus-purple border-b-2 border-campus-purple"
-                    : "text-campus-darkGray"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            {isLoggedIn ? (
-              <Button variant="outline">Sign Out</Button>
-            ) : (
-              <Button asChild variant="default" className="bg-campus-purple hover:bg-campus-darkPurple">
-                <Link to="/auth">Sign In</Link>
-              </Button>
-            )}
-          </nav>
+          <div className="hidden sm:ml-6 sm:flex sm:items-center sm:space-x-4">
+            <div className="flex space-x-4">
+              {navLinks
+                .filter(link => !link.authRequired || (link.authRequired && user))
+                .map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      location.pathname === link.path
+                        ? "bg-campus-purple/10 text-campus-darkPurple"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                ))}
+            </div>
 
-          {/* Mobile menu button */}
-          <div className="flex md:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 top-16 z-50 bg-white md:hidden">
-          <div className="flex flex-col p-4 space-y-4">
-            {filteredNavLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`py-2 text-lg font-medium transition-colors hover:text-campus-purple ${
-                  location.pathname === link.path
-                    ? "text-campus-purple"
-                    : "text-campus-darkGray"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <div className="pt-2">
-              {isLoggedIn ? (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign Out
-                </Button>
+            <div className="ml-4 flex items-center">
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <div className="hidden md:block text-right">
+                    <p className="text-sm font-medium text-black truncate">{email}</p>
+                    <p className="text-xs text-gray-500">Logged In</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleSignOut}
+                    className="text-gray-700"
+                    title="Sign Out"
+                  >
+                    <LogOut className="h-5 w-5" />
+                  </Button>
+                </div>
               ) : (
                 <Button
-                  asChild
-                  variant="default"
-                  className="w-full bg-campus-purple hover:bg-campus-darkPurple"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={() => navigate("/auth")}
+                  className="bg-campus-purple hover:bg-campus-darkPurple text-white"
                 >
-                  <Link to="/auth">Sign In</Link>
+                  <LogIn className="h-4 w-4 mr-1" />
+                  Login
                 </Button>
               )}
             </div>
           </div>
+
+          {/* Mobile menu button */}
+          <div className="flex items-center sm:hidden">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+              aria-controls="mobile-menu"
+              aria-expanded={isMobileMenuOpen}
+              onClick={toggleMobileMenu}
+            >
+              <span className="sr-only">Open main menu</span>
+              {isMobileMenuOpen ? (
+                <X className="block h-6 w-6" />
+              ) : (
+                <Menu className="block h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
-      )}
-    </header>
+      </div>
+
+      {/* Mobile menu */}
+      <div
+        className={`${
+          isMobileMenuOpen ? "block" : "hidden"
+        } sm:hidden absolute w-full bg-white border-b shadow-lg`}
+        id="mobile-menu"
+      >
+        <div className="px-2 pt-2 pb-3 space-y-1">
+          {navLinks
+            .filter(link => !link.authRequired || (link.authRequired && user))
+            .map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                  location.pathname === link.path
+                    ? "bg-campus-purple/10 text-campus-darkPurple"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            
+            {user ? (
+              <>
+                <div className="px-3 py-2">
+                  <p className="text-sm font-medium text-black truncate">{email}</p>
+                  <p className="text-xs text-gray-500">Logged In</p>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center">
+                    <LogOut className="h-5 w-5 mr-2" />
+                    Sign Out
+                  </div>
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                className="block px-3 py-2 rounded-md text-base font-medium bg-campus-purple text-white hover:bg-campus-darkPurple"
+              >
+                <div className="flex items-center">
+                  <LogIn className="h-5 w-5 mr-2" />
+                  Login
+                </div>
+              </Link>
+            )}
+        </div>
+      </div>
+    </nav>
   );
 };
 
