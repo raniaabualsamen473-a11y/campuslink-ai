@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error, data: null };
       }
 
-      toast.success("Signed in successfully");
+      toast.success("Signed in successfully! Redirecting to your swap requests...");
       return { data: data.session, error: null };
     } catch (error) {
       console.error("Sign in error:", error);
@@ -117,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // If email confirmation is not required, we'll have a session
       if (data.session) {
-        toast.success("Account created! You are now logged in.");
+        toast.success("Account created! You are now logged in. Redirecting to your swap requests...");
         return { data: data.session, error: null };
       }
       

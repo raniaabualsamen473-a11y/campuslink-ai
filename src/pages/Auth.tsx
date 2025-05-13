@@ -11,14 +11,15 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { toast } from "sonner";
 
 // Form validation schema
 const authSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  fullName: z.string().optional(),
-  universityId: z.string().optional(),
-  telegramUsername: z.string().optional(),
+  fullName: z.string().min(2, { message: "Full name is required" }).optional().or(z.literal('')),
+  universityId: z.string().optional().or(z.literal('')),
+  telegramUsername: z.string().optional().or(z.literal('')),
 });
 
 type AuthFormValues = z.infer<typeof authSchema>;
@@ -45,7 +46,7 @@ const Auth = () => {
     // Check if user is already logged in and redirect
     if (user) {
       console.log("User is logged in, redirecting to swap-requests");
-      navigate("/swap-requests");
+      navigate("/swap-requests", { replace: true });
     }
   }, [user, navigate]);
 
@@ -55,7 +56,8 @@ const Auth = () => {
       if (authMode === "signin") {
         const result = await signInWithEmail(values.email, values.password);
         if (result.data) {
-          navigate("/swap-requests");
+          // Success! The toast is already shown in the auth hook
+          navigate("/swap-requests", { replace: true });
         }
       } else {
         // For signup, include additional user data
@@ -67,7 +69,7 @@ const Auth = () => {
         
         const result = await signUpWithEmail(values.email, values.password, userData);
         if (result.data) {
-          navigate("/swap-requests");
+          navigate("/swap-requests", { replace: true });
         }
       }
     } finally {
@@ -112,6 +114,7 @@ const Auth = () => {
                           placeholder="your.email@example.com" 
                           {...field} 
                           className="text-black"
+                          required
                         />
                       </FormControl>
                       <FormMessage />
@@ -131,6 +134,7 @@ const Auth = () => {
                           placeholder="••••••••" 
                           {...field} 
                           className="text-black"
+                          required
                         />
                       </FormControl>
                       <FormMessage />
@@ -151,6 +155,7 @@ const Auth = () => {
                               placeholder="John Doe" 
                               {...field} 
                               className="text-black"
+                              required
                             />
                           </FormControl>
                           <FormMessage />
@@ -169,6 +174,7 @@ const Auth = () => {
                               placeholder="Your student ID number" 
                               {...field} 
                               className="text-black"
+                              required
                             />
                           </FormControl>
                           <FormMessage />
@@ -187,6 +193,7 @@ const Auth = () => {
                               placeholder="@username" 
                               {...field} 
                               className="text-black"
+                              required
                             />
                           </FormControl>
                           <FormMessage />
@@ -250,6 +257,9 @@ const Auth = () => {
             </Button>
           </Tabs>
         </CardContent>
+        <CardFooter className="text-center text-sm text-muted-foreground">
+          <p>By signing up, you agree to our terms of service and privacy policy.</p>
+        </CardFooter>
       </Card>
     </div>
   );

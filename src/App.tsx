@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
@@ -13,6 +13,8 @@ import Petitions from "./pages/Petitions";
 import Auth from "./pages/Auth";
 import ClassSwap from "./pages/ClassSwap";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,10 +36,25 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (!user) {
+    toast.error("You need to log in to access this page");
     return <Navigate to="/auth" replace />;
   }
   
   return <>{children}</>;
+};
+
+// Home page with automatic redirection if logged in
+const Home = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate("/swap-requests", { replace: true });
+    }
+  }, [user, isLoading, navigate]);
+
+  return <Index />;
 };
 
 const App = () => (
@@ -49,7 +66,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Layout />}>
-              <Route index element={<Index />} />
+              <Route index element={<Home />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
