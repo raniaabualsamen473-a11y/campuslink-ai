@@ -14,12 +14,18 @@ export type Database = {
           anonymous: boolean | null
           created_at: string
           current_section: string | null
+          days_pattern: string | null
           desired_course: string | null
           desired_section: string | null
           email: string | null
+          flexible_days: boolean | null
+          flexible_time: boolean | null
           full_name: string | null
           id: string
           petition: boolean | null
+          preferred_time: string | null
+          reason: string | null
+          summer_format: string | null
           telegram_username: string | null
           university_id: number | null
           user_id: string
@@ -28,12 +34,18 @@ export type Database = {
           anonymous?: boolean | null
           created_at?: string
           current_section?: string | null
+          days_pattern?: string | null
           desired_course?: string | null
           desired_section?: string | null
           email?: string | null
+          flexible_days?: boolean | null
+          flexible_time?: boolean | null
           full_name?: string | null
           id?: string
           petition?: boolean | null
+          preferred_time?: string | null
+          reason?: string | null
+          summer_format?: string | null
           telegram_username?: string | null
           university_id?: number | null
           user_id: string
@@ -42,12 +54,18 @@ export type Database = {
           anonymous?: boolean | null
           created_at?: string
           current_section?: string | null
+          days_pattern?: string | null
           desired_course?: string | null
           desired_section?: string | null
           email?: string | null
+          flexible_days?: boolean | null
+          flexible_time?: boolean | null
           full_name?: string | null
           id?: string
           petition?: boolean | null
+          preferred_time?: string | null
+          reason?: string | null
+          summer_format?: string | null
           telegram_username?: string | null
           university_id?: number | null
           user_id?: string

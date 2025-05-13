@@ -12,7 +12,41 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup, 
+  SelectItem, 
+  SelectLabel, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel,
+  FormMessage 
+} from "@/components/ui/form";
+import { 
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { 
+  RadioGroup, 
+  RadioGroupItem 
+} from "@/components/ui/radio-group";
+import { Clock, Calendar } from "lucide-react";
 
 // Define the form validation schema
 const formSchema = z.object({
@@ -25,6 +59,13 @@ const formSchema = z.object({
   telegramUsername: z.string().optional(),
   email: z.string().email("Invalid email address").optional(),
   notes: z.string().optional(),
+  // New fields for time and day pattern
+  dayPattern: z.string().optional(),
+  preferredTime: z.string().optional(),
+  flexibleTime: z.boolean().default(false),
+  flexibleDays: z.boolean().default(false),
+  reason: z.string().optional(),
+  summerFormat: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -41,15 +82,37 @@ const sampleCourses = [
 // Sample sections for the dropdown - in a real app, these would come from an API or database
 const sampleSections = ["A", "B", "C", "D", "E", "F"];
 
+// Time slots with visual representation
+const timeSlots = [
+  { value: "8am", label: "8:00 AM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "9am", label: "9:00 AM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "10am", label: "10:00 AM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "11am", label: "11:00 AM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "12pm", label: "12:00 PM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "1pm", label: "1:00 PM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "2pm", label: "2:00 PM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "3pm", label: "3:00 PM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "4pm", label: "4:00 PM", icon: <Clock className="w-4 h-4 mr-2" /> },
+  { value: "5pm", label: "5:00 PM", icon: <Clock className="w-4 h-4 mr-2" /> },
+];
+
+// Day patterns with clear labels
+const dayPatterns = [
+  { value: "mw", label: "Monday/Wednesday (MW)", days: ["Monday", "Wednesday"] },
+  { value: "stt", label: "Sunday/Tuesday/Thursday (STT)", days: ["Sunday", "Tuesday", "Thursday"] },
+];
+
+// Summer format patterns with clear descriptions
+const summerFormats = [
+  { value: "everyday", label: "Every day (Sun-Thu)" },
+  { value: "firstTwoDays", label: "First two days (Sun-Mon)" },
+  { value: "lastThreeDays", label: "Last three days (Tue-Thu)" },
+];
+
 const SwapForm = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customCourse, setCustomCourse] = useState<string>("");
-  const [customCurrentSection, setCustomCurrentSection] = useState<string>("");
-  const [customTargetSection, setCustomTargetSection] = useState<string>("");
-  const [showCustomCourseInput, setShowCustomCourseInput] = useState(false);
-  const [showCustomCurrentSectionInput, setShowCustomCurrentSectionInput] = useState(false);
-  const [showCustomTargetSectionInput, setShowCustomTargetSectionInput] = useState(false);
+  const [semesterType, setSemesterType] = useState("regular");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -63,11 +126,16 @@ const SwapForm = () => {
       telegramUsername: "",
       email: user?.email || "",
       notes: "",
+      dayPattern: "mw",
+      preferredTime: "",
+      flexibleTime: false,
+      flexibleDays: false,
+      reason: "",
+      summerFormat: "everyday",
     },
   });
 
   const watchIsPetition = form.watch("isPetition");
-  const watchIsAnonymous = form.watch("isAnonymous");
 
   const handleSubmit = async (data: FormValues) => {
     if (!user) {
@@ -80,9 +148,9 @@ const SwapForm = () => {
     try {
       // Prepare the data for submission
       const requestData = {
-        desired_course: showCustomCourseInput ? customCourse : data.course,
-        current_section: watchIsPetition ? null : (showCustomCurrentSectionInput ? customCurrentSection : data.currentSection),
-        desired_section: showCustomTargetSectionInput ? customTargetSection : data.targetSection,
+        desired_course: data.course,
+        current_section: watchIsPetition ? null : data.currentSection,
+        desired_section: data.targetSection,
         petition: data.isPetition,
         anonymous: data.isAnonymous,
         full_name: data.isAnonymous ? null : data.fullName,
@@ -90,6 +158,12 @@ const SwapForm = () => {
         email: data.email || user.email,
         user_id: user.id,
         notes: data.notes || null,
+        days_pattern: semesterType === "regular" ? data.dayPattern : null,
+        preferred_time: data.isPetition ? data.preferredTime : null,
+        flexible_time: data.isPetition ? data.flexibleTime : null,
+        flexible_days: data.isPetition ? data.flexibleDays : null,
+        reason: data.isPetition ? data.reason : null,
+        summer_format: semesterType === "summer" ? data.summerFormat : null,
       };
 
       // Submit to Supabase
@@ -108,9 +182,9 @@ const SwapForm = () => {
           email: data.email || user.email,
           name: data.fullName || "User",
           details: {
-            course: showCustomCourseInput ? customCourse : data.course,
-            currentSection: watchIsPetition ? null : (showCustomCurrentSectionInput ? customCurrentSection : data.currentSection),
-            targetSection: showCustomTargetSectionInput ? customTargetSection : data.targetSection,
+            course: data.course,
+            currentSection: watchIsPetition ? null : data.currentSection,
+            targetSection: data.targetSection,
             telegramUsername: data.telegramUsername
           }
         }
@@ -118,12 +192,6 @@ const SwapForm = () => {
 
       toast.success("Your request has been submitted successfully!");
       form.reset();
-      setCustomCourse("");
-      setCustomCurrentSection("");
-      setCustomTargetSection("");
-      setShowCustomCourseInput(false);
-      setShowCustomCurrentSectionInput(false);
-      setShowCustomTargetSectionInput(false);
     } catch (error: any) {
       console.error("Error submitting request:", error);
       toast.error(`Failed to submit request: ${error.message}`);
@@ -133,283 +201,448 @@ const SwapForm = () => {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      <div className="space-y-4">
-        {/* Course Selection */}
-        <div>
-          <Label htmlFor="course" className="text-black">Course</Label>
-          {showCustomCourseInput ? (
-            <div className="mt-1">
-              <Input
-                id="customCourse"
-                value={customCourse}
-                onChange={(e) => setCustomCourse(e.target.value)}
-                className="text-black"
-                placeholder="Enter course name"
-              />
-              <Button 
-                type="button" 
-                variant="link" 
-                onClick={() => setShowCustomCourseInput(false)}
-                className="mt-1 p-0 h-auto text-sm text-campus-purple"
-              >
-                Use course list
-              </Button>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Course Information</CardTitle>
+            <CardDescription>Enter the course and section details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Semester Selection */}
+            <div className="mb-6">
+              <Tabs defaultValue="regular" onValueChange={setSemesterType}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="regular">Regular Semester</TabsTrigger>
+                  <TabsTrigger value="summer">Summer Semester</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-          ) : (
-            <div className="mt-1">
-              <Select
-                onValueChange={(value) => form.setValue("course", value)}
-                value={form.watch("course")}
-              >
-                <SelectTrigger className="w-full text-black">
-                  <SelectValue placeholder="Select a course" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Courses</SelectLabel>
-                    {sampleCourses.map((course) => (
-                      <SelectItem key={course} value={course}>
-                        {course}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Button 
-                type="button" 
-                variant="link" 
-                onClick={() => {
-                  setShowCustomCourseInput(true);
-                  form.setValue("course", "");
-                }}
-                className="mt-1 p-0 h-auto text-sm text-campus-purple"
-              >
-                Add a different course
-              </Button>
+
+            {/* Petition or Swap Selection */}
+            <div className="mb-6">
+              <Tabs onValueChange={(value) => form.setValue("isPetition", value === "petition")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="swap">Swap Request</TabsTrigger>
+                  <TabsTrigger value="petition">Section Petition</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-          )}
-          {form.formState.errors.course && (
-            <p className="text-red-500 text-sm mt-1">{form.formState.errors.course.message}</p>
-          )}
-        </div>
 
-        {/* Toggle between Swap and Petition */}
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="isPetition"
-            checked={watchIsPetition}
-            onCheckedChange={(checked) => form.setValue("isPetition", checked)}
-          />
-          <Label htmlFor="isPetition" className="text-black">This is a petition (no current section)</Label>
-        </div>
-
-        {/* Current Section - Only show if not petition */}
-        {!watchIsPetition && (
-          <div>
-            <Label htmlFor="currentSection" className="text-black">Current Section</Label>
-            {showCustomCurrentSectionInput ? (
-              <div className="mt-1">
-                <Input
-                  id="customCurrentSection"
-                  value={customCurrentSection}
-                  onChange={(e) => setCustomCurrentSection(e.target.value)}
-                  className="text-black"
-                  placeholder="Enter your current section"
-                />
-                <Button 
-                  type="button" 
-                  variant="link" 
-                  onClick={() => setShowCustomCurrentSectionInput(false)}
-                  className="mt-1 p-0 h-auto text-sm text-campus-purple"
-                >
-                  Use section list
-                </Button>
-              </div>
-            ) : (
-              <div className="mt-1">
-                <Select
-                  onValueChange={(value) => form.setValue("currentSection", value)}
-                  value={form.watch("currentSection")}
-                >
-                  <SelectTrigger className="w-full text-black">
-                    <SelectValue placeholder="Select your current section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Sections</SelectLabel>
-                      {sampleSections.map((section) => (
-                        <SelectItem key={section} value={section}>
-                          Section {section}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <Button 
-                  type="button" 
-                  variant="link" 
-                  onClick={() => {
-                    setShowCustomCurrentSectionInput(true);
-                    form.setValue("currentSection", "");
-                  }}
-                  className="mt-1 p-0 h-auto text-sm text-campus-purple"
-                >
-                  Add a different section
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Target Section */}
-        <div>
-          <Label htmlFor="targetSection" className="text-black">Target Section</Label>
-          {showCustomTargetSectionInput ? (
-            <div className="mt-1">
-              <Input
-                id="customTargetSection"
-                value={customTargetSection}
-                onChange={(e) => setCustomTargetSection(e.target.value)}
-                className="text-black"
-                placeholder="Enter target section"
-              />
-              <Button 
-                type="button" 
-                variant="link" 
-                onClick={() => setShowCustomTargetSectionInput(false)}
-                className="mt-1 p-0 h-auto text-sm text-campus-purple"
-              >
-                Use section list
-              </Button>
-            </div>
-          ) : (
-            <div className="mt-1">
-              <Select
-                onValueChange={(value) => form.setValue("targetSection", value)}
-                value={form.watch("targetSection")}
-              >
-                <SelectTrigger className="w-full text-black">
-                  <SelectValue placeholder="Select desired section" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Sections</SelectLabel>
-                    {sampleSections.map((section) => (
-                      <SelectItem key={section} value={section}>
-                        Section {section}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              <Button 
-                type="button" 
-                variant="link" 
-                onClick={() => {
-                  setShowCustomTargetSectionInput(true);
-                  form.setValue("targetSection", "");
-                }}
-                className="mt-1 p-0 h-auto text-sm text-campus-purple"
-              >
-                Add a different section
-              </Button>
-            </div>
-          )}
-          {form.formState.errors.targetSection && (
-            <p className="text-red-500 text-sm mt-1">{form.formState.errors.targetSection.message}</p>
-          )}
-        </div>
-
-        {/* Anonymous Option */}
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isAnonymous"
-            checked={watchIsAnonymous}
-            onCheckedChange={(checked) => form.setValue("isAnonymous", checked === true)}
-          />
-          <Label htmlFor="isAnonymous" className="text-black">Keep my request anonymous</Label>
-        </div>
-
-        {/* Contact Information */}
-        <div className="border rounded-lg p-4 space-y-4">
-          <h3 className="font-semibold text-black">Contact Information</h3>
-          
-          {!watchIsAnonymous && (
-            <div>
-              <Label htmlFor="fullName" className="text-black">Full Name</Label>
-              <Input
-                id="fullName"
-                {...form.register("fullName")}
-                className="mt-1 text-black"
-                placeholder="Your full name"
-              />
-              {form.formState.errors.fullName && (
-                <p className="text-red-500 text-sm mt-1">{form.formState.errors.fullName.message}</p>
+            {/* Course Selection */}
+            <FormField
+              control={form.control}
+              name="course"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Course</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Courses</SelectLabel>
+                        {sampleCourses.map((course) => (
+                          <SelectItem key={course} value={course}>
+                            {course}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">Add Custom Course</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {field.value === "custom" && (
+                    <Input
+                      className="mt-2"
+                      placeholder="Enter course name (e.g., CS202: Advanced Programming)"
+                      onChange={(e) => form.setValue("course", e.target.value)}
+                    />
+                  )}
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="telegramUsername" className="text-black">Telegram Username (optional)</Label>
-            <Input
-              id="telegramUsername"
-              {...form.register("telegramUsername")}
-              className="mt-1 text-black"
-              placeholder="@username"
             />
-            <p className="text-sm text-gray-500 mt-1">For direct communication when a match is found.</p>
-            {form.formState.errors.telegramUsername && (
-              <p className="text-red-500 text-sm mt-1">{form.formState.errors.telegramUsername.message}</p>
-            )}
-          </div>
 
-          <div>
-            <Label htmlFor="email" className="text-black">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              {...form.register("email")}
-              className="mt-1 text-black"
-              placeholder="your.email@example.com"
-              defaultValue={user?.email || ""}
+            {/* Current Section - Only show if not petition */}
+            {!watchIsPetition && (
+              <FormField
+                control={form.control}
+                name="currentSection"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Section</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select your current section" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Sections</SelectLabel>
+                          {sampleSections.map((section) => (
+                            <SelectItem key={section} value={section}>
+                              Section {section}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Add Custom Section</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    {field.value === "custom" && (
+                      <Input
+                        className="mt-2"
+                        placeholder="Enter section (e.g., G, H1, etc.)"
+                        onChange={(e) => form.setValue("currentSection", e.target.value)}
+                      />
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Target Section */}
+            <FormField
+              control={form.control}
+              name="targetSection"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Target Section</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select desired section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Sections</SelectLabel>
+                        {sampleSections.map((section) => (
+                          <SelectItem key={section} value={section}>
+                            Section {section}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="custom">Add Custom Section</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  {field.value === "custom" && (
+                    <Input
+                      className="mt-2"
+                      placeholder="Enter section (e.g., G, H1, etc.)"
+                      onChange={(e) => form.setValue("targetSection", e.target.value)}
+                    />
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {form.formState.errors.email && (
-              <p className="text-red-500 text-sm mt-1">{form.formState.errors.email.message}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Schedule Preferences</CardTitle>
+            <CardDescription>Specify your scheduling preferences</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Days Pattern - Regular Semester */}
+            {semesterType === "regular" && (
+              <FormField
+                control={form.control}
+                name="dayPattern"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Days Pattern</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+                      >
+                        {dayPatterns.map((pattern) => (
+                          <div key={pattern.value} className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted">
+                            <RadioGroupItem value={pattern.value} id={pattern.value} />
+                            <Label htmlFor={pattern.value} className="flex flex-col cursor-pointer">
+                              <span className="font-medium">{pattern.label}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {pattern.days.join(", ")}
+                              </span>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          </div>
-        </div>
 
-        {/* Notes */}
-        <div>
-          <Label htmlFor="notes" className="text-black">Additional Notes (optional)</Label>
-          <Textarea
-            id="notes"
-            {...form.register("notes")}
-            className="mt-1 text-black"
-            placeholder="Any additional information about your request..."
-          />
-        </div>
-      </div>
+            {/* Summer Format - Summer Semester */}
+            {semesterType === "summer" && (
+              <FormField
+                control={form.control}
+                name="summerFormat"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Summer Format</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-1 gap-4"
+                      >
+                        {summerFormats.map((format) => (
+                          <div key={format.value} className="flex items-center space-x-2 rounded-md border p-4 cursor-pointer hover:bg-muted">
+                            <RadioGroupItem value={format.value} id={format.value} />
+                            <Label htmlFor={format.value} className="cursor-pointer">
+                              {format.label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-      <Button 
-        type="submit" 
-        className="w-full bg-campus-purple hover:bg-campus-darkPurple"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Submitting...
-          </span>
-        ) : (
-          'Submit Request'
+            {/* Preferred Time - Show if petition */}
+            {watchIsPetition && (
+              <FormField
+                control={form.control}
+                name="preferredTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Time</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select preferred time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Time Slots</SelectLabel>
+                          {timeSlots.map((slot) => (
+                            <SelectItem key={slot.value} value={slot.value}>
+                              <div className="flex items-center">
+                                {slot.icon}
+                                <span>{slot.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Flexibility Options - Show if petition */}
+            {watchIsPetition && (
+              <div className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="flexibleTime"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Flexible with time</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="flexibleDays"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Flexible with days</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Petition Reason - Show if petition */}
+        {watchIsPetition && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Petition Reason</CardTitle>
+              <CardDescription>Explain why you need this section</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="reason"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reason for Petition</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Explain why you need this specific section..."
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
         )}
-      </Button>
-    </form>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Information</CardTitle>
+            <CardDescription>How others can reach you</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Anonymous Option */}
+            <FormField
+              control={form.control}
+              name="isAnonymous"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Keep my request anonymous</FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* Full Name - Only show if not anonymous */}
+            {!form.watch("isAnonymous") && (
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your full name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Telegram Username */}
+            <FormField
+              control={form.control}
+              name="telegramUsername"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Telegram Username (optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="@username" {...field} />
+                  </FormControl>
+                  <p className="text-sm text-muted-foreground">
+                    For direct communication when a match is found.
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email Address</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email" 
+                      placeholder="your.email@example.com" 
+                      {...field}
+                      defaultValue={user?.email || ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Notes */}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Additional Notes (optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Any additional information about your request..."
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Button 
+          type="submit" 
+          className="w-full bg-campus-purple hover:bg-campus-darkPurple"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Submitting...
+            </span>
+          ) : (
+            'Submit Request'
+          )}
+        </Button>
+      </form>
+    </Form>
   );
 };
 
