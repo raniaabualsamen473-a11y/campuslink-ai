@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Match } from "@/types/swap";
-import { Telegram } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 
 const MatchResults = () => {
   const { user } = useAuth();
@@ -145,7 +145,7 @@ const MatchResults = () => {
                     className="text-blue-500 border-blue-300 hover:bg-blue-50"
                     title="Chat on Telegram"
                   >
-                    <Telegram size={16} className="mr-1" />
+                    <MessageSquare size={16} className="mr-1" />
                     Chat
                   </Button>
                   <Button 
