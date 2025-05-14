@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Match } from "@/types/swap";
+import { Telegram } from "lucide-react";
 
 const MatchResults = () => {
   const { user } = useAuth();
@@ -76,6 +77,19 @@ const MatchResults = () => {
     }
   };
 
+  const openTelegramChat = (username: string | null) => {
+    if (!username) {
+      toast.info("Telegram username not available", {
+        description: "The student hasn't provided their Telegram username."
+      });
+      return;
+    }
+    
+    // Remove @ symbol if present
+    const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+    window.open(`https://t.me/${cleanUsername}`, '_blank');
+  };
+
   return (
     <Card className="border-campus-purple/20">
       <CardHeader>
@@ -123,7 +137,17 @@ const MatchResults = () => {
                 
                 <Separator className="my-2" />
                 
-                <div className="mt-2 flex justify-end">
+                <div className="mt-2 flex justify-end gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => openTelegramChat(match.telegram_username)}
+                    className="text-blue-500 border-blue-300 hover:bg-blue-50"
+                    title="Chat on Telegram"
+                  >
+                    <Telegram size={16} className="mr-1" />
+                    Chat
+                  </Button>
                   <Button 
                     size="sm" 
                     onClick={() => handleContact(match)}
