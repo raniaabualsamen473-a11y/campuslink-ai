@@ -22,12 +22,9 @@ export interface SwapRequest {
   desired_course: string | null;
   current_section: string | null;
   desired_section: string | null;
-  notes: string | null;
   university_id: number | null;
   full_name: string | null;
   email: string | null;
-  flexible_time?: boolean | null;
-  flexible_days?: boolean | null;
   reason?: string | null;
   summer_format?: string | null;
   days_pattern?: string | null;

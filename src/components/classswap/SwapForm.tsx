@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,12 +57,9 @@ const formSchema = z.object({
   fullName: z.string().optional(),
   telegramUsername: z.string().optional(),
   email: z.string().email("Invalid email address").optional(),
-  notes: z.string().optional(),
   // New fields for time and day pattern
   dayPattern: z.string().optional(),
   preferredTime: z.string().optional(),
-  flexibleTime: z.boolean().default(false),
-  flexibleDays: z.boolean().default(false),
   reason: z.string().optional(),
   summerFormat: z.string().optional(),
 });
@@ -125,11 +121,8 @@ const SwapForm = () => {
       fullName: "",
       telegramUsername: "",
       email: user?.email || "",
-      notes: "",
       dayPattern: "mw",
       preferredTime: "",
-      flexibleTime: false,
-      flexibleDays: false,
       reason: "",
       summerFormat: "everyday",
     },
@@ -157,11 +150,8 @@ const SwapForm = () => {
         telegram_username: data.telegramUsername || null,
         email: data.email || user.email,
         user_id: user.id,
-        notes: data.notes || null,
         days_pattern: semesterType === "regular" ? data.dayPattern : null,
         preferred_time: data.isPetition ? data.preferredTime : null,
-        flexible_time: data.isPetition ? data.flexibleTime : null,
-        flexible_days: data.isPetition ? data.flexibleDays : null,
         reason: data.isPetition ? data.reason : null,
         summer_format: semesterType === "summer" ? data.summerFormat : null,
       };

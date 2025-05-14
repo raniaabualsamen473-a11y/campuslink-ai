@@ -9,17 +9,12 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import MatchResults from "@/components/MatchResults";
 import { SwapRequest } from "@/types/swap";
-
-// Define types for swap requests
-
 
 const SwapRequests = () => {
   const { user } = useAuth();
@@ -38,13 +33,10 @@ const SwapRequests = () => {
   const [targetSection, setTargetSection] = useState("");
   const [customTargetSection, setCustomTargetSection] = useState("");
   const [telegramUsername, setTelegramUsername] = useState("");
-  const [notes, setNotes] = useState("");
   const [activeRequests, setActiveRequests] = useState<SwapRequest[]>([]);
   const [days, setDays] = useState("mw");
   const [preferredTime, setPreferredTime] = useState("");
   const [reason, setReason] = useState("");
-  const [isFlexibleTime, setIsFlexibleTime] = useState(false);
-  const [isFlexibleDays, setIsFlexibleDays] = useState(false);
   const [summerFormat, setSummerFormat] = useState("everyday");
   
   // Sample data - in a real app this would come from backend
@@ -177,12 +169,9 @@ const SwapRequests = () => {
         desired_course: finalCourseName,
         current_section: finalCurrentSection,
         desired_section: finalTargetSection,
-        notes: notes,
         university_id: user.user_metadata?.university_id,
         full_name: isAnonymous ? null : user.user_metadata?.full_name,
         email: user.email,
-        flexible_time: requestType === "petition" ? isFlexibleTime : null,
-        flexible_days: requestType === "petition" ? isFlexibleDays : null,
         reason: requestType === "petition" ? reason : null,
         summer_format: semester === "summer" ? summerFormat : null,
         days_pattern: semester === "regular" ? days : null,
@@ -202,11 +191,15 @@ const SwapRequests = () => {
       } 
       // Otherwise insert new request
       else {
+        console.log("Submitting request data:", requestData);
         const { error } = await supabase
           .from('swap_requests')
           .insert(requestData);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
         
         toast.success("Request submitted successfully!");
         
@@ -246,15 +239,12 @@ const SwapRequests = () => {
     setCustomCurrentSection("");
     setTargetSection("");
     setCustomTargetSection("");
-    setNotes("");
     setIsAnonymous(false);
     setRequestType("swap");
     setSemester("regular");
     setDays("mw");
     setPreferredTime("");
     setReason("");
-    setIsFlexibleTime(false);
-    setIsFlexibleDays(false);
     setSummerFormat("everyday");
   };
 
@@ -294,7 +284,6 @@ const SwapRequests = () => {
       setCourseName(requestToEdit.desired_course || "");
       setCurrentSection(requestToEdit.current_section || "");
       setTargetSection(requestToEdit.desired_section || "");
-      setNotes(requestToEdit.notes || "");
       setIsAnonymous(requestToEdit.anonymous || false);
       setTelegramUsername(requestToEdit.telegram_username || "");
       setSemester(requestToEdit.summer_format ? "summer" : "regular");
@@ -310,8 +299,6 @@ const SwapRequests = () => {
       if (requestToEdit.petition) {
         setPreferredTime(requestToEdit.preferred_time || "");
         setReason(requestToEdit.reason || "");
-        setIsFlexibleTime(requestToEdit.flexible_time || false);
-        setIsFlexibleDays(requestToEdit.flexible_days || false);
       }
       
       toast(`Editing request`, {
@@ -566,10 +553,10 @@ const SwapRequests = () => {
 
                         <div className="space-y-2">
                           <Label htmlFor="reason" className="text-black">Reason for Petition</Label>
-                          <Textarea 
+                          <textarea 
                             id="reason" 
                             placeholder="Why do you need this section?" 
-                            className="min-h-[100px]"
+                            className="w-full min-h-[100px] px-3 py-2 border rounded-md"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                           />
@@ -590,45 +577,6 @@ const SwapRequests = () => {
                         </div>
                       </div>
                     </>
-                  )}
-
-                  {/* Additional Notes */}
-                  <div className="space-y-2">
-                    <Label htmlFor="notes" className="text-black">Additional Notes (Optional)</Label>
-                    <Textarea 
-                      id="notes" 
-                      placeholder="Any additional information or preferences..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-
-                  {/* Flexible Options (for petitions) */}
-                  {requestType === "petition" && (
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="flexible-time" 
-                          checked={isFlexibleTime}
-                          onCheckedChange={(checked) => 
-                            setIsFlexibleTime(checked === true)}
-                        />
-                        <Label htmlFor="flexible-time" className="font-normal text-black">
-                          I'm flexible with the time
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="flexible-days"
-                          checked={isFlexibleDays}
-                          onCheckedChange={(checked) => 
-                            setIsFlexibleDays(checked === true)}
-                        />
-                        <Label htmlFor="flexible-days" className="font-normal text-black">
-                          I'm flexible with the days
-                        </Label>
-                      </div>
-                    </div>
                   )}
 
                   {/* Contact Method */}
