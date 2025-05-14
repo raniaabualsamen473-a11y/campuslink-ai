@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,6 +63,9 @@ const formSchema = z.object({
   preferredTime: z.string().optional(),
   reason: z.string().optional(),
   summerFormat: z.string().optional(),
+  flexibleTime: z.boolean().default(false),
+  flexibleDays: z.boolean().default(false),
+  notes: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -125,6 +129,9 @@ const SwapForm = () => {
       preferredTime: "",
       reason: "",
       summerFormat: "everyday",
+      flexibleTime: false,
+      flexibleDays: false,
+      notes: "",
     },
   });
 
@@ -154,6 +161,9 @@ const SwapForm = () => {
         preferred_time: data.isPetition ? data.preferredTime : null,
         reason: data.isPetition ? data.reason : null,
         summer_format: semesterType === "summer" ? data.summerFormat : null,
+        flexible_time: data.flexibleTime,
+        flexible_days: data.flexibleDays,
+        notes: data.notes,
       };
 
       // Submit to Supabase
@@ -164,21 +174,6 @@ const SwapForm = () => {
       if (error) {
         throw new Error(error.message);
       }
-
-      // Send notification via edge function
-      await supabase.functions.invoke("send-notification", {
-        body: {
-          type: "request_submitted",
-          email: data.email || user.email,
-          name: data.fullName || "User",
-          details: {
-            course: data.course,
-            currentSection: watchIsPetition ? null : data.currentSection,
-            targetSection: data.targetSection,
-            telegramUsername: data.telegramUsername
-          }
-        }
-      });
 
       toast.success("Your request has been submitted successfully!");
       form.reset();
