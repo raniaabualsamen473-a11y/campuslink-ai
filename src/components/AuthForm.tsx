@@ -17,6 +17,27 @@ const AuthForm = () => {
   const [fullName, setFullName] = useState("");
   const [universityId, setUniversityId] = useState("");
   const [telegramUsername, setTelegramUsername] = useState("");
+  const [telegramError, setTelegramError] = useState("");
+  
+  // Telegram username validation
+  const validateTelegramUsername = (username: string) => {
+    // Clear previous errors
+    setTelegramError("");
+    
+    // Remove @ if user included it
+    if (username.startsWith('@')) {
+      username = username.substring(1);
+      setTelegramUsername(username);
+    }
+    
+    // Check if username is valid (only letters, numbers and underscores)
+    if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+      setTelegramError("Username can only contain letters, numbers, and underscores");
+      return false;
+    }
+    
+    return true;
+  };
   
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +62,12 @@ const AuthForm = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate telegram username
+    if (!validateTelegramUsername(telegramUsername)) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -52,7 +79,7 @@ const AuthForm = () => {
           data: {
             full_name: fullName,
             university_id: universityId,
-            telegram_username: telegramUsername,
+            telegram_username: telegramUsername ? telegramUsername : null,
           },
         },
       });
@@ -184,14 +211,27 @@ const AuthForm = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telegram" className="text-black">Telegram Username</Label>
-                  <Input 
-                    id="telegram" 
-                    placeholder="@username" 
-                    required
-                    value={telegramUsername}
-                    onChange={(e) => setTelegramUsername(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-500">Required for contact when a match is found</p>
+                  <div className="flex items-center">
+                    <span className="bg-gray-100 border border-r-0 border-input rounded-l-md px-3 py-2 text-sm text-gray-500">
+                      @
+                    </span>
+                    <Input 
+                      id="telegram" 
+                      placeholder="username" 
+                      required
+                      value={telegramUsername}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setTelegramUsername(value);
+                        validateTelegramUsername(value);
+                      }}
+                      className="rounded-l-none"
+                    />
+                  </div>
+                  {telegramError && (
+                    <p className="text-xs text-red-500">{telegramError}</p>
+                  )}
+                  <p className="text-xs text-gray-500">Enter your Telegram username (no @ symbol). Required for contacting when a match is found.</p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password" className="text-black">Password</Label>

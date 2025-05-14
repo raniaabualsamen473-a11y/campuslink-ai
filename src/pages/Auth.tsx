@@ -19,7 +19,15 @@ const authSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   fullName: z.string().min(2, { message: "Full name is required" }).optional().or(z.literal('')),
   universityId: z.string().optional().or(z.literal('')),
-  telegramUsername: z.string().optional().or(z.literal('')),
+  telegramUsername: z.string()
+    .refine(val => !val || !/^@/.test(val), {
+      message: "Please enter the username without the @ symbol"
+    })
+    .refine(val => !val || /^[a-zA-Z0-9_]+$/.test(val), {
+      message: "Username can only contain letters, numbers, and underscores"
+    })
+    .optional()
+    .or(z.literal('')),
 });
 
 type AuthFormValues = z.infer<typeof authSchema>;
@@ -189,13 +197,19 @@ const Auth = () => {
                         <FormItem>
                           <FormLabel className="text-black">Telegram Username</FormLabel>
                           <FormControl>
-                            <Input 
-                              placeholder="@username" 
-                              {...field} 
-                              className="text-black"
-                              required
-                            />
+                            <div className="flex items-center">
+                              <span className="bg-gray-100 border border-r-0 border-input rounded-l-md px-3 py-2 text-sm text-gray-500">
+                                @
+                              </span>
+                              <Input 
+                                placeholder="username" 
+                                {...field} 
+                                className="rounded-l-none text-black"
+                                required
+                              />
+                            </div>
                           </FormControl>
+                          <p className="text-xs text-gray-500 mt-1">Enter your Telegram username (no @ symbol). Required for contact when a match is found.</p>
                           <FormMessage />
                         </FormItem>
                       )}
