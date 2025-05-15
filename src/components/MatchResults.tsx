@@ -2,13 +2,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { sectionsMatch } from "@/utils/sectionUtils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Match } from "@/types/swap";
+import { Match, SwapRequest } from "@/types/swap";
 import { MessageSquare } from "lucide-react";
 
 interface MatchResultsProps {
@@ -74,8 +73,8 @@ const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
           .select('*')
           .neq('user_id', user.id) // Not from the same user
           .ilike('desired_course', request.desired_course) // Same course (case insensitive)
-          .eq('normalized_desired_section', request.normalized_current_section) // They want my section
-          .eq('normalized_current_section', request.normalized_desired_section) // They have my desired section
+          .eq('normalized_desired_section', request.normalized_current_section || '') // They want my section
+          .eq('normalized_current_section', request.normalized_desired_section || '') // They have my desired section
           .limit(30);
           
         if (matchesError) throw matchesError;

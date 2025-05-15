@@ -22,6 +22,8 @@ export type Database = {
           flexible_time: boolean | null
           full_name: string | null
           id: string
+          normalized_current_section: string | null
+          normalized_desired_section: string | null
           notes: string | null
           petition: boolean | null
           preferred_time: string | null
@@ -43,6 +45,8 @@ export type Database = {
           flexible_time?: boolean | null
           full_name?: string | null
           id?: string
+          normalized_current_section?: string | null
+          normalized_desired_section?: string | null
           notes?: string | null
           petition?: boolean | null
           preferred_time?: string | null
@@ -64,6 +68,8 @@ export type Database = {
           flexible_time?: boolean | null
           full_name?: string | null
           id?: string
+          normalized_current_section?: string | null
+          normalized_desired_section?: string | null
           notes?: string | null
           petition?: boolean | null
           preferred_time?: string | null
