@@ -25,6 +25,7 @@ const SwapRequests = () => {
   const [requestType, setRequestType] = useState("swap");
   const [semester, setSemester] = useState("regular");
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Form state
   const [courseName, setCourseName] = useState("");
@@ -224,6 +225,9 @@ const SwapRequests = () => {
       
       // Refresh user's requests
       fetchUserRequests();
+      
+      // Trigger refresh of matches
+      setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       console.error("Error submitting request:", error);
       toast.error(error.message || "Error submitting request");
@@ -264,6 +268,9 @@ const SwapRequests = () => {
       
       toast.success(`Request canceled successfully!`);
       fetchUserRequests();
+      
+      // Also refresh matches when a request is deleted
+      setRefreshTrigger(prev => prev + 1);
     } catch (error: any) {
       console.error("Error deleting request:", error);
       toast.error(error.message || "Error canceling request");
@@ -645,9 +652,9 @@ const SwapRequests = () => {
           </Card>
         </div>
 
-        {/* Match Results */}
+        {/* Match Results - pass the refresh trigger prop */}
         <div>
-          <MatchResults />
+          <MatchResults refreshTrigger={refreshTrigger} />
         </div>
 
         {/* Active Requests */}

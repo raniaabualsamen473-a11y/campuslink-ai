@@ -22,6 +22,8 @@ export interface SwapRequest {
   desired_course: string | null;
   current_section: string | null;
   desired_section: string | null;
+  normalized_current_section?: string | null;
+  normalized_desired_section?: string | null;
   university_id: number | null;
   full_name: string | null;
   email: string | null;

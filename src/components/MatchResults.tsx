@@ -11,17 +11,22 @@ import { toast } from "sonner";
 import { Match } from "@/types/swap";
 import { MessageSquare } from "lucide-react";
 
-const MatchResults = () => {
+interface MatchResultsProps {
+  refreshTrigger?: number; // Prop to trigger refresh when new request is submitted
+}
+
+const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
   const { user } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [groupedMatches, setGroupedMatches] = useState<Record<string, Match[]>>({});
 
+  // Refresh matches when user changes or refreshTrigger changes
   useEffect(() => {
     if (user) {
       fetchMatches();
     }
-  }, [user]);
+  }, [user, refreshTrigger]);
 
   // Group matches by course when the matches state updates
   useEffect(() => {
@@ -42,37 +47,107 @@ const MatchResults = () => {
     
     setIsLoading(true);
     try {
-      // In a real application, this would be a call to your backend
-      // to get matches for the current user's requests
-      const { data, error } = await supabase
+      // First, get the current user's requests to find potential matches against
+      const { data: userRequests, error: userRequestsError } = await supabase
         .from('swap_requests')
         .select('*')
-        .neq('user_id', user.id)
-        .limit(10);
+        .eq('user_id', user.id);
         
-      if (error) throw error;
+      if (userRequestsError) throw userRequestsError;
       
-      // Mock data transformation for display purposes
-      // In a real app, you'd have actual matching logic
-      if (data && data.length > 0) {
-        const mockMatches: Match[] = data.map(item => ({
-          id: item.id,
-          course: item.desired_course || "Unknown Course",
-          currentSection: item.current_section,
-          desiredSection: item.desired_section || "Unknown Section",
-          user: item.full_name || "Anonymous Student",
-          isAnonymous: item.anonymous || false,
-          matchPercent: Math.floor(Math.random() * 40) + 60, // 60-100% match for demo
-          type: item.petition ? "petition" : "swap",
-          dateCreated: new Date(item.created_at).toLocaleDateString(),
-          user_id: item.user_id,
-          telegram_username: item.telegram_username
-        }));
-        
-        setMatches(mockMatches);
-      } else {
+      if (!userRequests || userRequests.length === 0) {
         setMatches([]);
+        setIsLoading(false);
+        return;
       }
+      
+      // For each user request, find potential matches
+      const allMatches: Match[] = [];
+      
+      for (const request of userRequests) {
+        // Skip petition requests as they don't have a current section to swap
+        if (request.petition) continue;
+        
+        // Find potential matches by comparing normalized fields
+        const { data: potentialMatches, error: matchesError } = await supabase
+          .from('swap_requests')
+          .select('*')
+          .neq('user_id', user.id) // Not from the same user
+          .ilike('desired_course', request.desired_course) // Same course (case insensitive)
+          .eq('normalized_desired_section', request.normalized_current_section) // They want my section
+          .eq('normalized_current_section', request.normalized_desired_section) // They have my desired section
+          .limit(30);
+          
+        if (matchesError) throw matchesError;
+        
+        if (potentialMatches && potentialMatches.length > 0) {
+          const formattedMatches: Match[] = potentialMatches.map(match => ({
+            id: match.id,
+            course: match.desired_course || "Unknown Course",
+            currentSection: match.current_section || "Unknown Section",
+            desiredSection: match.desired_section || "Unknown Section",
+            user: match.full_name || "Anonymous Student",
+            isAnonymous: match.anonymous || false,
+            matchPercent: 100, // Perfect match
+            type: match.petition ? "petition" : "swap",
+            dateCreated: new Date(match.created_at).toLocaleDateString(),
+            user_id: match.user_id,
+            telegram_username: match.telegram_username
+          }));
+          
+          allMatches.push(...formattedMatches);
+        }
+      }
+      
+      // Handle case where no perfect matches were found - show partial matches
+      if (allMatches.length === 0) {
+        // Look for partial matches (just course match)
+        for (const request of userRequests) {
+          const { data: partialMatches, error: partialError } = await supabase
+            .from('swap_requests')
+            .select('*')
+            .neq('user_id', user.id) // Not from the same user
+            .ilike('desired_course', request.desired_course) // Same course (case insensitive)
+            .limit(20);
+            
+          if (partialError) throw partialError;
+          
+          if (partialMatches && partialMatches.length > 0) {
+            const formattedMatches: Match[] = partialMatches.map(match => {
+              let matchPercent = 60; // Base match percentage for same course
+              
+              // Increase match percent if one of the sections matches
+              if (match.normalized_desired_section === request.normalized_current_section) {
+                matchPercent += 20; // They want my section
+              }
+              if (match.normalized_current_section === request.normalized_desired_section) {
+                matchPercent += 20; // They have my desired section
+              }
+              
+              return {
+                id: match.id,
+                course: match.desired_course || "Unknown Course",
+                currentSection: match.current_section || "Unknown Section",
+                desiredSection: match.desired_section || "Unknown Section",
+                user: match.full_name || "Anonymous Student",
+                isAnonymous: match.anonymous || false,
+                matchPercent,
+                type: match.petition ? "petition" : "swap",
+                dateCreated: new Date(match.created_at).toLocaleDateString(),
+                user_id: match.user_id,
+                telegram_username: match.telegram_username
+              };
+            });
+            
+            allMatches.push(...formattedMatches);
+          }
+        }
+      }
+      
+      // Sort by match percentage (highest first)
+      allMatches.sort((a, b) => b.matchPercent - a.matchPercent);
+      
+      setMatches(allMatches);
     } catch (error) {
       console.error("Error fetching matches:", error);
       toast.error("Failed to load potential matches");
@@ -99,8 +174,10 @@ const MatchResults = () => {
       return;
     }
     
-    // Remove @ symbol if present
-    const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+    // Add @ symbol if not present
+    const formattedUsername = username.startsWith('@') ? username : '@' + username;
+    // Remove @ symbol for the URL
+    const cleanUsername = formattedUsername.substring(1);
     window.open(`https://t.me/${cleanUsername}`, '_blank');
   };
 
@@ -141,7 +218,11 @@ const MatchResults = () => {
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        <Badge variant="outline" className={`${
+                          match.matchPercent === 100 
+                            ? "bg-green-50 text-green-700 border-green-200" 
+                            : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                        }`}>
                           {match.matchPercent}% Match
                         </Badge>
                       </div>
