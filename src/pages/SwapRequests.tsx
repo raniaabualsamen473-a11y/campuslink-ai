@@ -162,6 +162,14 @@ const SwapRequests = () => {
     }
     
     try {
+      // Create normalized versions of the sections for matching
+      const normalizedCurrentSection = requestType === "swap" 
+        ? finalCurrentSection ? finalCurrentSection.toLowerCase().trim() : null
+        : null;
+      const normalizedTargetSection = finalTargetSection 
+        ? finalTargetSection.toLowerCase().trim() 
+        : null;
+
       const requestData: SwapRequest = {
         id: editingRequestId || uuidv4(),
         user_id: user.id,
@@ -171,6 +179,8 @@ const SwapRequests = () => {
         desired_course: finalCourseName,
         current_section: finalCurrentSection,
         desired_section: finalTargetSection,
+        normalized_current_section: normalizedCurrentSection,
+        normalized_desired_section: normalizedTargetSection,
         university_id: user.user_metadata?.university_id,
         full_name: isAnonymous ? null : user.user_metadata?.full_name,
         email: user.email,
