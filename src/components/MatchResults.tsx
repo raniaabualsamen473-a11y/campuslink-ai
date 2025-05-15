@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,7 +66,7 @@ const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
         // Skip petition requests as they don't have a current section to swap
         if (request.petition) continue;
         
-        // Find potential matches by comparing normalized fields
+        // Find potential matches using normalized fields for accurate matching
         const { data: potentialMatches, error: matchesError } = await supabase
           .from('swap_requests')
           .select('*')
@@ -83,8 +82,8 @@ const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
           const formattedMatches: Match[] = potentialMatches.map(match => ({
             id: match.id,
             course: match.desired_course || "Unknown Course",
-            currentSection: match.current_section || "Unknown Section",
-            desiredSection: match.desired_section || "Unknown Section",
+            currentSection: match.current_section || "Unknown Section", // Using the full section text
+            desiredSection: match.desired_section || "Unknown Section", // Using the full section text
             user: match.full_name || "Anonymous Student",
             isAnonymous: match.anonymous || false,
             matchPercent: 100, // Perfect match
@@ -126,8 +125,8 @@ const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
               return {
                 id: match.id,
                 course: match.desired_course || "Unknown Course",
-                currentSection: match.current_section || "Unknown Section",
-                desiredSection: match.desired_section || "Unknown Section",
+                currentSection: match.current_section || "Unknown Section", // Using the full section text
+                desiredSection: match.desired_section || "Unknown Section", // Using the full section text
                 user: match.full_name || "Anonymous Student",
                 isAnonymous: match.anonymous || false,
                 matchPercent,

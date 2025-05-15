@@ -118,6 +118,47 @@ const SwapRequests = () => {
     }
   };
 
+  // Check if a duplicate request already exists
+  const checkForDuplicate = async (
+    userId: string, 
+    courseName: string, 
+    normalizedCurrentSection: string | null, 
+    normalizedTargetSection: string | null
+  ): Promise<boolean> => {
+    try {
+      // Query for existing requests with the same course and sections
+      const { data, error } = await supabase
+        .from('swap_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('desired_course', courseName);
+      
+      if (error) throw error;
+      
+      // For swap requests, check both sections match
+      if (normalizedCurrentSection) {
+        const duplicateSwap = data?.some(req => 
+          req.normalized_current_section === normalizedCurrentSection && 
+          req.normalized_desired_section === normalizedTargetSection
+        );
+        
+        if (duplicateSwap) return true;
+      } else {
+        // For petitions, just check the desired section
+        const duplicatePetition = data?.some(req => 
+          req.petition && req.normalized_desired_section === normalizedTargetSection
+        );
+        
+        if (duplicatePetition) return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Error checking for duplicate requests:", error);
+      return false; // Allow submission if check fails
+    }
+  };
+
   const handleSwapSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -169,6 +210,24 @@ const SwapRequests = () => {
       const normalizedTargetSection = finalTargetSection 
         ? finalTargetSection.toLowerCase().trim() 
         : null;
+
+      // Check for duplicate requests (only if not editing)
+      if (!editingRequestId) {
+        const isDuplicate = await checkForDuplicate(
+          user.id, 
+          finalCourseName, 
+          normalizedCurrentSection, 
+          normalizedTargetSection
+        );
+        
+        if (isDuplicate) {
+          toast.error("You've already submitted this exact request", {
+            description: "Please edit your existing request instead of creating a duplicate"
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
 
       const requestData: SwapRequest = {
         id: editingRequestId || uuidv4(),
