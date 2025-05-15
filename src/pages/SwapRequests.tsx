@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from 'uuid';
 import MatchResults from "@/components/MatchResults";
 import { SwapRequest } from "@/types/swap";
+import { normalizeSection } from "@/utils/sectionUtils";
 
 const SwapRequests = () => {
   const { user } = useAuth();
@@ -130,9 +131,9 @@ const SwapRequests = () => {
     // Get final values (using custom input if provided)
     const finalCourseName = customCourseName || courseName;
     const finalCurrentSection = requestType === "swap" 
-      ? (customCurrentSection || currentSection) 
+      ? normalizeSection(customCurrentSection || currentSection)
       : null;
-    const finalTargetSection = customTargetSection || targetSection;
+    const finalTargetSection = normalizeSection(customTargetSection || targetSection);
     
     // Validate required fields
     if (!finalCourseName) {

@@ -11,6 +11,45 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+/**
+ * Normalizes section names for consistent matching
+ */
+const normalizeSection = (sectionName: string): string => {
+  if (!sectionName) return '';
+  
+  // Convert to lowercase and trim
+  let normalized = sectionName.toLowerCase().trim();
+  
+  // Remove "section" word if present
+  normalized = normalized.replace(/\bsection\s*/gi, '');
+  
+  // Standardize common day patterns
+  // MW, M/W, Monday/Wednesday, etc. -> mw
+  if (/\b(m[on]*(day)?[\s\/]*w[ed]*(nesday)?)\b/i.test(normalized)) {
+    normalized = normalized.replace(/\b(m[on]*(day)?[\s\/]*w[ed]*(nesday)?)\b/i, 'mw');
+  }
+  
+  // STT, S/T/T, Sunday/Tuesday/Thursday, etc. -> stt
+  if (/\b(s[un]*(day)?[\s\/]*t[ue]*(sday)?[\s\/]*th[ur]*(sday)?)\b/i.test(normalized)) {
+    normalized = normalized.replace(/\b(s[un]*(day)?[\s\/]*t[ue]*(sday)?[\s\/]*th[ur]*(sday)?)\b/i, 'stt');
+  }
+  
+  // Standardize time formats (8:00 AM, 8 AM, 8am -> 8am)
+  normalized = normalized.replace(/(\d+)(:00)?\s*(am|pm)/i, '$1$3');
+  
+  // Remove parentheses and their contents
+  normalized = normalized.replace(/\(.*?\)/g, '');
+  
+  // Remove extra spaces
+  normalized = normalized.replace(/\s+/g, ' ');
+  
+  // Remove special characters except alphanumeric, spaces
+  normalized = normalized.replace(/[^\w\s]/g, '');
+  
+  // Final trim
+  return normalized.trim();
+};
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -32,14 +71,23 @@ serve(async (req) => {
         console.log('New swap request detected:', payload.new);
         
         try {
-          // Call our forward-swap-request function with the new row data
+          // Apply normalization to the section names before forwarding
+          const newRequest = {...payload.new};
+          if (newRequest.current_section) {
+            newRequest.current_section = normalizeSection(newRequest.current_section);
+          }
+          if (newRequest.desired_section) {
+            newRequest.desired_section = normalizeSection(newRequest.desired_section);
+          }
+          
+          // Call our forward-swap-request function with the normalized data
           const response = await fetch(`${supabaseUrl}/functions/v1/forward-swap-request`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "Authorization": `Bearer ${supabaseAnonKey}`,
             },
-            body: JSON.stringify({ record: payload.new }),
+            body: JSON.stringify({ record: newRequest }),
           });
 
           if (!response.ok) {

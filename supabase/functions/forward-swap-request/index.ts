@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -7,6 +6,43 @@ const N8N_WEBHOOK_URL = "https://artificialdynamo04.app.n8n.cloud/webhook-test/s
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Same normalization function we added to listen-for-swaps
+const normalizeSection = (sectionName: string): string => {
+  if (!sectionName) return '';
+  
+  // Convert to lowercase and trim
+  let normalized = sectionName.toLowerCase().trim();
+  
+  // Remove "section" word if present
+  normalized = normalized.replace(/\bsection\s*/gi, '');
+  
+  // Standardize common day patterns
+  // MW, M/W, Monday/Wednesday, etc. -> mw
+  if (/\b(m[on]*(day)?[\s\/]*w[ed]*(nesday)?)\b/i.test(normalized)) {
+    normalized = normalized.replace(/\b(m[on]*(day)?[\s\/]*w[ed]*(nesday)?)\b/i, 'mw');
+  }
+  
+  // STT, S/T/T, Sunday/Tuesday/Thursday, etc. -> stt
+  if (/\b(s[un]*(day)?[\s\/]*t[ue]*(sday)?[\s\/]*th[ur]*(sday)?)\b/i.test(normalized)) {
+    normalized = normalized.replace(/\b(s[un]*(day)?[\s\/]*t[ue]*(sday)?[\s\/]*th[ur]*(sday)?)\b/i, 'stt');
+  }
+  
+  // Standardize time formats (8:00 AM, 8 AM, 8am -> 8am)
+  normalized = normalized.replace(/(\d+)(:00)?\s*(am|pm)/i, '$1$3');
+  
+  // Remove parentheses and their contents
+  normalized = normalized.replace(/\(.*?\)/g, '');
+  
+  // Remove extra spaces
+  normalized = normalized.replace(/\s+/g, ' ');
+  
+  // Remove special characters except alphanumeric, spaces
+  normalized = normalized.replace(/[^\w\s]/g, '');
+  
+  // Final trim
+  return normalized.trim();
 };
 
 serve(async (req) => {

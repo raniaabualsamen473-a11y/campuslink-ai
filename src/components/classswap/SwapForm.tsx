@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +11,7 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizeSection } from "@/utils/sectionUtils";
 import { 
   Select, 
   SelectContent, 
@@ -146,11 +146,16 @@ const SwapForm = () => {
     setIsSubmitting(true);
 
     try {
+      // Get final values (using custom input if provided)
+      const finalCourseName = data.course;
+      const finalCurrentSection = watchIsPetition ? null : normalizeSection(data.currentSection || '');
+      const finalTargetSection = normalizeSection(data.targetSection || '');
+      
       // Prepare the data for submission
       const requestData = {
-        desired_course: data.course,
-        current_section: watchIsPetition ? null : data.currentSection,
-        desired_section: data.targetSection,
+        desired_course: finalCourseName,
+        current_section: watchIsPetition ? null : finalCurrentSection,
+        desired_section: finalTargetSection,
         petition: data.isPetition,
         anonymous: data.isAnonymous,
         full_name: data.isAnonymous ? null : data.fullName,
