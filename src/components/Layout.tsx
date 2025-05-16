@@ -9,7 +9,7 @@ const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background dark:from-background dark:to-background/95">
       <Navbar 
         isMobileMenuOpen={isMobileMenuOpen} 
         setIsMobileMenuOpen={setIsMobileMenuOpen} 

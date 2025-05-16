@@ -125,6 +125,20 @@ export default {
 					'50%': {
 						transform: 'translateY(-5px)'
 					}
+				},
+				'theme-toggle': {
+					'0%': { 
+						transform: 'rotate(0deg) scale(0.8)',
+						opacity: '0.5'
+					},
+					'50%': { 
+						transform: 'rotate(180deg) scale(1.2)',
+						opacity: '1'
+					},
+					'100%': { 
+						transform: 'rotate(360deg) scale(1)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
@@ -133,7 +147,8 @@ export default {
 				'fade-in': 'fade-in 0.5s ease-out',
 				'slide-in': 'slide-in 0.5s ease-out',
 				'glow-pulse': 'glow-pulse 2s infinite',
-				'float': 'float 3s ease-in-out infinite'
+				'float': 'float 3s ease-in-out infinite',
+				'theme-toggle': 'theme-toggle 0.5s ease-in-out'
 			},
 			backgroundImage: {
 				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',

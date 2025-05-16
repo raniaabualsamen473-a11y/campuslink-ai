@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { ThemeProvider } from "./components/ThemeProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,37 +59,39 @@ const Home = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/swap-requests" element={
-                <ProtectedRoute>
-                  <SwapRequests />
-                </ProtectedRoute>
-              } />
-              <Route path="/petitions" element={
-                <ProtectedRoute>
-                  <Petitions />
-                </ProtectedRoute>
-              } />
-              {/* Removed the Class Swap route */}
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="campuslink-theme">
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/swap-requests" element={
+                  <ProtectedRoute>
+                    <SwapRequests />
+                  </ProtectedRoute>
+                } />
+                <Route path="/petitions" element={
+                  <ProtectedRoute>
+                    <Petitions />
+                  </ProtectedRoute>
+                } />
+                {/* Removed the Class Swap route */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

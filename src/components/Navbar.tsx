@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface NavbarProps {
   isMobileMenuOpen: boolean;
@@ -42,7 +43,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
   ];
 
   return (
-    <nav className="glass sticky top-0 z-50 backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-glass">
+    <nav className="glass sticky top-0 z-50 backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-glass dark:bg-slate-900/50 dark:border-white/10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo and Brand Name */}
@@ -53,7 +54,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 alt="CampusLink AI Logo" 
                 className="h-9 w-9 object-contain"
               />
-              <span className="text-xl font-bold text-campus-darkPurple">CampusLink</span>
+              <span className="text-xl font-bold text-campus-darkPurple dark:text-white">CampusLink</span>
               <span className="text-lg font-semibold text-campus-purple">AI</span>
             </Link>
           </div>
@@ -69,8 +70,8 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                     to={link.path}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                       location.pathname === link.path
-                        ? "bg-campus-purple/20 text-campus-darkPurple shadow-neon-purple"
-                        : "text-gray-700 hover:bg-white/10 hover:text-campus-purple"
+                        ? "bg-campus-purple/20 text-campus-darkPurple shadow-neon-purple dark:text-white dark:bg-campus-purple/30"
+                        : "text-gray-700 hover:bg-white/10 hover:text-campus-purple dark:text-gray-300 dark:hover:text-campus-lightPurple"
                     }`}
                   >
                     {link.name}
@@ -78,7 +79,10 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 ))}
             </div>
 
-            <div className="ml-4 flex items-center">
+            <div className="ml-4 flex items-center space-x-2">
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
               {user ? (
                 <div className="flex items-center space-x-2">
                   <div className="hidden md:block text-right">
@@ -109,10 +113,13 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
           </div>
 
           {/* Mobile menu button */}
-          <div className="flex items-center sm:hidden">
+          <div className="flex items-center sm:hidden gap-2">
+            {/* Theme Toggle for Mobile */}
+            <ThemeToggle />
+            
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:bg-white/10 hover:text-campus-purple focus:outline-none transition-all duration-300"
+              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:bg-white/10 hover:text-campus-purple focus:outline-none transition-all duration-300 dark:text-gray-300 dark:hover:text-campus-lightPurple"
               aria-controls="mobile-menu"
               aria-expanded={isMobileMenuOpen}
               onClick={toggleMobileMenu}
@@ -132,7 +139,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
       <div
         className={`${
           isMobileMenuOpen ? "block" : "hidden"
-        } sm:hidden absolute w-full glass backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-glass-lg animate-fade-in`}
+        } sm:hidden absolute w-full glass backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-glass-lg animate-fade-in dark:bg-slate-900/50 dark:border-white/10`}
         id="mobile-menu"
       >
         <div className="px-2 pt-2 pb-3 space-y-1">
@@ -144,8 +151,8 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 to={link.path}
                 className={`block px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${
                   location.pathname === link.path
-                    ? "bg-campus-purple/20 text-campus-darkPurple shadow-neon-purple"
-                    : "text-gray-700 hover:bg-white/10 hover:text-campus-purple"
+                    ? "bg-campus-purple/20 text-campus-darkPurple shadow-neon-purple dark:text-white dark:bg-campus-purple/30"
+                    : "text-gray-700 hover:bg-white/10 hover:text-campus-purple dark:text-gray-300 dark:hover:text-campus-lightPurple"
                 }`}
               >
                 {link.name}
@@ -160,7 +167,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-white/10 hover:text-campus-purple transition-all duration-300"
+                  className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-white/10 hover:text-campus-purple transition-all duration-300 dark:text-gray-300 dark:hover:text-campus-lightPurple"
                 >
                   <div className="flex items-center">
                     <LogOut className="h-5 w-5 mr-2" />
