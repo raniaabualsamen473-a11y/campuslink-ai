@@ -42,36 +42,36 @@ export const MatchCard = ({ match }: MatchCardProps) => {
   };
 
   return (
-    <div className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <div className="border rounded-lg p-4 bg-card shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start">
         <div>
           <div className="mt-1 space-y-1">
             {match.type === "swap" && match.currentSection && (
-              <p className="text-sm text-gray-700">
-                <span className="font-medium text-gray-500">From: </span>
+              <p className="text-sm text-adaptive-muted">
+                <span className="font-medium text-adaptive-soft">From: </span>
                 {match.currentSection}
               </p>
             )}
-            <p className="text-sm text-gray-700">
-              <span className="font-medium text-gray-500">To: </span>
+            <p className="text-sm text-adaptive-muted">
+              <span className="font-medium text-adaptive-soft">To: </span>
               {match.desiredSection}
             </p>
           </div>
         </div>
         <Badge variant="outline" className={`${
           match.matchPercent === 100 
-            ? "bg-green-50 text-green-700 border-green-200" 
-            : "bg-yellow-50 text-yellow-700 border-yellow-200"
+            ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50" 
+            : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50"
         }`}>
           {match.matchPercent}% Match
         </Badge>
       </div>
       
       <div className="mt-2">
-        <p className="text-sm font-medium text-black">
+        <p className="text-sm font-medium text-adaptive">
           Posted by: {match.isAnonymous ? "Anonymous Student" : match.user}
         </p>
-        <p className="text-xs text-gray-500">{match.dateCreated}</p>
+        <p className="text-xs text-adaptive-soft">{match.dateCreated}</p>
       </div>
       
       <Separator className="my-3" />
@@ -80,9 +80,8 @@ export const MatchCard = ({ match }: MatchCardProps) => {
         {match.telegram_username && (
           <Button 
             size="sm" 
-            variant="outline"
+            variant="telegram"
             onClick={() => openTelegramChat(match.telegram_username)}
-            className="text-blue-500 border-blue-300 hover:bg-blue-50"
             title={`Chat with ${match.isAnonymous ? "user" : match.user} on Telegram`}
           >
             <MessageSquare size={16} className="mr-1" />
@@ -91,8 +90,8 @@ export const MatchCard = ({ match }: MatchCardProps) => {
         )}
         <Button 
           size="sm" 
+          variant="match-success"
           onClick={() => handleContact(match)}
-          className="bg-campus-purple hover:bg-campus-darkPurple text-white"
         >
           Contact
         </Button>

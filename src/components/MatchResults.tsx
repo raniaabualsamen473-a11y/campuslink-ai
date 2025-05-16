@@ -15,7 +15,7 @@ const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
   return (
     <Card className="border-campus-purple/20">
       <CardHeader>
-        <CardTitle className="text-campus-darkPurple flex items-center">
+        <CardTitle className="text-foreground flex items-center">
           <span>Potential Matches</span>
           {Object.keys(groupedMatches).length > 0 && (
             <span className="ml-2 text-sm bg-campus-purple text-white rounded-full px-2 py-0.5">
@@ -23,7 +23,7 @@ const MatchResults = ({ refreshTrigger = 0 }: MatchResultsProps) => {
             </span>
           )}
         </CardTitle>
-        <CardDescription className="text-gray-700">
+        <CardDescription>
           Students who might be interested in swapping with you
         </CardDescription>
       </CardHeader>

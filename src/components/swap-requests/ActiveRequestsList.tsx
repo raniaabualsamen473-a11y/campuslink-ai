@@ -54,12 +54,13 @@ export const ActiveRequestsList = ({
                       size="sm" 
                       variant="outline" 
                       onClick={() => onEditRequest(request.id)}
+                      className="border-blue-300 hover:border-blue-400 text-blue-600 dark:border-blue-700 dark:hover:border-blue-600 dark:text-blue-400"
                     >
                       Edit
                     </Button>
                     <Button 
                       size="sm" 
-                      variant="destructive" 
+                      variant="cancel-request" 
                       onClick={() => onDeleteRequest(request.id)}
                     >
                       Cancel

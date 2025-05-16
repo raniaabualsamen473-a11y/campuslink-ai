@@ -161,7 +161,13 @@ export default {
 				'glass-sm': '0 2px 8px rgba(0, 0, 0, 0.07)',
 				'glass-lg': '0 12px 42px rgba(0, 0, 0, 0.15)',
 				'neon-purple': '0 0 10px rgba(155, 48, 255, 0.5)',
-				'neon-purple-lg': '0 0 20px rgba(155, 48, 255, 0.7)'
+				'neon-purple-lg': '0 0 20px rgba(155, 48, 255, 0.7)',
+				'neon-blue': '0 0 10px rgba(59, 130, 246, 0.5)',
+				'neon-blue-lg': '0 0 20px rgba(59, 130, 246, 0.7)',
+				'neon-green': '0 0 10px rgba(34, 197, 94, 0.5)',
+				'neon-green-lg': '0 0 20px rgba(34, 197, 94, 0.7)',
+				'neon-red': '0 0 10px rgba(239, 68, 68, 0.5)',
+				'neon-red-lg': '0 0 20px rgba(239, 68, 68, 0.7)'
 			}
 		}
 	},

@@ -18,6 +18,9 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         glass: "bg-white/10 backdrop-blur-md border border-white/20 text-foreground hover:bg-white/20 hover:border-white/30 dark:bg-slate-800/30 dark:border-white/10 dark:hover:bg-slate-700/30",
         neon: "bg-campus-purple text-white hover:bg-campus-neonPurple shadow-neon-purple hover:shadow-neon-purple-lg dark:bg-campus-deepPurple dark:hover:bg-campus-purple",
+        telegram: "bg-blue-500 text-white hover:bg-blue-600 shadow-neon-blue hover:shadow-neon-blue-lg",
+        "match-success": "bg-green-500 text-white hover:bg-green-600 shadow-neon-green hover:shadow-neon-green-lg",
+        "cancel-request": "bg-red-500 text-white hover:bg-red-600 shadow-neon-red hover:shadow-neon-red-lg",
       },
       size: {
         default: "h-10 px-4 py-2",
