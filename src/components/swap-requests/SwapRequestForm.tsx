@@ -1,12 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -14,11 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { SwapRequest } from "@/types/swap";
 import { normalizeSection } from "@/utils/sectionUtils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Clock } from "lucide-react";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { generateTimeSlots, formatDaysPattern, formatTime } from "@/utils/timeSlotUtils";
+import { SectionFields } from "./SectionFields";
+import { ContactInfoFields } from "./ContactInfoFields";
+import { CourseSelectionFields } from "./CourseSelectionFields";
+import { PetitionReasonField } from "./PetitionReasonField";
 
 interface SwapRequestFormProps {
   editingRequestId: string | null;
@@ -26,61 +22,6 @@ interface SwapRequestFormProps {
   onRequestSubmitted: () => void;
   onCancelEdit: () => void;
 }
-
-// Helper function to generate time slots based on semester type and day pattern
-const generateTimeSlots = (semesterType: string, dayPattern: string): string[] => {
-  const timeSlots: string[] = [];
-  let startHour = 8;
-  let startMinute = 30;
-  
-  // Regular semester, Sun/Tue/Thu (1 hour classes)
-  if (semesterType === "regular" && dayPattern === "stt") {
-    for (let i = 0; i < 10; i++) {
-      const formattedHour = startHour.toString().padStart(2, '0');
-      const formattedMinute = startMinute.toString().padStart(2, '0');
-      timeSlots.push(`${formattedHour}:${formattedMinute}`);
-      
-      // Add 1 hour
-      startMinute += 60;
-      if (startMinute >= 60) {
-        startHour += Math.floor(startMinute / 60);
-        startMinute %= 60;
-      }
-    }
-  }
-  // Regular semester, Mon/Wed (1.5 hour classes)
-  else if (semesterType === "regular" && dayPattern === "mw") {
-    for (let i = 0; i < 7; i++) {
-      const formattedHour = startHour.toString().padStart(2, '0');
-      const formattedMinute = startMinute.toString().padStart(2, '0');
-      timeSlots.push(`${formattedHour}:${formattedMinute}`);
-      
-      // Add 1.5 hours (90 minutes)
-      startMinute += 90;
-      if (startMinute >= 60) {
-        startHour += Math.floor(startMinute / 60);
-        startMinute %= 60;
-      }
-    }
-  }
-  // Summer semester (1.25 hour classes)
-  else if (semesterType === "summer") {
-    for (let i = 0; i < 8; i++) {
-      const formattedHour = startHour.toString().padStart(2, '0');
-      const formattedMinute = startMinute.toString().padStart(2, '0');
-      timeSlots.push(`${formattedHour}:${formattedMinute}`);
-      
-      // Add 1.25 hours (75 minutes)
-      startMinute += 75;
-      if (startMinute >= 60) {
-        startHour += Math.floor(startMinute / 60);
-        startMinute %= 60;
-      }
-    }
-  }
-  
-  return timeSlots;
-};
 
 export const SwapRequestForm = ({ 
   editingRequestId,
@@ -434,49 +375,6 @@ export const SwapRequestForm = ({
       setIsLoading(false);
     }
   };
-  
-  // Format days pattern for display
-  const formatDaysPattern = (pattern: string, semesterType: string): string => {
-    if (semesterType === "regular") {
-      switch (pattern) {
-        case "mw": return "Mon/Wed";
-        case "stt": return "Sun/Tue/Thu";
-        default: return pattern;
-      }
-    } else {
-      switch (pattern) {
-        case "everyday": return "Every day";
-        case "sunmon": return "Sun & Mon";
-        case "tuethusat": return "Tue/Wed/Thu";
-        default: return pattern;
-      }
-    }
-  };
-
-  // Get class duration based on semester and days pattern
-  const getClassDuration = (semesterType: string, dayPattern: string): string => {
-    if (semesterType === "regular") {
-      return dayPattern === "mw" ? "1 hour 30 minutes" : "1 hour";
-    } else {
-      return "1 hour 15 minutes";
-    }
-  };
-  
-  // Format time for display
-  const formatTime = (time: string): string => {
-    if (!time) return "";
-    
-    try {
-      const [hours, minutes] = time.split(":");
-      const hour = parseInt(hours);
-      const period = hour >= 12 ? "PM" : "AM";
-      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-      
-      return `${displayHour}:${minutes} ${period}`;
-    } catch (e) {
-      return time;
-    }
-  };
 
   const resetForm = () => {
     if (editingRequestId) {
@@ -517,137 +415,6 @@ export const SwapRequestForm = ({
     setDesiredStartTime("");
   };
 
-  const renderDayPatternOptions = (field: string, value: string, onChange: (value: string) => void) => {
-    if (semester === "summer") {
-      return (
-        <div className="space-y-4">
-          <Label className="text-sm font-medium text-black">Days Format</Label>
-          <RadioGroup 
-            value={value}
-            onValueChange={onChange}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-3"
-          >
-            <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
-              <RadioGroupItem value="everyday" id={`${field}-everyday`} />
-              <Label htmlFor={`${field}-everyday`} className="cursor-pointer text-black">Every day (Sun-Thu)</Label>
-            </div>
-            <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
-              <RadioGroupItem value="sunmon" id={`${field}-sunmon`} />
-              <Label htmlFor={`${field}-sunmon`} className="cursor-pointer text-black">Sun & Mon</Label>
-            </div>
-            <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
-              <RadioGroupItem value="tuethusat" id={`${field}-tuethusat`} />
-              <Label htmlFor={`${field}-tuethusat`} className="cursor-pointer text-black">Tue/Wed/Thu</Label>
-            </div>
-          </RadioGroup>
-        </div>
-      );
-    } else {
-      return (
-        <div className="space-y-2">
-          <Label className="text-black">Days Pattern</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex items-center space-x-2">
-              <input 
-                type="radio" 
-                id={`${field}-mw`}
-                name={`${field}-days`} 
-                value="mw"
-                checked={value === "mw"}
-                onChange={() => onChange("mw")}
-                className="text-campus-purple focus:ring-campus-purple" 
-              />
-              <Label htmlFor={`${field}-mw`} className="font-normal text-black">Monday/Wednesday (1.5 hour classes)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input 
-                type="radio" 
-                id={`${field}-stt`}
-                name={`${field}-days`}
-                value="stt"
-                checked={value === "stt"}
-                onChange={() => onChange("stt")}
-                className="text-campus-purple focus:ring-campus-purple" 
-              />
-              <Label htmlFor={`${field}-stt`} className="font-normal text-black">Sunday/Tuesday/Thursday (1 hour classes)</Label>
-            </div>
-          </div>
-        </div>
-      );
-    }
-  };
-
-  const renderStructuredSectionFields = (
-    type: "current" | "desired",
-    sectionNumber: string,
-    daysPattern: string,
-    startTime: string,
-    timeSlots: string[],
-    setNumber: (value: string) => void,
-    setDaysPattern: (value: string) => void,
-    setStartTime: (value: string) => void
-  ) => {
-    return (
-      <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-        <h3 className="font-medium text-lg text-campus-darkPurple">
-          {type === "current" ? "Current Section Details" : "Desired Section Details"}
-        </h3>
-        
-        {/* Section Number */}
-        <div className="space-y-2">
-          <Label htmlFor={`${type}-section-number`} className="text-black">Section Number</Label>
-          <Input 
-            id={`${type}-section-number`} 
-            type="number"
-            min="1"
-            placeholder="e.g., 1, 2, 3" 
-            value={sectionNumber}
-            onChange={(e) => setNumber(e.target.value)}
-            className="w-full"
-          />
-        </div>
-        
-        {/* Days Pattern */}
-        {renderDayPatternOptions(
-          type, 
-          daysPattern, 
-          setDaysPattern
-        )}
-        
-        {/* Start Time */}
-        <div className="space-y-2">
-          <Label htmlFor={`${type}-start-time`} className="text-black">Start Time</Label>
-          <Select
-            value={startTime}
-            onValueChange={setStartTime}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select start time" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeSlots.map((time) => (
-                <SelectItem key={`${type}-${time}`} value={time}>
-                  <div className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
-                    <span>{formatTime(time)}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-gray-500 mt-1">
-            Class duration: {getClassDuration(semester, daysPattern)}
-          </p>
-        </div>
-        
-        {/* Preview of section format */}
-        <div className="mt-2 bg-gray-100 p-2 rounded text-sm">
-          <p><strong>Preview:</strong> Section {sectionNumber || "#"} ({formatDaysPattern(daysPattern, semester)} {formatTime(startTime) || "time"})</p>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <Card className="border-campus-purple/20">
       <CardHeader>
@@ -686,133 +453,73 @@ export const SwapRequestForm = ({
             </div>
 
             {/* Course Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="course" className="text-black">Course</Label>
-              <Select value={courseName} onValueChange={setCourseName}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a course" />
-                </SelectTrigger>
-                <SelectContent>
-                  {courses.map((course) => (
-                    <SelectItem key={course} value={course}>
-                      {course}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="other">
-                    + Add New Course
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {courseName === "other" && (
-                <div className="mt-2">
-                  <Label htmlFor="custom-course" className="text-black">Enter Course Name</Label>
-                  <Input 
-                    id="custom-course" 
-                    value={customCourseName}
-                    onChange={(e) => setCustomCourseName(e.target.value)}
-                    placeholder="Enter course name"
-                    className="mt-1" 
-                  />
-                </div>
-              )}
-            </div>
+            <CourseSelectionFields
+              courseName={courseName}
+              customCourseName={customCourseName}
+              courses={courses}
+              setCourseName={setCourseName}
+              setCustomCourseName={setCustomCourseName}
+            />
 
             {/* Structured Section Fields */}
             {requestType === "swap" ? (
               <>
                 {/* Current Section */}
-                {renderStructuredSectionFields(
-                  "current",
-                  currentSectionNumber,
-                  currentDaysPattern,
-                  currentStartTime,
-                  currentTimeSlots,
-                  setCurrentSectionNumber,
-                  setCurrentDaysPattern,
-                  setCurrentStartTime
-                )}
+                <SectionFields
+                  type="current"
+                  sectionNumber={currentSectionNumber}
+                  daysPattern={currentDaysPattern}
+                  startTime={currentStartTime}
+                  timeSlots={currentTimeSlots}
+                  setNumber={setCurrentSectionNumber}
+                  setDaysPattern={setCurrentDaysPattern}
+                  setStartTime={setCurrentStartTime}
+                  semester={semester}
+                />
                 
                 {/* Desired Section */}
-                {renderStructuredSectionFields(
-                  "desired",
-                  desiredSectionNumber,
-                  desiredDaysPattern,
-                  desiredStartTime,
-                  desiredTimeSlots,
-                  setDesiredSectionNumber,
-                  setDesiredDaysPattern,
-                  setDesiredStartTime
-                )}
+                <SectionFields
+                  type="desired"
+                  sectionNumber={desiredSectionNumber}
+                  daysPattern={desiredDaysPattern}
+                  startTime={desiredStartTime}
+                  timeSlots={desiredTimeSlots}
+                  setNumber={setDesiredSectionNumber}
+                  setDaysPattern={setDesiredDaysPattern}
+                  setStartTime={setDesiredStartTime}
+                  semester={semester}
+                />
               </>
             ) : (
               <>
                 {/* Petition - only desired section */}
-                {renderStructuredSectionFields(
-                  "desired",
-                  desiredSectionNumber,
-                  desiredDaysPattern,
-                  desiredStartTime,
-                  desiredTimeSlots,
-                  setDesiredSectionNumber,
-                  setDesiredDaysPattern,
-                  setDesiredStartTime
-                )}
+                <SectionFields
+                  type="desired"
+                  sectionNumber={desiredSectionNumber}
+                  daysPattern={desiredDaysPattern}
+                  startTime={desiredStartTime}
+                  timeSlots={desiredTimeSlots}
+                  setNumber={setDesiredSectionNumber}
+                  setDaysPattern={setDesiredDaysPattern}
+                  setStartTime={setDesiredStartTime}
+                  semester={semester}
+                />
                 
                 {/* Petition Reason */}
-                <div className="space-y-2">
-                  <Label htmlFor="reason" className="text-black">Reason for Petition</Label>
-                  <textarea 
-                    id="reason" 
-                    placeholder="Why do you need this section?" 
-                    className="w-full min-h-[100px] px-3 py-2 border rounded-md"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Explaining your reason may help gather support for your petition
-                  </p>
-                </div>
+                <PetitionReasonField 
+                  reason={reason}
+                  setReason={setReason}
+                />
               </>
             )}
 
             {/* Contact Information */}
-            <div className="space-y-4 pt-4">
-              <h3 className="font-medium text-lg text-campus-darkPurple">
-                Contact Information
-              </h3>
-                
-              {/* Telegram Username */}
-              <div className="space-y-2">
-                <Label htmlFor="telegram" className="text-black">Your Telegram Username</Label>
-                <Input 
-                  id="telegram" 
-                  placeholder="@username" 
-                  value={telegramUsername}
-                  onChange={(e) => setTelegramUsername(e.target.value)}
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Used to connect you with matching students
-                </p>
-              </div>
-
-              {/* Anonymity Option */}
-              <div className="flex items-center space-x-4 pt-2">
-                <Switch
-                  id="anonymous"
-                  checked={isAnonymous}
-                  onCheckedChange={setIsAnonymous}
-                />
-                <div>
-                  <Label htmlFor="anonymous" className="font-medium text-black">
-                    Submit Anonymously
-                  </Label>
-                  <p className="text-sm text-gray-500">
-                    Your name won't be visible to other students
-                  </p>
-                </div>
-              </div>
-            </div>
+            <ContactInfoFields
+              telegramUsername={telegramUsername}
+              isAnonymous={isAnonymous}
+              setTelegramUsername={setTelegramUsername}
+              setIsAnonymous={setIsAnonymous}
+            />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
