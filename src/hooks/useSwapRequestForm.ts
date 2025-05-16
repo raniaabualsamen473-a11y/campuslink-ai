@@ -3,21 +3,21 @@ import { useState, useEffect } from "react";
 import { SwapRequest } from "@/types/swap";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
-import { normalizeSection } from "@/utils/sectionUtils";
-import { formatDaysPattern, formatTime, generateTimeSlots } from "@/utils/timeSlotUtils";
+import { generateTimeSlots } from "@/utils/timeSlotUtils";
+import { 
+  validateSwapFormFields,
+  checkForDuplicateRequest 
+} from "@/utils/validationUtils";
+import { 
+  prepareRequestData,
+  mapRequestDataToForm 
+} from "@/utils/requestDataUtils";
 
 interface UseSwapRequestFormProps {
   user: any;
   editingRequestId: string | null;
   onRequestSubmitted: () => void;
   onCancelEdit: () => void;
-}
-
-interface SectionData {
-  number: number;
-  pattern: string;
-  time: string;
 }
 
 // Main hook function
@@ -115,7 +115,8 @@ export const useSwapRequestForm = ({
       if (error) throw error;
       
       if (data) {
-        populateFormWithExistingData(data);
+        const formData = mapRequestDataToForm(data as SwapRequest);
+        populateFormWithData(formData);
       }
     } catch (error) {
       console.error("Error loading swap request:", error);
@@ -123,92 +124,21 @@ export const useSwapRequestForm = ({
     }
   };
 
-  // Populate form with existing data
-  const populateFormWithExistingData = (data: SwapRequest) => {
-    setCourseName(data.desired_course || "");
-    setRequestType(data.petition ? "petition" : "swap");
-    setIsAnonymous(data.anonymous || false);
-    setTelegramUsername(data.telegram_username || "");
-    setSemester(data.summer_format ? "summer" : "regular");
-    setSummerFormat(data.summer_format || "everyday");
-    setReason(data.reason || "");
-    
-    // Set structured section data
-    if (data.current_section_number) {
-      setCurrentSectionNumber(data.current_section_number.toString());
-    }
-    if (data.current_days_pattern) {
-      setCurrentDaysPattern(data.current_days_pattern);
-    }
-    if (data.current_start_time) {
-      setCurrentStartTime(data.current_start_time);
-    }
-    
-    if (data.desired_section_number) {
-      setDesiredSectionNumber(data.desired_section_number.toString());
-    }
-    if (data.desired_days_pattern) {
-      setDesiredDaysPattern(data.desired_days_pattern);
-    }
-    if (data.desired_start_time) {
-      setDesiredStartTime(data.desired_start_time);
-    }
-  };
-
-  // Check for duplicate requests
-  const checkForDuplicate = async (
-    userId: string, 
-    courseName: string, 
-    currentSectionData: SectionData | null, 
-    desiredSectionData: SectionData | null
-  ): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('swap_requests')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('desired_course', courseName);
-      
-      if (error) throw error;
-      
-      if (currentSectionData) {
-        return checkForDuplicateSwap(data, currentSectionData, desiredSectionData);
-      } else {
-        return checkForDuplicatePetition(data, desiredSectionData);
-      }
-    } catch (error: any) {
-      console.error("Error checking for duplicate requests:", error);
-      return false; // Allow submission if check fails
-    }
-  };
-
-  // Check for duplicate swap request
-  const checkForDuplicateSwap = (
-    existingRequests: any[], 
-    currentSection: SectionData, 
-    desiredSection: SectionData | null
-  ): boolean => {
-    return existingRequests?.some(req => 
-      req.current_section_number === currentSection.number && 
-      req.current_days_pattern === currentSection.pattern &&
-      req.current_start_time === currentSection.time &&
-      req.desired_section_number === desiredSection?.number &&
-      req.desired_days_pattern === desiredSection?.pattern &&
-      req.desired_start_time === desiredSection?.time
-    ) || false;
-  };
-
-  // Check for duplicate petition
-  const checkForDuplicatePetition = (
-    existingRequests: any[], 
-    desiredSection: SectionData | null
-  ): boolean => {
-    return existingRequests?.some(req => 
-      req.petition && 
-      req.desired_section_number === desiredSection?.number &&
-      req.desired_days_pattern === desiredSection?.pattern &&
-      req.desired_start_time === desiredSection?.time
-    ) || false;
+  // Populate form with data
+  const populateFormWithData = (formData: ReturnType<typeof mapRequestDataToForm>) => {
+    setCourseName(formData.courseName);
+    setRequestType(formData.requestType);
+    setIsAnonymous(formData.isAnonymous);
+    setTelegramUsername(formData.telegramUsername);
+    setSemester(formData.semester);
+    setSummerFormat(formData.summerFormat);
+    setReason(formData.reason);
+    setCurrentSectionNumber(formData.currentSectionNumber);
+    setCurrentDaysPattern(formData.currentDaysPattern);
+    setCurrentStartTime(formData.currentStartTime);
+    setDesiredSectionNumber(formData.desiredSectionNumber);
+    setDesiredDaysPattern(formData.desiredDaysPattern);
+    setDesiredStartTime(formData.desiredStartTime);
   };
 
   // Send notification to user
@@ -227,77 +157,6 @@ export const useSwapRequestForm = ({
     }
   };
 
-  // Validate form fields
-  const validateFormFields = (): boolean => {
-    const finalCourseName = customCourseName || courseName;
-    
-    if (!finalCourseName) {
-      toast.error("Please select or enter a course name");
-      return false;
-    }
-    
-    if (requestType === "swap") {
-      if (!currentSectionNumber || !currentStartTime) {
-        toast.error("Please complete all current section fields");
-        return false;
-      }
-    }
-    
-    if (!desiredSectionNumber || !desiredStartTime) {
-      toast.error("Please complete all desired section fields");
-      return false;
-    }
-    
-    if (!telegramUsername) {
-      toast.error("Please enter your Telegram username for contact");
-      return false;
-    }
-
-    return true;
-  };
-
-  // Prepare request data object
-  const prepareRequestData = (): SwapRequest | null => {
-    const finalCourseName = customCourseName || courseName;
-    
-    // Create string representation of sections for backwards compatibility
-    const currentSectionString = requestType === "swap" 
-      ? `Section ${currentSectionNumber} (${formatDaysPattern(currentDaysPattern, semester)} ${formatTime(currentStartTime)})`
-      : null;
-      
-    const desiredSectionString = `Section ${desiredSectionNumber} (${formatDaysPattern(desiredDaysPattern, semester)} ${formatTime(desiredStartTime)})`;
-    
-    return {
-      id: editingRequestId || uuidv4(),
-      user_id: user.id,
-      anonymous: isAnonymous,
-      petition: requestType === "petition",
-      telegram_username: telegramUsername,
-      desired_course: finalCourseName,
-      current_section: currentSectionString,
-      desired_section: desiredSectionString,
-      normalized_current_section: currentSectionString ? normalizeSection(currentSectionString) : null,
-      normalized_desired_section: normalizeSection(desiredSectionString),
-      university_id: user.user_metadata?.university_id,
-      full_name: isAnonymous ? null : user.user_metadata?.full_name,
-      email: user.email,
-      
-      // Structured section data
-      current_section_number: requestType === "swap" ? parseInt(currentSectionNumber) : null,
-      current_days_pattern: requestType === "swap" ? currentDaysPattern : null,
-      current_start_time: requestType === "swap" ? currentStartTime : null,
-      
-      desired_section_number: parseInt(desiredSectionNumber),
-      desired_days_pattern: desiredDaysPattern,
-      desired_start_time: desiredStartTime,
-      
-      reason: requestType === "petition" ? reason : null,
-      summer_format: semester === "summer" ? summerFormat : null,
-      days_pattern: semester === "regular" ? (requestType === "petition" ? desiredDaysPattern : null) : null,
-      preferred_time: requestType === "petition" ? desiredStartTime : null
-    };
-  };
-
   // Create or update request in database
   const saveRequestToDatabase = async (requestData: SwapRequest): Promise<boolean> => {
     try {
@@ -311,7 +170,6 @@ export const useSwapRequestForm = ({
         
         toast.success("Request updated successfully!");
       } else {
-        console.log("Submitting request data:", requestData);
         const { error } = await supabase
           .from('swap_requests')
           .insert(requestData);
@@ -359,10 +217,23 @@ export const useSwapRequestForm = ({
     
     try {
       // Validate form fields
-      if (!validateFormFields()) {
+      const isValid = validateSwapFormFields(
+        requestType,
+        courseName,
+        customCourseName,
+        currentSectionNumber,
+        currentStartTime,
+        desiredSectionNumber,
+        desiredStartTime,
+        telegramUsername
+      );
+      
+      if (!isValid) {
         setIsLoading(false);
         return;
       }
+      
+      const finalCourseName = customCourseName || courseName;
       
       // Create structured section data for checking duplicates
       const currentSectionData = requestType === "swap" 
@@ -381,8 +252,7 @@ export const useSwapRequestForm = ({
 
       // Check for duplicate requests (only if not editing)
       if (!editingRequestId) {
-        const finalCourseName = customCourseName || courseName;
-        const isDuplicate = await checkForDuplicate(
+        const isDuplicate = await checkForDuplicateRequest(
           user.id, 
           finalCourseName, 
           currentSectionData, 
@@ -399,12 +269,24 @@ export const useSwapRequestForm = ({
       }
 
       // Prepare request data
-      const requestData = prepareRequestData();
-      
-      if (!requestData) {
-        setIsLoading(false);
-        return;
-      }
+      const requestData = prepareRequestData(
+        editingRequestId,
+        user.id,
+        user.user_metadata,
+        isAnonymous,
+        requestType,
+        finalCourseName,
+        currentSectionNumber,
+        currentDaysPattern,
+        currentStartTime,
+        desiredSectionNumber,
+        desiredDaysPattern,
+        desiredStartTime,
+        reason,
+        semester,
+        summerFormat,
+        telegramUsername
+      );
 
       // Save to database
       const success = await saveRequestToDatabase(requestData);
