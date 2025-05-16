@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { SwapRequest } from "@/types/swap";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ import {
   prepareRequestData,
   mapRequestDataToForm 
 } from "@/utils/requestDataUtils";
-import { submitPetition, checkExistingPetition } from "@/utils/petitionUtils";
+import { usePetitionForm } from "@/hooks/usePetitionForm";
 
 interface UseSwapRequestFormProps {
   user: any;
@@ -61,6 +62,20 @@ export const useSwapRequestForm = ({
     "Database Systems",
     "Computer Networks",
   ]);
+
+  // Initialize petition form hook
+  const { 
+    isLoading: isPetitionSubmitting,
+    handlePetitionSubmit 
+  } = usePetitionForm({
+    userId: user?.id,
+    userMetadata: user?.user_metadata,
+    onSuccess: () => {
+      // Reset form and notify parent component
+      resetForm();
+      onRequestSubmitted();
+    }
+  });
 
   // Update time slots when semester or days pattern changes
   useEffect(() => {
@@ -236,45 +251,23 @@ export const useSwapRequestForm = ({
       const finalCourseName = customCourseName || courseName;
       
       if (requestType === "petition") {
-        // Handle petition submission
-        const petitionExists = await checkExistingPetition(
-          user.id,
-          finalCourseName,
-          desiredDaysPattern,
-          semester,
-          semester === 'summer' ? summerFormat : null
-        );
+        // Handle petition submission by calling our extracted hook
+        const success = await handlePetitionSubmit({
+          courseName: finalCourseName,
+          sectionNumber: desiredSectionNumber,
+          daysPattern: desiredDaysPattern,
+          startTime: desiredStartTime,
+          semester: semester,
+          summerFormat: semester === 'summer' ? summerFormat : null,
+          isAnonymous: isAnonymous,
+          telegramUsername: telegramUsername,
+          reason: reason
+        });
         
-        if (petitionExists) {
-          toast.error("You've already submitted this petition", {
-            description: "Each student can only support a specific petition once"
-          });
+        if (!success) {
           setIsLoading(false);
-          return;
         }
-        
-        const petitionData = {
-          course_name: finalCourseName,
-          section_number: parseInt(desiredSectionNumber),
-          days_pattern: desiredDaysPattern,
-          start_time: desiredStartTime,
-          semester_type: semester,
-          summer_format: semester === 'summer' ? summerFormat : null,
-          anonymous: isAnonymous,
-          telegram_username: isAnonymous ? null : telegramUsername,
-          full_name: isAnonymous ? null : user.user_metadata?.full_name,
-          email: isAnonymous ? null : user.email,
-          university_id: user.user_metadata?.university_id
-        };
-        
-        const success = await submitPetition(user.id, petitionData);
-        
-        if (success) {
-          // Reset form and notify parent component
-          resetForm();
-          onRequestSubmitted();
-          return;
-        }
+        // The success case is handled in the petition hook (onSuccess callback)
       } else {
         // Handle swap request submission (existing code)
         // Create structured section data for checking duplicates
@@ -336,11 +329,11 @@ export const useSwapRequestForm = ({
           resetForm();
           onRequestSubmitted();
         }
+        setIsLoading(false);
       }
     } catch (error: any) {
       console.error("Error in form submission:", error);
       toast.error("An unexpected error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -387,7 +380,7 @@ export const useSwapRequestForm = ({
   };
 
   return {
-    isLoading,
+    isLoading: isLoading || isPetitionSubmitting,
     isAnonymous,
     requestType,
     semester,
