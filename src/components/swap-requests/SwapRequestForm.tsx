@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { SwapRequest } from "@/types/swap";
 import { normalizeSection } from "@/utils/sectionUtils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Clock } from "lucide-react";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 interface SwapRequestFormProps {
   editingRequestId: string | null;
@@ -20,6 +26,14 @@ interface SwapRequestFormProps {
   onRequestSubmitted: () => void;
   onCancelEdit: () => void;
 }
+
+// Define possible start times based on day pattern
+const START_TIMES = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", 
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", 
+  "17:00", "17:30"
+];
 
 export const SwapRequestForm = ({ 
   editingRequestId,
@@ -36,14 +50,18 @@ export const SwapRequestForm = ({
   // Form state
   const [courseName, setCourseName] = useState("");
   const [customCourseName, setCustomCourseName] = useState("");
-  const [currentSection, setCurrentSection] = useState("");
-  const [customCurrentSection, setCustomCurrentSection] = useState("");
-  const [targetSection, setTargetSection] = useState("");
-  const [customTargetSection, setCustomTargetSection] = useState("");
   const [telegramUsername, setTelegramUsername] = useState("");
-  const [days, setDays] = useState("mw");
-  const [preferredTime, setPreferredTime] = useState("");
   const [reason, setReason] = useState("");
+  
+  // Structured section data
+  const [currentSectionNumber, setCurrentSectionNumber] = useState<string>("");
+  const [currentDaysPattern, setCurrentDaysPattern] = useState("stt");
+  const [currentStartTime, setCurrentStartTime] = useState("");
+  
+  const [desiredSectionNumber, setDesiredSectionNumber] = useState<string>("");
+  const [desiredDaysPattern, setDesiredDaysPattern] = useState("stt");
+  const [desiredStartTime, setDesiredStartTime] = useState("");
+  
   const [summerFormat, setSummerFormat] = useState("everyday");
   
   // Sample data - in a real app this would come from backend
@@ -56,26 +74,6 @@ export const SwapRequestForm = ({
     "Database Systems",
     "Computer Networks",
   ]);
-  
-  // Sample sections
-  const sections = {
-    "Machine Learning": [
-      { id: "ML-1", name: "Section 1", schedule: "Monday/Wednesday 10:00 AM" },
-      { id: "ML-2", name: "Section 2", schedule: "Sunday/Tuesday/Thursday 2:00 PM" },
-      { id: "ML-3", name: "Section 3", schedule: "Monday/Wednesday 3:00 PM" },
-    ],
-    "Advanced Algorithms": [
-      { id: "AA-1", name: "Section 1", schedule: "Monday/Wednesday 9:00 AM" },
-      { id: "AA-2", name: "Section 2", schedule: "Sunday/Tuesday/Thursday 11:00 AM" },
-    ],
-  };
-
-  // Summer semester section options
-  const summerSections = {
-    everyday: "Every day (Sun-Thu)",
-    firstTwoDays: "First two days (Sun-Mon)",
-    lastThreeDays: "Last three days (Tue-Thu)"
-  };
 
   useEffect(() => {
     // Check for telegram username in user metadata
@@ -85,14 +83,73 @@ export const SwapRequestForm = ({
         setTelegramUsername(metadata.telegram_username);
       }
     }
-  }, [user]);
+    
+    // Reset field values when semester or request type changes
+    setCurrentDaysPattern(semester === "regular" ? "stt" : "everyday");
+    setDesiredDaysPattern(semester === "regular" ? "stt" : "everyday");
+    setCurrentStartTime("");
+    setDesiredStartTime("");
+  }, [user, semester, requestType]);
+
+  // Load existing request data if editing
+  useEffect(() => {
+    if (editingRequestId) {
+      loadRequestData(editingRequestId);
+    }
+  }, [editingRequestId]);
+
+  const loadRequestData = async (requestId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('swap_requests')
+        .select('*')
+        .eq('id', requestId)
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setCourseName(data.desired_course || "");
+        setRequestType(data.petition ? "petition" : "swap");
+        setIsAnonymous(data.anonymous || false);
+        setTelegramUsername(data.telegram_username || "");
+        setSemester(data.summer_format ? "summer" : "regular");
+        setSummerFormat(data.summer_format || "everyday");
+        setReason(data.reason || "");
+        
+        // Set structured section data
+        if (data.current_section_number) {
+          setCurrentSectionNumber(data.current_section_number.toString());
+        }
+        if (data.current_days_pattern) {
+          setCurrentDaysPattern(data.current_days_pattern);
+        }
+        if (data.current_start_time) {
+          setCurrentStartTime(data.current_start_time);
+        }
+        
+        if (data.desired_section_number) {
+          setDesiredSectionNumber(data.desired_section_number.toString());
+        }
+        if (data.desired_days_pattern) {
+          setDesiredDaysPattern(data.desired_days_pattern);
+        }
+        if (data.desired_start_time) {
+          setDesiredStartTime(data.desired_start_time);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading swap request:", error);
+      toast.error("Failed to load request data");
+    }
+  };
 
   // Check if a duplicate request already exists
   const checkForDuplicate = async (
     userId: string, 
     courseName: string, 
-    normalizedCurrentSection: string | null, 
-    normalizedTargetSection: string | null
+    currentSectionData: {number: number, pattern: string, time: string} | null, 
+    desiredSectionData: {number: number, pattern: string, time: string} | null
   ): Promise<boolean> => {
     try {
       // Query for existing requests with the same course and sections
@@ -105,17 +162,24 @@ export const SwapRequestForm = ({
       if (error) throw error;
       
       // For swap requests, check both sections match
-      if (normalizedCurrentSection) {
+      if (currentSectionData) {
         const duplicateSwap = data?.some(req => 
-          req.normalized_current_section === normalizedCurrentSection && 
-          req.normalized_desired_section === normalizedTargetSection
+          req.current_section_number === currentSectionData.number && 
+          req.current_days_pattern === currentSectionData.pattern &&
+          req.current_start_time === currentSectionData.time &&
+          req.desired_section_number === desiredSectionData?.number &&
+          req.desired_days_pattern === desiredSectionData?.pattern &&
+          req.desired_start_time === desiredSectionData?.time
         );
         
         if (duplicateSwap) return true;
       } else {
         // For petitions, just check the desired section
         const duplicatePetition = data?.some(req => 
-          req.petition && req.normalized_desired_section === normalizedTargetSection
+          req.petition && 
+          req.desired_section_number === desiredSectionData?.number &&
+          req.desired_days_pattern === desiredSectionData?.pattern &&
+          req.desired_start_time === desiredSectionData?.time
         );
         
         if (duplicatePetition) return true;
@@ -154,12 +218,8 @@ export const SwapRequestForm = ({
     
     setIsLoading(true);
     
-    // Get final values (using custom input if provided)
+    // Get final values
     const finalCourseName = customCourseName || courseName;
-    const finalCurrentSection = requestType === "swap" 
-      ? normalizeSection(customCurrentSection || currentSection)
-      : null;
-    const finalTargetSection = normalizeSection(customTargetSection || targetSection);
     
     // Validate required fields
     if (!finalCourseName) {
@@ -168,14 +228,17 @@ export const SwapRequestForm = ({
       return;
     }
     
-    if (requestType === "swap" && !finalCurrentSection) {
-      toast.error("Please select or enter your current section");
-      setIsLoading(false);
-      return;
+    // Validate section data
+    if (requestType === "swap") {
+      if (!currentSectionNumber || !currentStartTime) {
+        toast.error("Please complete all current section fields");
+        setIsLoading(false);
+        return;
+      }
     }
     
-    if (!finalTargetSection) {
-      toast.error("Please select or enter the target section");
+    if (!desiredSectionNumber || !desiredStartTime) {
+      toast.error("Please complete all desired section fields");
       setIsLoading(false);
       return;
     }
@@ -187,21 +250,35 @@ export const SwapRequestForm = ({
     }
     
     try {
-      // Create normalized versions of the sections for matching
-      const normalizedCurrentSection = requestType === "swap" 
-        ? finalCurrentSection ? finalCurrentSection.toLowerCase().trim() : null
+      // Create string representation of sections for backwards compatibility
+      const currentSectionString = requestType === "swap" 
+        ? `Section ${currentSectionNumber} (${formatDaysPattern(currentDaysPattern, semester)} ${formatTime(currentStartTime)})`
         : null;
-      const normalizedTargetSection = finalTargetSection 
-        ? finalTargetSection.toLowerCase().trim() 
+        
+      const desiredSectionString = `Section ${desiredSectionNumber} (${formatDaysPattern(desiredDaysPattern, semester)} ${formatTime(desiredStartTime)})`;
+      
+      // Create structured section data for checking duplicates
+      const currentSectionData = requestType === "swap" 
+        ? {
+            number: parseInt(currentSectionNumber), 
+            pattern: currentDaysPattern, 
+            time: currentStartTime
+          }
         : null;
+        
+      const desiredSectionData = {
+        number: parseInt(desiredSectionNumber),
+        pattern: desiredDaysPattern,
+        time: desiredStartTime
+      };
 
       // Check for duplicate requests (only if not editing)
       if (!editingRequestId) {
         const isDuplicate = await checkForDuplicate(
           user.id, 
           finalCourseName, 
-          normalizedCurrentSection, 
-          normalizedTargetSection
+          currentSectionData, 
+          desiredSectionData
         );
         
         if (isDuplicate) {
@@ -220,17 +297,27 @@ export const SwapRequestForm = ({
         petition: requestType === "petition",
         telegram_username: telegramUsername,
         desired_course: finalCourseName,
-        current_section: finalCurrentSection,
-        desired_section: finalTargetSection,
-        normalized_current_section: normalizedCurrentSection,
-        normalized_desired_section: normalizedTargetSection,
+        current_section: currentSectionString,
+        desired_section: desiredSectionString,
+        normalized_current_section: currentSectionString ? normalizeSection(currentSectionString) : null,
+        normalized_desired_section: normalizeSection(desiredSectionString),
         university_id: user.user_metadata?.university_id,
         full_name: isAnonymous ? null : user.user_metadata?.full_name,
         email: user.email,
+        
+        // Structured section data
+        current_section_number: currentSectionData?.number || null,
+        current_days_pattern: currentSectionData?.pattern || null,
+        current_start_time: currentSectionData?.time || null,
+        
+        desired_section_number: desiredSectionData.number,
+        desired_days_pattern: desiredSectionData.pattern,
+        desired_start_time: desiredSectionData.time,
+        
         reason: requestType === "petition" ? reason : null,
         summer_format: semester === "summer" ? summerFormat : null,
-        days_pattern: semester === "regular" ? days : null,
-        preferred_time: requestType === "petition" ? preferredTime : null
+        days_pattern: semester === "regular" ? (requestType === "petition" ? desiredDaysPattern : null) : null,
+        preferred_time: requestType === "petition" ? desiredStartTime : null
       };
 
       // If editing, update existing request
@@ -262,12 +349,12 @@ export const SwapRequestForm = ({
         if (user.email) {
           await sendNotification(user.email, "request_submitted", {
             course: finalCourseName,
-            currentSection: finalCurrentSection,
-            targetSection: finalTargetSection
+            currentSection: currentSectionString,
+            targetSection: desiredSectionString
           });
         }
         
-        // Add the course/section to our options if they're new
+        // Add the course to our options if it's new
         if (customCourseName && !courses.includes(customCourseName)) {
           setCourses([...courses, customCourseName]);
         }
@@ -286,6 +373,40 @@ export const SwapRequestForm = ({
       setIsLoading(false);
     }
   };
+  
+  // Format days pattern for display
+  const formatDaysPattern = (pattern: string, semesterType: string): string => {
+    if (semesterType === "regular") {
+      switch (pattern) {
+        case "mw": return "Mon/Wed";
+        case "stt": return "Sun/Tue/Thu";
+        default: return pattern;
+      }
+    } else {
+      switch (pattern) {
+        case "everyday": return "Every day";
+        case "sunmon": return "Sun & Mon";
+        case "tuethusat": return "Tue/Wed/Thu";
+        default: return pattern;
+      }
+    }
+  };
+  
+  // Format time for display
+  const formatTime = (time: string): string => {
+    if (!time) return "";
+    
+    try {
+      const [hours, minutes] = time.split(":");
+      const hour = parseInt(hours);
+      const period = hour >= 12 ? "PM" : "AM";
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      
+      return `${displayHour}:${minutes} ${period}`;
+    } catch (e) {
+      return time;
+    }
+  };
 
   const resetForm = () => {
     if (editingRequestId) {
@@ -294,45 +415,59 @@ export const SwapRequestForm = ({
     
     setCourseName("");
     setCustomCourseName("");
-    setCurrentSection("");
-    setCustomCurrentSection("");
-    setTargetSection("");
-    setCustomTargetSection("");
     setIsAnonymous(false);
     setRequestType("swap");
     setSemester("regular");
-    setDays("mw");
-    setPreferredTime("");
     setReason("");
     setSummerFormat("everyday");
+    
+    // Reset structured section data
+    setCurrentSectionNumber("");
+    setCurrentDaysPattern("stt");
+    setCurrentStartTime("");
+    setDesiredSectionNumber("");
+    setDesiredDaysPattern("stt");
+    setDesiredStartTime("");
   };
 
   const handleSemesterChange = (value: string) => {
     setSemester(value);
+    
+    // Reset days pattern based on semester type
+    if (value === "regular") {
+      setCurrentDaysPattern("stt");
+      setDesiredDaysPattern("stt");
+    } else {
+      setCurrentDaysPattern("everyday");
+      setDesiredDaysPattern("everyday");
+    }
+    
+    // Reset times since available options may change
+    setCurrentStartTime("");
+    setDesiredStartTime("");
   };
 
-  const renderSectionOptions = () => {
+  const renderDayPatternOptions = (field: string, value: string, onChange: (value: string) => void) => {
     if (semester === "summer") {
       return (
         <div className="space-y-4">
           <Label className="text-sm font-medium text-black">Days Format</Label>
           <RadioGroup 
-            defaultValue={summerFormat} 
-            value={summerFormat}
-            onValueChange={setSummerFormat}
+            value={value}
+            onValueChange={onChange}
             className="grid grid-cols-1 gap-4 sm:grid-cols-3"
           >
             <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
-              <RadioGroupItem value="everyday" id="everyday" />
-              <Label htmlFor="everyday" className="cursor-pointer text-black">Every day (Sun-Thu)</Label>
+              <RadioGroupItem value="everyday" id={`${field}-everyday`} />
+              <Label htmlFor={`${field}-everyday`} className="cursor-pointer text-black">Every day (Sun-Thu)</Label>
             </div>
             <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
-              <RadioGroupItem value="firstTwoDays" id="firstTwoDays" />
-              <Label htmlFor="firstTwoDays" className="cursor-pointer text-black">First two days (Sun-Mon)</Label>
+              <RadioGroupItem value="sunmon" id={`${field}-sunmon`} />
+              <Label htmlFor={`${field}-sunmon`} className="cursor-pointer text-black">Sun & Mon</Label>
             </div>
             <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
-              <RadioGroupItem value="lastThreeDays" id="lastThreeDays" />
-              <Label htmlFor="lastThreeDays" className="cursor-pointer text-black">Last three days (Tue-Thu)</Label>
+              <RadioGroupItem value="tuethusat" id={`${field}-tuethusat`} />
+              <Label htmlFor={`${field}-tuethusat`} className="cursor-pointer text-black">Tue/Wed/Thu</Label>
             </div>
           </RadioGroup>
         </div>
@@ -345,31 +480,105 @@ export const SwapRequestForm = ({
             <div className="flex items-center space-x-2">
               <input 
                 type="radio" 
-                id="mw" 
-                name="days" 
+                id={`${field}-mw`}
+                name={`${field}-days`} 
                 value="mw"
-                checked={days === "mw"}
-                onChange={() => setDays("mw")}
+                checked={value === "mw"}
+                onChange={() => onChange("mw")}
                 className="text-campus-purple focus:ring-campus-purple" 
               />
-              <Label htmlFor="mw" className="font-normal text-black">Monday/Wednesday</Label>
+              <Label htmlFor={`${field}-mw`} className="font-normal text-black">Monday/Wednesday (1.5 hour classes)</Label>
             </div>
             <div className="flex items-center space-x-2">
               <input 
                 type="radio" 
-                id="stt" 
-                name="days" 
+                id={`${field}-stt`}
+                name={`${field}-days`}
                 value="stt"
-                checked={days === "stt"}
-                onChange={() => setDays("stt")}
+                checked={value === "stt"}
+                onChange={() => onChange("stt")}
                 className="text-campus-purple focus:ring-campus-purple" 
               />
-              <Label htmlFor="stt" className="font-normal text-black">Sunday/Tuesday/Thursday</Label>
+              <Label htmlFor={`${field}-stt`} className="font-normal text-black">Sunday/Tuesday/Thursday (1 hour classes)</Label>
             </div>
           </div>
         </div>
       );
     }
+  };
+
+  const renderStructuredSectionFields = (
+    type: "current" | "desired",
+    sectionNumber: string,
+    daysPattern: string,
+    startTime: string,
+    setNumber: (value: string) => void,
+    setDaysPattern: (value: string) => void,
+    setStartTime: (value: string) => void
+  ) => {
+    return (
+      <div className="space-y-4 border p-4 rounded-md bg-gray-50">
+        <h3 className="font-medium text-lg text-campus-darkPurple">
+          {type === "current" ? "Current Section Details" : "Desired Section Details"}
+        </h3>
+        
+        {/* Section Number */}
+        <div className="space-y-2">
+          <Label htmlFor={`${type}-section-number`} className="text-black">Section Number</Label>
+          <Input 
+            id={`${type}-section-number`} 
+            type="number"
+            min="1"
+            placeholder="e.g., 1, 2, 3" 
+            value={sectionNumber}
+            onChange={(e) => setNumber(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        
+        {/* Days Pattern */}
+        {renderDayPatternOptions(
+          type, 
+          daysPattern, 
+          setDaysPattern
+        )}
+        
+        {/* Start Time */}
+        <div className="space-y-2">
+          <Label htmlFor={`${type}-start-time`} className="text-black">Start Time</Label>
+          <Select
+            value={startTime}
+            onValueChange={setStartTime}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select start time" />
+            </SelectTrigger>
+            <SelectContent>
+              {START_TIMES.map((time) => (
+                <SelectItem key={`${type}-${time}`} value={time}>
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-2" />
+                    <span>{formatTime(time)}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-gray-500">
+            {semester === "regular" && daysPattern === "mw" 
+              ? "Classes are 1.5 hours long"
+              : semester === "regular" && daysPattern === "stt"
+                ? "Classes are 1 hour long" 
+                : "Summer classes are 1 hour and 15 minutes long"}
+          </p>
+        </div>
+        
+        {/* Preview of section format */}
+        <div className="mt-2 bg-gray-100 p-2 rounded text-sm">
+          <p><strong>Preview:</strong> Section {sectionNumber || "#"} ({formatDaysPattern(daysPattern, semester)} {formatTime(startTime) || "time"})</p>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -442,158 +651,96 @@ export const SwapRequestForm = ({
               )}
             </div>
 
+            {/* Structured Section Fields */}
             {requestType === "swap" ? (
               <>
                 {/* Current Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="current-section" className="text-black">Your Current Section</Label>
-                  <Select value={currentSection} onValueChange={setCurrentSection}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your current section" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courseName && sections[courseName as keyof typeof sections]?.map((section) => (
-                        <SelectItem key={section.id} value={section.id}>
-                          {section.name} ({section.schedule})
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="other">
-                        + Add New Section
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {currentSection === "other" && (
-                    <div className="mt-2">
-                      <Label htmlFor="custom-current-section" className="text-black">Enter Current Section</Label>
-                      <Input 
-                        id="custom-current-section" 
-                        value={customCurrentSection}
-                        onChange={(e) => setCustomCurrentSection(e.target.value)}
-                        placeholder="e.g., Section 3 (Mon/Wed 2:00 PM)"
-                        className="mt-1" 
-                      />
-                    </div>
-                  )}
-                </div>
-
+                {renderStructuredSectionFields(
+                  "current",
+                  currentSectionNumber,
+                  currentDaysPattern,
+                  currentStartTime,
+                  setCurrentSectionNumber,
+                  setCurrentDaysPattern,
+                  setCurrentStartTime
+                )}
+                
                 {/* Desired Section */}
-                <div className="space-y-2">
-                  <Label htmlFor="target-section" className="text-black">Section You Want</Label>
-                  <Select value={targetSection} onValueChange={setTargetSection}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your desired section" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courseName && sections[courseName as keyof typeof sections]?.map((section) => (
-                        <SelectItem key={section.id} value={section.id}>
-                          {section.name} ({section.schedule})
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="other">
-                        + Add New Section
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  {targetSection === "other" && (
-                    <div className="mt-2">
-                      <Label htmlFor="custom-target-section" className="text-black">Enter Desired Section</Label>
-                      <Input 
-                        id="custom-target-section" 
-                        value={customTargetSection}
-                        onChange={(e) => setCustomTargetSection(e.target.value)}
-                        placeholder="e.g., Section 2 (Sun/Tue/Thu 11:00 AM)"
-                        className="mt-1" 
-                      />
-                    </div>
-                  )}
-                </div>
+                {renderStructuredSectionFields(
+                  "desired",
+                  desiredSectionNumber,
+                  desiredDaysPattern,
+                  desiredStartTime,
+                  setDesiredSectionNumber,
+                  setDesiredDaysPattern,
+                  setDesiredStartTime
+                )}
               </>
             ) : (
               <>
-                {/* New Section Petition */}
-                <div className="space-y-4">
-                  {renderSectionOptions()}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="time" className="text-black">Preferred Time</Label>
-                    <Select value={preferredTime} onValueChange={setPreferredTime}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select preferred time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="8am">8:00 AM</SelectItem>
-                        <SelectItem value="9am">9:00 AM</SelectItem>
-                        <SelectItem value="10am">10:00 AM</SelectItem>
-                        <SelectItem value="11am">11:00 AM</SelectItem>
-                        <SelectItem value="12pm">12:00 PM</SelectItem>
-                        <SelectItem value="1pm">1:00 PM</SelectItem>
-                        <SelectItem value="2pm">2:00 PM</SelectItem>
-                        <SelectItem value="3pm">3:00 PM</SelectItem>
-                        <SelectItem value="4pm">4:00 PM</SelectItem>
-                        <SelectItem value="5pm">5:00 PM</SelectItem>
-                        <SelectItem value="other">Other (specify in notes)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reason" className="text-black">Reason for Petition</Label>
-                    <textarea 
-                      id="reason" 
-                      placeholder="Why do you need this section?" 
-                      className="w-full min-h-[100px] px-3 py-2 border rounded-md"
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Explaining your reason may help gather support for your petition
-                    </p>
-                  </div>
-
-                  {/* Target Section for Petition */}
-                  <div className="space-y-2">
-                    <Label htmlFor="petition-section" className="text-black">Desired Section</Label>
-                    <Input 
-                      id="petition-section" 
-                      placeholder="Describe the section you want"
-                      value={customTargetSection}
-                      onChange={(e) => setCustomTargetSection(e.target.value)}
-                    />
-                  </div>
+                {/* Petition - only desired section */}
+                {renderStructuredSectionFields(
+                  "desired",
+                  desiredSectionNumber,
+                  desiredDaysPattern,
+                  desiredStartTime,
+                  setDesiredSectionNumber,
+                  setDesiredDaysPattern,
+                  setDesiredStartTime
+                )}
+                
+                {/* Petition Reason */}
+                <div className="space-y-2">
+                  <Label htmlFor="reason" className="text-black">Reason for Petition</Label>
+                  <textarea 
+                    id="reason" 
+                    placeholder="Why do you need this section?" 
+                    className="w-full min-h-[100px] px-3 py-2 border rounded-md"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Explaining your reason may help gather support for your petition
+                  </p>
                 </div>
               </>
             )}
 
-            {/* Contact Method */}
-            <div className="space-y-2">
-              <Label htmlFor="telegram" className="text-black">Your Telegram Username</Label>
-              <Input 
-                id="telegram" 
-                placeholder="@username" 
-                value={telegramUsername}
-                onChange={(e) => setTelegramUsername(e.target.value)}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Used to connect you with matching students
-              </p>
-            </div>
-
-            {/* Anonymity Option */}
-            <div className="flex items-center space-x-4 pt-2">
-              <Switch
-                id="anonymous"
-                checked={isAnonymous}
-                onCheckedChange={setIsAnonymous}
-              />
-              <div>
-                <Label htmlFor="anonymous" className="font-medium text-black">
-                  Submit Anonymously
-                </Label>
-                <p className="text-sm text-gray-500">
-                  Your name won't be visible to other students
+            {/* Contact Information */}
+            <div className="space-y-4 pt-4">
+              <h3 className="font-medium text-lg text-campus-darkPurple">
+                Contact Information
+              </h3>
+                
+              {/* Telegram Username */}
+              <div className="space-y-2">
+                <Label htmlFor="telegram" className="text-black">Your Telegram Username</Label>
+                <Input 
+                  id="telegram" 
+                  placeholder="@username" 
+                  value={telegramUsername}
+                  onChange={(e) => setTelegramUsername(e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Used to connect you with matching students
                 </p>
+              </div>
+
+              {/* Anonymity Option */}
+              <div className="flex items-center space-x-4 pt-2">
+                <Switch
+                  id="anonymous"
+                  checked={isAnonymous}
+                  onCheckedChange={setIsAnonymous}
+                />
+                <div>
+                  <Label htmlFor="anonymous" className="font-medium text-black">
+                    Submit Anonymously
+                  </Label>
+                  <p className="text-sm text-gray-500">
+                    Your name won't be visible to other students
+                  </p>
+                </div>
               </div>
             </div>
           </div>

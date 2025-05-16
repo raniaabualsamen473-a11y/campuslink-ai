@@ -27,9 +27,22 @@ export interface SwapRequest {
   university_id: number | null;
   full_name: string | null;
   email: string | null;
+  
+  // Structured section data
+  current_section_number: number | null;
+  current_days_pattern: string | null;
+  current_start_time: string | null;
+  
+  desired_section_number: number | null;
+  desired_days_pattern: string | null;
+  desired_start_time: string | null;
+  
   reason?: string | null;
   summer_format?: string | null;
   days_pattern?: string | null;
   preferred_time?: string | null;
   created_at?: string;
+  flexible_time?: boolean;
+  flexible_days?: boolean;
+  notes?: string | null;
 }
