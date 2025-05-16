@@ -1,6 +1,6 @@
 
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PetitionReasonFieldProps {
   reason: string;
@@ -13,6 +13,11 @@ export const PetitionReasonField = ({
 }: PetitionReasonFieldProps) => {
   const maxLength = 500;
   const [characterCount, setCharacterCount] = useState(reason.length);
+
+  // Update character count when reason prop changes
+  useEffect(() => {
+    setCharacterCount(reason.length);
+  }, [reason]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
