@@ -20,36 +20,42 @@ const SwapRequests = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
-      <div className="mb-8">
+      <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-bold mb-2 text-campus-darkPurple">Class Swap Requests</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Submit and manage your class section swap requests
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
         {/* Request Form */}
-        <div id="request-form">
-          <SwapRequestForm 
-            editingRequestId={editingRequestId}
-            user={user}
-            onRequestSubmitted={refreshRequests}
-            onCancelEdit={cancelEditing}
-          />
+        <div id="request-form" className="animate-fade-in" style={{animationDelay: "0.1s"}}>
+          <div className="glass-card p-6 hover:shadow-neon-purple transition-all duration-300">
+            <SwapRequestForm 
+              editingRequestId={editingRequestId}
+              user={user}
+              onRequestSubmitted={refreshRequests}
+              onCancelEdit={cancelEditing}
+            />
+          </div>
         </div>
 
         {/* Match Results */}
-        <div>
-          <MatchResults refreshTrigger={refreshTrigger} />
+        <div className="animate-fade-in" style={{animationDelay: "0.2s"}}>
+          <div className="glass-card p-6 hover:shadow-neon-purple transition-all duration-300">
+            <MatchResults refreshTrigger={refreshTrigger} />
+          </div>
         </div>
 
         {/* Active Requests */}
-        <div>
-          <ActiveRequestsList 
-            requests={activeRequests}
-            onEditRequest={handleEditRequest}
-            onDeleteRequest={handleDeleteRequest}
-          />
+        <div className="animate-fade-in" style={{animationDelay: "0.3s"}}>
+          <div className="glass-card p-6 hover:shadow-neon-purple transition-all duration-300">
+            <ActiveRequestsList 
+              requests={activeRequests}
+              onEditRequest={handleEditRequest}
+              onDeleteRequest={handleDeleteRequest}
+            />
+          </div>
         </div>
       </div>
     </div>

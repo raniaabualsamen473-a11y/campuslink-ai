@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -88,21 +87,28 @@ const Auth = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-campus-purple"></div>
+        <div className="animate-glow-pulse rounded-full h-12 w-12 border-2 border-campus-purple"></div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-10rem)] px-4 py-12">
-      <Card className="w-full max-w-md shadow-lg">
+      <Card className="w-full max-w-md shadow-glass">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-black">Welcome to ClassSwap</CardTitle>
-          <CardDescription className="text-black">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="https://pbqpbupsmzafbzlxccov.supabase.co/storage/v1/object/public/logo//CampusLink.ai(Logo)%20(Logo).png" 
+              alt="CampusLink AI Logo" 
+              className="h-16 w-16 object-contain"
+            />
+          </div>
+          <CardTitle className="text-2xl font-bold text-foreground">Welcome to CampusLink AI</CardTitle>
+          <CardDescription className="text-muted-foreground">
             Sign in or create an account to continue
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="glass-card backdrop-blur-md">
           <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "signin" | "signup")}>
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -116,12 +122,12 @@ const Auth = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-black">Email</FormLabel>
+                      <FormLabel className="text-foreground">Email</FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="your.email@example.com" 
                           {...field} 
-                          className="text-black"
+                          className="glass-input"
                           required
                         />
                       </FormControl>
@@ -135,13 +141,13 @@ const Auth = () => {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-black">Password</FormLabel>
+                      <FormLabel className="text-foreground">Password</FormLabel>
                       <FormControl>
                         <Input 
                           type="password" 
                           placeholder="••••••••" 
                           {...field} 
-                          className="text-black"
+                          className="glass-input"
                           required
                         />
                       </FormControl>
@@ -157,12 +163,12 @@ const Auth = () => {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Full Name</FormLabel>
+                          <FormLabel className="text-foreground">Full Name</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="John Doe" 
                               {...field} 
-                              className="text-black"
+                              className="glass-input"
                               required
                             />
                           </FormControl>
@@ -176,12 +182,12 @@ const Auth = () => {
                       name="universityId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">University ID</FormLabel>
+                          <FormLabel className="text-foreground">University ID</FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Your student ID number" 
                               {...field} 
-                              className="text-black"
+                              className="glass-input"
                               required
                             />
                           </FormControl>
@@ -195,21 +201,21 @@ const Auth = () => {
                       name="telegramUsername"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-black">Telegram Username</FormLabel>
+                          <FormLabel className="text-foreground">Telegram Username</FormLabel>
                           <FormControl>
                             <div className="flex items-center">
-                              <span className="bg-gray-100 border border-r-0 border-input rounded-l-md px-3 py-2 text-sm text-gray-500">
+                              <span className="glass border border-white/20 border-r-0 rounded-l-xl px-3 py-2 text-sm text-muted-foreground">
                                 @
                               </span>
                               <Input 
                                 placeholder="username" 
                                 {...field} 
-                                className="rounded-l-none text-black"
+                                className="glass-input rounded-l-none"
                                 required
                               />
                             </div>
                           </FormControl>
-                          <p className="text-xs text-gray-500 mt-1">Enter your Telegram username (no @ symbol). Required for contact when a match is found.</p>
+                          <p className="text-xs text-muted-foreground mt-1">Enter your Telegram username (no @ symbol). Required for contact when a match is found.</p>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -219,7 +225,8 @@ const Auth = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-campus-purple hover:bg-campus-darkPurple"
+                  variant="neon"
+                  className="w-full btn-glow"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -236,7 +243,7 @@ const Auth = () => {
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
@@ -244,7 +251,7 @@ const Auth = () => {
             </div>
 
             <Button
-              variant="outline"
+              variant="glass"
               type="button"
               className="w-full"
               onClick={() => signInWithGoogle()}
@@ -271,7 +278,7 @@ const Auth = () => {
             </Button>
           </Tabs>
         </CardContent>
-        <CardFooter className="text-center text-sm text-muted-foreground">
+        <CardFooter className="text-center text-xs text-muted-foreground">
           <p>By signing up, you agree to our terms of service and privacy policy.</p>
         </CardFooter>
       </Card>

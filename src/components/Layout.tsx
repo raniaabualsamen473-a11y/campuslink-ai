@@ -9,14 +9,14 @@ const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background">
       <Navbar 
         isMobileMenuOpen={isMobileMenuOpen} 
         setIsMobileMenuOpen={setIsMobileMenuOpen} 
       />
       <main 
         className={cn(
-          "flex-1 transition-all duration-300",
+          "flex-1 transition-all duration-300 grid-bg",
           isMobileMenuOpen && "pt-16 sm:pt-0"
         )}
       >

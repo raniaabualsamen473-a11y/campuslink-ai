@@ -61,13 +61,19 @@ export default {
 					darkGray: '#2D3748',
 					purple: '#9b30ff',
 					lightPurple: '#b980ff',
-					darkPurple: '#7a1dce'
+					darkPurple: '#7a1dce',
+					neonPurple: '#b035ff',
+					deepPurple: '#5e0cb0',
+					glass: 'rgba(255, 255, 255, 0.1)',
+					darkGlass: 'rgba(15, 23, 42, 0.3)'
 				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				'2xl': '1rem',
+				'3xl': '1.5rem',
 			},
 			keyframes: {
 				'accordion-down': {
@@ -103,13 +109,44 @@ export default {
 					'100%': {
 						transform: 'translateX(0)'
 					}
+				},
+				'glow-pulse': {
+					'0%, 100%': {
+						boxShadow: '0 0 5px 2px rgba(155, 48, 255, 0.3)'
+					},
+					'50%': {
+						boxShadow: '0 0 15px 5px rgba(155, 48, 255, 0.6)'
+					}
+				},
+				'float': {
+					'0%, 100%': {
+						transform: 'translateY(0)'
+					},
+					'50%': {
+						transform: 'translateY(-5px)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.5s ease-out',
-				'slide-in': 'slide-in 0.5s ease-out'
+				'slide-in': 'slide-in 0.5s ease-out',
+				'glow-pulse': 'glow-pulse 2s infinite',
+				'float': 'float 3s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0))',
+				'glass-shine': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+				'purple-gradient': 'linear-gradient(135deg, #7a1dce 0%, #9b30ff 50%, #b980ff 100%)',
+				'neon-glow': 'linear-gradient(135deg, rgba(155, 48, 255, 0.5) 0%, rgba(155, 48, 255, 0.2) 100%)'
+			},
+			boxShadow: {
+				'glass': '0 8px 32px rgba(0, 0, 0, 0.1)',
+				'glass-sm': '0 2px 8px rgba(0, 0, 0, 0.07)',
+				'glass-lg': '0 12px 42px rgba(0, 0, 0, 0.15)',
+				'neon-purple': '0 0 10px rgba(155, 48, 255, 0.5)',
+				'neon-purple-lg': '0 0 20px rgba(155, 48, 255, 0.7)'
 			}
 		}
 	},

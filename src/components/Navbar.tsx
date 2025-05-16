@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, LogOut, LogIn } from "lucide-react";
+import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface NavbarProps {
@@ -42,12 +42,17 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
   ];
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50">
+    <nav className="glass sticky top-0 z-50 backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-glass">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo and Brand Name */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-1.5">
+              <img 
+                src="https://pbqpbupsmzafbzlxccov.supabase.co/storage/v1/object/public/logo//CampusLink.ai(Logo)%20(Logo).png" 
+                alt="CampusLink AI Logo" 
+                className="h-9 w-9 object-contain"
+              />
               <span className="text-xl font-bold text-campus-darkPurple">CampusLink</span>
               <span className="text-lg font-semibold text-campus-purple">AI</span>
             </Link>
@@ -62,10 +67,10 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                   <Link
                     key={link.path}
                     to={link.path}
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                       location.pathname === link.path
-                        ? "bg-campus-purple/10 text-campus-darkPurple"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-campus-purple/20 text-campus-darkPurple shadow-neon-purple"
+                        : "text-gray-700 hover:bg-white/10 hover:text-campus-purple"
                     }`}
                   >
                     {link.name}
@@ -77,14 +82,14 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
               {user ? (
                 <div className="flex items-center space-x-2">
                   <div className="hidden md:block text-right">
-                    <p className="text-sm font-medium text-black truncate">{email}</p>
-                    <p className="text-xs text-gray-500">Logged In</p>
+                    <p className="text-sm font-medium text-foreground truncate">{email}</p>
+                    <p className="text-xs text-muted-foreground">Logged In</p>
                   </div>
                   <Button
-                    variant="ghost"
+                    variant="glass"
                     size="icon"
                     onClick={handleSignOut}
-                    className="text-gray-700"
+                    className="text-foreground hover:text-campus-purple"
                     title="Sign Out"
                   >
                     <LogOut className="h-5 w-5" />
@@ -93,7 +98,8 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
               ) : (
                 <Button
                   onClick={() => navigate("/auth")}
-                  className="bg-campus-purple hover:bg-campus-darkPurple text-white"
+                  variant="neon"
+                  className="btn-glow"
                 >
                   <LogIn className="h-4 w-4 mr-1" />
                   Login
@@ -106,7 +112,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
           <div className="flex items-center sm:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-lg text-gray-700 hover:bg-white/10 hover:text-campus-purple focus:outline-none transition-all duration-300"
               aria-controls="mobile-menu"
               aria-expanded={isMobileMenuOpen}
               onClick={toggleMobileMenu}
@@ -126,7 +132,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
       <div
         className={`${
           isMobileMenuOpen ? "block" : "hidden"
-        } sm:hidden absolute w-full bg-white border-b shadow-lg`}
+        } sm:hidden absolute w-full glass backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-glass-lg animate-fade-in`}
         id="mobile-menu"
       >
         <div className="px-2 pt-2 pb-3 space-y-1">
@@ -136,10 +142,10 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                className={`block px-3 py-2 rounded-lg text-base font-medium transition-all duration-300 ${
                   location.pathname === link.path
-                    ? "bg-campus-purple/10 text-campus-darkPurple"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-campus-purple/20 text-campus-darkPurple shadow-neon-purple"
+                    : "text-gray-700 hover:bg-white/10 hover:text-campus-purple"
                 }`}
               >
                 {link.name}
@@ -149,12 +155,12 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
             {user ? (
               <>
                 <div className="px-3 py-2">
-                  <p className="text-sm font-medium text-black truncate">{email}</p>
-                  <p className="text-xs text-gray-500">Logged In</p>
+                  <p className="text-sm font-medium text-foreground truncate">{email}</p>
+                  <p className="text-xs text-muted-foreground">Logged In</p>
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:bg-white/10 hover:text-campus-purple transition-all duration-300"
                 >
                   <div className="flex items-center">
                     <LogOut className="h-5 w-5 mr-2" />
@@ -165,7 +171,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
             ) : (
               <Link
                 to="/auth"
-                className="block px-3 py-2 rounded-md text-base font-medium bg-campus-purple text-white hover:bg-campus-darkPurple"
+                className="block px-3 py-2 rounded-lg text-base font-medium bg-campus-purple text-white hover:bg-campus-neonPurple shadow-neon-purple hover:shadow-neon-purple-lg transition-all duration-300"
               >
                 <div className="flex items-center">
                   <LogIn className="h-5 w-5 mr-2" />
