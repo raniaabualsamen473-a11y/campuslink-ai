@@ -1,4 +1,5 @@
 
+
 export interface Match {
   id: string;
   course: string;
@@ -46,3 +47,4 @@ export interface SwapRequest {
   flexible_days?: boolean;
   notes?: string | null;
 }
+
