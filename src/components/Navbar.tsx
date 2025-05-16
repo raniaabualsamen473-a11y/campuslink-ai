@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
     { name: "Dashboard", path: "/dashboard", authRequired: true },
     { name: "Swap Requests", path: "/swap-requests", authRequired: true },
     { name: "Petitions", path: "/petitions", authRequired: true },
-    { name: "Class Swap", path: "/class-swap", authRequired: true },
   ];
 
   return (

@@ -11,7 +11,6 @@ import Dashboard from "./pages/Dashboard";
 import SwapRequests from "./pages/SwapRequests";
 import Petitions from "./pages/Petitions";
 import Auth from "./pages/Auth";
-import ClassSwap from "./pages/ClassSwap";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -83,11 +82,7 @@ const App = () => (
                   <Petitions />
                 </ProtectedRoute>
               } />
-              <Route path="/class-swap" element={
-                <ProtectedRoute>
-                  <ClassSwap />
-                </ProtectedRoute>
-              } />
+              {/* Removed the Class Swap route */}
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
