@@ -61,12 +61,10 @@ export const MatchCard = ({ match }: MatchCardProps) => {
             </p>
           </div>
         </div>
-        <Badge variant="outline" className={`${
-          match.matchPercent === 100 
-            ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50" 
-            : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50"
-        }`}>
-          {match.matchPercent}% {t('matches.match')}
+        <Badge variant="outline" className={
+          "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50"
+        }>
+          {t('matches.match')}
         </Badge>
       </div>
       
