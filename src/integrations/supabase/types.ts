@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      petition_requests: {
+        Row: {
+          anonymous: boolean | null
+          course_name: string
+          created_at: string
+          days_pattern: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          section_number: number | null
+          semester_type: string
+          start_time: string | null
+          summer_format: string | null
+          telegram_username: string | null
+          university_id: number | null
+          user_id: string
+        }
+        Insert: {
+          anonymous?: boolean | null
+          course_name: string
+          created_at?: string
+          days_pattern?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          section_number?: number | null
+          semester_type: string
+          start_time?: string | null
+          summer_format?: string | null
+          telegram_username?: string | null
+          university_id?: number | null
+          user_id: string
+        }
+        Update: {
+          anonymous?: boolean | null
+          course_name?: string
+          created_at?: string
+          days_pattern?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          section_number?: number | null
+          semester_type?: string
+          start_time?: string | null
+          summer_format?: string | null
+          telegram_username?: string | null
+          university_id?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       swap_requests: {
         Row: {
           anonymous: boolean | null
@@ -122,6 +173,16 @@ export type Database = {
       }
     }
     Views: {
+      petition_counts: {
+        Row: {
+          course_name: string | null
+          days_pattern: string | null
+          semester_type: string | null
+          summer_format: string | null
+          supporter_count: number | null
+        }
+        Relationships: []
+      }
       swap_request_matches: {
         Row: {
           current_section: string | null

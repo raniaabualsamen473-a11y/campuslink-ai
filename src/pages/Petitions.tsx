@@ -1,64 +1,188 @@
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { usePetitions, PETITION_THRESHOLD } from "@/hooks/usePetitions";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDistanceToNow } from "date-fns";
+import { useAuth } from "@/hooks/useAuth";
 
 const Petitions = () => {
-  const activePetitions = [
-    {
-      id: 1,
-      course: "Machine Learning",
-      requestedSection: "Section 4 (Sun/Tue/Thu 4:00 PM)",
-      supporters: 18,
-      requiredSupporters: 20,
-      progress: 90,
-      dateCreated: "2025-05-06",
-      isSupported: true,
-    },
-    {
-      id: 2,
-      course: "Advanced Algorithms",
-      requestedSection: "Section 3 (Mon/Wed 1:00 PM)",
-      supporters: 12,
-      requiredSupporters: 20,
-      progress: 60,
-      dateCreated: "2025-05-04",
-      isSupported: false,
-    },
-    {
-      id: 3,
-      course: "Web Development",
-      requestedSection: "Section 2 (Sun/Tue/Thu 10:00 AM)",
-      supporters: 8,
-      requiredSupporters: 20,
-      progress: 40,
-      dateCreated: "2025-05-03",
-      isSupported: false,
-    },
-  ];
+  const { 
+    activePetitions, 
+    completedPetitions, 
+    isLoading,
+    supportPetition,
+    isUserSupporting,
+    generatePetitionForm,
+    refreshPetitions
+  } = usePetitions();
+  const { session } = useAuth();
 
-  const completedPetitions = [
-    {
-      id: 4,
-      course: "Database Systems",
-      requestedSection: "Section 3 (Sun/Tue/Thu 9:00 AM)",
-      supporters: 23,
-      requiredSupporters: 20,
-      progress: 100,
-      dateCreated: "2025-04-28",
-      dateCompleted: "2025-05-02",
-      status: "Submitted to Faculty",
-    },
-  ];
+  // Refresh petitions when the component mounts
+  useEffect(() => {
+    refreshPetitions();
+  }, []);
 
-  const handleSupportPetition = (petitionId: number) => {
-    toast.success("You've successfully supported this petition!");
+  const handleSupportPetition = (petition: any) => {
+    supportPetition(petition);
   };
 
-  const handleSubmitPetition = (petitionId: number) => {
-    toast.success("Petition has been generated and sent to faculty!");
+  const handleSubmitPetition = (petition: any) => {
+    generatePetitionForm(petition);
+  };
+
+  const renderSection = (petition: any) => {
+    if (petition.semester_type === 'regular' && petition.days_pattern) {
+      let pattern = petition.days_pattern === 'stt' 
+        ? 'Sun/Tue/Thu' 
+        : petition.days_pattern === 'mw' 
+          ? 'Mon/Wed'
+          : petition.days_pattern;
+          
+      return `${pattern} ${petition.start_time || ''}`.trim();
+    } else if (petition.summer_format) {
+      return petition.summer_format === 'everyday'
+        ? 'Every Day' 
+        : petition.summer_format;
+    }
+    return '';
+  };
+
+  const renderPetitionTime = (petition: any) => {
+    // This would normally use the petition's created_at time
+    // For now, we'll just display "Recent"
+    return "Recent";
+  };
+
+  const renderPetitionCards = (petitions: any[], completed = false) => {
+    if (isLoading) {
+      return Array(3).fill(0).map((_, i) => (
+        <Card key={`skeleton-${i}`} className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <Skeleton className="h-6 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-1">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-2 w-full" />
+              </div>
+              <Skeleton className="h-4 w-1/3" />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Skeleton className="h-9 w-full" />
+          </CardFooter>
+        </Card>
+      ));
+    }
+
+    if (petitions.length === 0) {
+      return (
+        <div className="col-span-full text-center py-12">
+          <p className="text-gray-500">
+            {completed 
+              ? "No completed petitions yet" 
+              : "No active petitions yet"
+            }
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            {completed
+              ? "Petitions will appear here once they reach 20 supporters"
+              : "Start a petition by creating a new petition request"
+            }
+          </p>
+          {!completed && (
+            <Button asChild variant="outline" className="mt-4">
+              <a href="/swap-requests">Create a Petition</a>
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    return petitions.map((petition) => {
+      const progress = Math.min(100, (petition.supporter_count / PETITION_THRESHOLD) * 100);
+      const isSupported = isUserSupporting(petition.id);
+
+      return (
+        <Card key={petition.id} className={`hover:shadow-md transition-shadow ${completed ? 'border-green-200' : ''}`}>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <CardTitle className="text-xl text-campus-blue">
+                {petition.course_name}
+              </CardTitle>
+              {completed && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  Completed
+                </span>
+              )}
+            </div>
+            <CardDescription>
+              {`Section Request: ${renderSection(petition)}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between mb-1 text-sm">
+                  <span>Progress</span>
+                  <span>{petition.supporter_count}/{PETITION_THRESHOLD} supporters</span>
+                </div>
+                <Progress value={progress} className={completed ? "bg-green-100" : ""} />
+              </div>
+              
+              <div className="text-sm text-gray-500">
+                <p>Created: {renderPetitionTime(petition)}</p>
+                {petition.supporter_count >= PETITION_THRESHOLD && !completed && (
+                  <p className="text-green-600 font-medium mt-1">
+                    Ready for submission!
+                  </p>
+                )}
+                {completed && (
+                  <p className="text-green-600 font-medium mt-1">
+                    Status: Submitted to Faculty
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            {completed ? (
+              <Button variant="outline" className="w-full">
+                View Petition Form
+              </Button>
+            ) : isSupported ? (
+              <Button variant="outline" disabled className="w-full">
+                Already Supported
+              </Button>
+            ) : progress >= 100 ? (
+              <Button 
+                className="w-full" 
+                onClick={() => handleSubmitPetition(petition)}
+              >
+                Generate Petition Form
+              </Button>
+            ) : (
+              <Button 
+                className="w-full"
+                disabled={!session}
+                onClick={() => handleSupportPetition(petition)}
+              >
+                {session ? "Support Petition" : "Sign In to Support"}
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      );
+    });
   };
 
   return (
@@ -78,114 +202,13 @@ const Petitions = () => {
 
         <TabsContent value="active">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activePetitions.map((petition) => (
-              <Card key={petition.id} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-xl text-campus-blue">
-                    {petition.course}
-                  </CardTitle>
-                  <CardDescription>
-                    {petition.requestedSection}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1 text-sm">
-                        <span>Progress</span>
-                        <span>{petition.supporters}/{petition.requiredSupporters} supporters</span>
-                      </div>
-                      <Progress value={petition.progress} />
-                    </div>
-                    
-                    <div className="text-sm text-gray-500">
-                      <p>Created: {petition.dateCreated}</p>
-                      {petition.progress >= 100 && (
-                        <p className="text-green-600 font-medium mt-1">
-                          Ready for submission!
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  {petition.isSupported ? (
-                    <Button variant="outline" disabled className="w-full">
-                      Already Supported
-                    </Button>
-                  ) : petition.progress >= 100 ? (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSubmitPetition(petition.id)}
-                    >
-                      Generate Petition Form
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleSupportPetition(petition.id)}
-                    >
-                      Support Petition
-                    </Button>
-                  )}
-                </CardFooter>
-              </Card>
-            ))}
+            {renderPetitionCards(activePetitions)}
           </div>
         </TabsContent>
 
         <TabsContent value="completed">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {completedPetitions.map((petition) => (
-              <Card key={petition.id} className="border-green-200">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl text-campus-blue">
-                      {petition.course}
-                    </CardTitle>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Completed
-                    </span>
-                  </div>
-                  <CardDescription>
-                    {petition.requestedSection}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1 text-sm">
-                        <span>Final Count</span>
-                        <span>{petition.supporters}/{petition.requiredSupporters} supporters</span>
-                      </div>
-                      <Progress value={petition.progress} className="bg-green-100" />
-                    </div>
-                    
-                    <div className="text-sm">
-                      <p className="text-gray-500">Created: {petition.dateCreated}</p>
-                      <p className="text-gray-500">Completed: {petition.dateCompleted}</p>
-                      <p className="text-green-600 font-medium mt-1">
-                        Status: {petition.status}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    View Petition Form
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-
-            {completedPetitions.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500">No completed petitions yet</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Petitions will appear here once they reach the required number of supporters
-                </p>
-              </div>
-            )}
+            {renderPetitionCards(completedPetitions, true)}
           </div>
         </TabsContent>
       </Tabs>
@@ -194,7 +217,7 @@ const Petitions = () => {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-campus-blue mb-4">How Petitions Work</h2>
           <p className="text-gray-600 mb-6">
-            When 20 or more students request the same class section, our system automatically
+            When {PETITION_THRESHOLD} or more students request the same class section, our system automatically
             generates a Google Form petition that can be submitted to faculty members
             requesting a new section based on student demand.
           </p>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { SwapRequest } from "@/types/swap";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +11,7 @@ import {
   prepareRequestData,
   mapRequestDataToForm 
 } from "@/utils/requestDataUtils";
+import { submitPetition, checkExistingPetition } from "@/utils/petitionUtils";
 
 interface UseSwapRequestFormProps {
   user: any;
@@ -235,66 +235,107 @@ export const useSwapRequestForm = ({
       
       const finalCourseName = customCourseName || courseName;
       
-      // Create structured section data for checking duplicates
-      const currentSectionData = requestType === "swap" 
-        ? {
-            number: parseInt(currentSectionNumber), 
-            pattern: currentDaysPattern, 
-            time: currentStartTime
-          }
-        : null;
-        
-      const desiredSectionData = {
-        number: parseInt(desiredSectionNumber),
-        pattern: desiredDaysPattern,
-        time: desiredStartTime
-      };
-
-      // Check for duplicate requests (only if not editing)
-      if (!editingRequestId) {
-        const isDuplicate = await checkForDuplicateRequest(
-          user.id, 
-          finalCourseName, 
-          currentSectionData, 
-          desiredSectionData
+      if (requestType === "petition") {
+        // Handle petition submission
+        const petitionExists = await checkExistingPetition(
+          user.id,
+          finalCourseName,
+          desiredDaysPattern,
+          semester,
+          semester === 'summer' ? summerFormat : null
         );
         
-        if (isDuplicate) {
-          toast.error("You've already submitted this exact request", {
-            description: "Please edit your existing request instead of creating a duplicate"
+        if (petitionExists) {
+          toast.error("You've already submitted this petition", {
+            description: "Each student can only support a specific petition once"
           });
           setIsLoading(false);
           return;
         }
-      }
+        
+        const petitionData = {
+          course_name: finalCourseName,
+          section_number: parseInt(desiredSectionNumber),
+          days_pattern: desiredDaysPattern,
+          start_time: desiredStartTime,
+          semester_type: semester,
+          summer_format: semester === 'summer' ? summerFormat : null,
+          anonymous: isAnonymous,
+          telegram_username: isAnonymous ? null : telegramUsername,
+          full_name: isAnonymous ? null : user.user_metadata?.full_name,
+          email: isAnonymous ? null : user.email,
+          university_id: user.user_metadata?.university_id
+        };
+        
+        const success = await submitPetition(user.id, petitionData);
+        
+        if (success) {
+          // Reset form and notify parent component
+          resetForm();
+          onRequestSubmitted();
+          return;
+        }
+      } else {
+        // Handle swap request submission (existing code)
+        // Create structured section data for checking duplicates
+        const currentSectionData = {
+          number: parseInt(currentSectionNumber), 
+          pattern: currentDaysPattern, 
+          time: currentStartTime
+        };
+          
+        const desiredSectionData = {
+          number: parseInt(desiredSectionNumber),
+          pattern: desiredDaysPattern,
+          time: desiredStartTime
+        };
 
-      // Prepare request data
-      const requestData = prepareRequestData(
-        editingRequestId,
-        user.id,
-        user.user_metadata,
-        isAnonymous,
-        requestType,
-        finalCourseName,
-        currentSectionNumber,
-        currentDaysPattern,
-        currentStartTime,
-        desiredSectionNumber,
-        desiredDaysPattern,
-        desiredStartTime,
-        reason,
-        semester,
-        summerFormat,
-        telegramUsername
-      );
+        // Check for duplicate requests (only if not editing)
+        if (!editingRequestId) {
+          const isDuplicate = await checkForDuplicateRequest(
+            user.id, 
+            finalCourseName, 
+            currentSectionData, 
+            desiredSectionData
+          );
+          
+          if (isDuplicate) {
+            toast.error("You've already submitted this exact request", {
+              description: "Please edit your existing request instead of creating a duplicate"
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
 
-      // Save to database
-      const success = await saveRequestToDatabase(requestData);
-      
-      if (success) {
-        // Reset form and notify parent component
-        resetForm();
-        onRequestSubmitted();
+        // Prepare request data
+        const requestData = prepareRequestData(
+          editingRequestId,
+          user.id,
+          user.user_metadata,
+          isAnonymous,
+          requestType,
+          finalCourseName,
+          currentSectionNumber,
+          currentDaysPattern,
+          currentStartTime,
+          desiredSectionNumber,
+          desiredDaysPattern,
+          desiredStartTime,
+          reason,
+          semester,
+          summerFormat,
+          telegramUsername
+        );
+
+        // Save to database
+        const success = await saveRequestToDatabase(requestData);
+        
+        if (success) {
+          // Reset form and notify parent component
+          resetForm();
+          onRequestSubmitted();
+        }
       }
     } catch (error: any) {
       console.error("Error in form submission:", error);
