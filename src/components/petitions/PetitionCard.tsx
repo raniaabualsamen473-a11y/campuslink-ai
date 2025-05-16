@@ -51,7 +51,7 @@ export const PetitionCard = ({
     <Card className={`hover:shadow-md transition-shadow ${isCompleted ? 'border-green-200' : ''}`}>
       <CardHeader>
         <div className="flex justify-between items-start">
-          <CardTitle className="text-xl text-campus-blue">
+          <CardTitle className="text-xl bg-gradient-to-r from-campus-neonPurple to-campus-lightPurple bg-clip-text text-transparent animate-pulse">
             {petition.course_name}
           </CardTitle>
           {isCompleted && (

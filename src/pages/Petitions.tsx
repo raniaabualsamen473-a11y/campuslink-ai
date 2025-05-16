@@ -26,7 +26,9 @@ const Petitions = () => {
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-bold mb-2 text-campus-darkPurple">Section Petitions</h1>
+        <h1 className="text-3xl font-bold mb-2 text-campus-darkPurple bg-gradient-to-r from-campus-neonPurple to-campus-lightPurple bg-clip-text text-transparent">
+          Section Petitions
+        </h1>
         <p className="text-muted-foreground">
           Support and track petitions for new class sections
         </p>
