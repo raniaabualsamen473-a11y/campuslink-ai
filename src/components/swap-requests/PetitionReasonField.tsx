@@ -1,5 +1,6 @@
 
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
 
 interface PetitionReasonFieldProps {
@@ -30,10 +31,10 @@ export const PetitionReasonField = ({
   return (
     <div className="space-y-2">
       <Label htmlFor="reason" className="text-black">Reason for Petition</Label>
-      <textarea 
+      <Textarea 
         id="reason" 
         placeholder="Why do you need this section?" 
-        className="w-full min-h-[100px] px-3 py-2 border rounded-md"
+        className="min-h-[100px]"
         value={reason}
         onChange={handleChange}
         maxLength={maxLength}
