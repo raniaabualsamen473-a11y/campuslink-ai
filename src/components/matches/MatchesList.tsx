@@ -1,7 +1,7 @@
 
 import { Match } from "@/types/swap";
 import { CourseMatchGroup } from "./CourseMatchGroup";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface MatchesListProps {
   groupedMatches: Record<string, Match[]>;
@@ -17,6 +17,8 @@ export const MatchesList = ({ groupedMatches, isLoading }: MatchesListProps) => 
       </div>
     );
   }
+
+  const totalMatches = Object.values(groupedMatches).flat().length;
 
   if (Object.keys(groupedMatches).length === 0) {
     return (
@@ -35,13 +37,21 @@ export const MatchesList = ({ groupedMatches, isLoading }: MatchesListProps) => 
 
   return (
     <div className="space-y-8">
-      {Object.entries(groupedMatches).map(([courseName, courseMatches]) => (
-        <CourseMatchGroup 
-          key={courseName} 
-          courseName={courseName} 
-          matches={courseMatches} 
-        />
-      ))}
+      {totalMatches > 0 && (
+        <div className="flex items-center gap-2 bg-green-50 p-3 rounded-md text-green-800 border border-green-200 mb-4">
+          <CheckCircle2 className="h-5 w-5" />
+          <span className="text-sm">Found {totalMatches} potential {totalMatches === 1 ? 'match' : 'matches'} across {Object.keys(groupedMatches).length} {Object.keys(groupedMatches).length === 1 ? 'course' : 'courses'}</span>
+        </div>
+      )}
+      {Object.entries(groupedMatches)
+        .sort(([, matchesA], [, matchesB]) => matchesB.length - matchesA.length) // Sort by match count
+        .map(([courseName, courseMatches]) => (
+          <CourseMatchGroup 
+            key={courseName} 
+            courseName={courseName} 
+            matches={courseMatches} 
+          />
+        ))}
     </div>
   );
 };

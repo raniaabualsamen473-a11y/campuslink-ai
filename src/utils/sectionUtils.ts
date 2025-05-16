@@ -47,7 +47,37 @@ export const normalizeSection = (sectionName: string): string => {
 
 /**
  * Tests if two section names match after normalization
+ * 
+ * This function is more lenient when comparing sections to increase match opportunities
  */
 export const sectionsMatch = (section1: string, section2: string): boolean => {
-  return normalizeSection(section1) === normalizeSection(section2);
+  // Direct comparison of normalized sections
+  if (normalizeSection(section1) === normalizeSection(section2)) {
+    return true;
+  }
+  
+  // Extract section numbers for partial matches
+  const extractSectionNumber = (section: string): string | null => {
+    const match = section.match(/\b([A-Za-z]?\d+[A-Za-z]?)\b/);
+    return match ? match[1].toLowerCase() : null;
+  };
+  
+  const sectionNum1 = extractSectionNumber(section1);
+  const sectionNum2 = extractSectionNumber(section2);
+  
+  // If both sections have identifiable numbers and they match
+  if (sectionNum1 && sectionNum2 && sectionNum1 === sectionNum2) {
+    return true;
+  }
+  
+  // Fallback to looser matching if exact match fails
+  const norm1 = normalizeSection(section1);
+  const norm2 = normalizeSection(section2);
+  
+  // Check if either normalized string contains the other
+  if (norm1 && norm2 && (norm1.includes(norm2) || norm2.includes(norm1))) {
+    return true;
+  }
+  
+  return false;
 };
