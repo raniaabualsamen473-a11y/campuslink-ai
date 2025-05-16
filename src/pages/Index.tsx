@@ -19,10 +19,10 @@ const Index = () => {
             className="h-24 w-24 object-contain animate-float"
           />
         </div>
-        <h1 className="text-5xl font-bold text-campus-darkPurple mb-4">
-          CampusLink <span className="text-campus-purple">AI</span>
+        <h1 className="text-5xl font-bold text-campus-purple mb-4">
+          CampusLink <span className="text-campus-lightPurple">AI</span>
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           The intelligent way to manage your university class schedule, swap sections, and connect with classmates.
         </p>
         
@@ -103,7 +103,7 @@ const Index = () => {
       </div>
 
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-campus-darkPurple mb-6">
+        <h2 className="text-3xl font-bold text-campus-purple mb-6">
           How It Works
         </h2>
         
@@ -141,7 +141,7 @@ const Index = () => {
       </div>
 
       <div className="text-center glass py-8 px-4 rounded-3xl backdrop-blur-md animate-fade-in" style={{animationDelay: "0.8s"}}>
-        <h2 className="text-2xl font-bold text-campus-darkPurple mb-6">
+        <h2 className="text-2xl font-bold text-campus-purple mb-6">
           Ready to start swapping classes?
         </h2>
         
