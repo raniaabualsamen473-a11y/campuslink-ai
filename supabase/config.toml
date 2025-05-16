@@ -6,3 +6,6 @@ verify_jwt = true
 
 [functions.listen-for-swaps]
 verify_jwt = true
+
+[functions.post-to-n8n-webhook]
+verify_jwt = true
