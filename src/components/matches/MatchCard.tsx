@@ -76,7 +76,7 @@ export const MatchCard = ({ match }: MatchCardProps) => {
       
       <Separator className="my-3" />
       
-      <div className="mt-2 flex justify-end gap-2">
+      <div className="mt-2 flex justify-end">
         {match.telegram_username && (
           <Button 
             size="sm" 
@@ -88,13 +88,6 @@ export const MatchCard = ({ match }: MatchCardProps) => {
             Chat on Telegram
           </Button>
         )}
-        <Button 
-          size="sm" 
-          variant="match-success"
-          onClick={() => handleContact(match)}
-        >
-          Contact
-        </Button>
       </div>
     </div>
   );

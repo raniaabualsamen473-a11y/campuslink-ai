@@ -20,12 +20,12 @@ export const CourseSelectionFields = ({
 }: CourseSelectionFieldsProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="course" className="text-black">Course</Label>
+      <Label htmlFor="course" className="text-foreground">Course</Label>
       <Select value={courseName} onValueChange={setCourseName}>
         <SelectTrigger>
           <SelectValue placeholder="Select a course" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-white dark:bg-gray-800 text-foreground">
           {courses.map((course) => (
             <SelectItem key={course} value={course}>
               {course}
@@ -39,13 +39,13 @@ export const CourseSelectionFields = ({
       
       {courseName === "other" && (
         <div className="mt-2">
-          <Label htmlFor="custom-course" className="text-black">Enter Course Name</Label>
+          <Label htmlFor="custom-course" className="text-foreground">Enter Course Name</Label>
           <Input 
             id="custom-course" 
             value={customCourseName}
             onChange={(e) => setCustomCourseName(e.target.value)}
             placeholder="Enter course name"
-            className="mt-1" 
+            className="mt-1 text-foreground" 
           />
         </div>
       )}

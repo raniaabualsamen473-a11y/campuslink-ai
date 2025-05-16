@@ -31,14 +31,14 @@ export const SectionFields = ({
   semester
 }: SectionFieldsProps) => {
   return (
-    <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-      <h3 className="font-medium text-lg text-campus-darkPurple">
+    <div className="space-y-4 border p-4 rounded-md bg-gray-50 dark:bg-gray-800">
+      <h3 className="font-medium text-lg text-campus-darkPurple dark:text-campus-purple">
         {type === "current" ? "Current Section Details" : "Desired Section Details"}
       </h3>
       
       {/* Section Number */}
       <div className="space-y-2">
-        <Label htmlFor={`${type}-section-number`} className="text-black">Section Number</Label>
+        <Label htmlFor={`${type}-section-number`} className="text-foreground">Section Number</Label>
         <Input 
           id={`${type}-section-number`} 
           type="number"
@@ -46,7 +46,7 @@ export const SectionFields = ({
           placeholder="e.g., 1, 2, 3" 
           value={sectionNumber}
           onChange={(e) => setNumber(e.target.value)}
-          className="w-full"
+          className="w-full text-foreground"
         />
       </div>
       
@@ -60,7 +60,7 @@ export const SectionFields = ({
       
       {/* Start Time */}
       <div className="space-y-2">
-        <Label htmlFor={`${type}-start-time`} className="text-black">Start Time</Label>
+        <Label htmlFor={`${type}-start-time`} className="text-foreground">Start Time</Label>
         <Select
           value={startTime}
           onValueChange={setStartTime}
@@ -68,7 +68,7 @@ export const SectionFields = ({
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select start time" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-800 text-foreground">
             {timeSlots.map((time) => (
               <SelectItem key={`${type}-${time}`} value={time}>
                 <div className="flex items-center">
@@ -79,13 +79,13 @@ export const SectionFields = ({
             ))}
           </SelectContent>
         </Select>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Class duration: {getClassDuration(semester, daysPattern)}
         </p>
       </div>
       
       {/* Preview of section format */}
-      <div className="mt-2 bg-gray-100 p-2 rounded text-sm">
+      <div className="mt-2 bg-gray-100 dark:bg-gray-700 p-2 rounded text-sm text-foreground">
         <p><strong>Preview:</strong> Section {sectionNumber || "#"} ({formatDaysPattern(daysPattern, semester)} {formatTime(startTime) || "time"})</p>
       </div>
     </div>
@@ -104,7 +104,7 @@ const renderDayPatternOptions = (
   if (semester === "summer") {
     return (
       <div className="space-y-4">
-        <Label className="text-sm font-medium text-black">Days Format</Label>
+        <Label className="text-sm font-medium text-foreground">Days Format</Label>
         <RadioGroup 
           value={value}
           onValueChange={onChange}
@@ -112,15 +112,15 @@ const renderDayPatternOptions = (
         >
           <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
             <RadioGroupItem value="everyday" id={`${field}-everyday`} />
-            <Label htmlFor={`${field}-everyday`} className="cursor-pointer text-black">Every day (Sun-Thu)</Label>
+            <Label htmlFor={`${field}-everyday`} className="cursor-pointer text-foreground">Every day (Sun-Thu)</Label>
           </div>
           <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
             <RadioGroupItem value="sunmon" id={`${field}-sunmon`} />
-            <Label htmlFor={`${field}-sunmon`} className="cursor-pointer text-black">Sun & Mon</Label>
+            <Label htmlFor={`${field}-sunmon`} className="cursor-pointer text-foreground">Sun & Mon</Label>
           </div>
           <div className="flex items-center space-x-2 rounded-md border p-3 cursor-pointer hover:bg-muted">
             <RadioGroupItem value="tuethusat" id={`${field}-tuethusat`} />
-            <Label htmlFor={`${field}-tuethusat`} className="cursor-pointer text-black">Tue/Wed/Thu</Label>
+            <Label htmlFor={`${field}-tuethusat`} className="cursor-pointer text-foreground">Tue/Wed/Thu</Label>
           </div>
         </RadioGroup>
       </div>
@@ -128,7 +128,7 @@ const renderDayPatternOptions = (
   } else {
     return (
       <div className="space-y-2">
-        <Label className="text-black">Days Pattern</Label>
+        <Label className="text-foreground">Days Pattern</Label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="flex items-center space-x-2">
             <input 
@@ -140,7 +140,7 @@ const renderDayPatternOptions = (
               onChange={() => onChange("mw")}
               className="text-campus-purple focus:ring-campus-purple" 
             />
-            <Label htmlFor={`${field}-mw`} className="font-normal text-black">Monday/Wednesday (1.5 hour classes)</Label>
+            <Label htmlFor={`${field}-mw`} className="font-normal text-foreground">Monday/Wednesday (1.5 hour classes)</Label>
           </div>
           <div className="flex items-center space-x-2">
             <input 
@@ -152,7 +152,7 @@ const renderDayPatternOptions = (
               onChange={() => onChange("stt")}
               className="text-campus-purple focus:ring-campus-purple" 
             />
-            <Label htmlFor={`${field}-stt`} className="font-normal text-black">Sunday/Tuesday/Thursday (1 hour classes)</Label>
+            <Label htmlFor={`${field}-stt`} className="font-normal text-foreground">Sunday/Tuesday/Thursday (1 hour classes)</Label>
           </div>
         </div>
       </div>
