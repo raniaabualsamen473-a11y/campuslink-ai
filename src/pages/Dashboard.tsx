@@ -10,7 +10,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [userRequests, setUserRequests] = useState<SwapRequest[]>([]);
   const [totalRequests, setTotalRequests] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [activeUsers, setActiveUsers] = useState(0);
   const [recentRequests, setRecentRequests] = useState<SwapRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -50,11 +50,29 @@ const Dashboard = () => {
         .limit(10);
         
       if (latestRequestsError) throw latestRequestsError;
+      
+      // Get count of unique users that have created requests
+      const { data: uniqueUsers, error: uniqueUsersError } = await supabase
+        .from('swap_requests')
+        .select('user_id', { count: 'exact', head: false })
+        .not('user_id', 'is', null);
+        
+      if (uniqueUsersError) throw uniqueUsersError;
+      
+      // Count distinct user_ids
+      const distinctUserIds = new Set();
+      if (uniqueUsers) {
+        uniqueUsers.forEach(req => {
+          if (req.user_id) {
+            distinctUserIds.add(req.user_id);
+          }
+        });
+      }
 
       // Set state with fetched data
       setUserRequests(userRequestsData as SwapRequest[] || []);
       setTotalRequests(requestsCount || 0);
-      setTotalUsers(Math.floor(requestsCount * 0.8) || 0); // Mock data for user count
+      setActiveUsers(distinctUserIds.size || 0);
       setRecentRequests(latestRequests as SwapRequest[] || []);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -104,7 +122,7 @@ const Dashboard = () => {
             <CardDescription>Students using ClassSwap</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-campus-darkPurple">{totalUsers}</p>
+            <p className="text-3xl font-bold text-campus-darkPurple">{activeUsers}</p>
           </CardContent>
         </Card>
       </div>
