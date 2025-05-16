@@ -21,7 +21,7 @@ const Layout = () => {
       />
       <main 
         className={cn(
-          "flex-1 transition-all duration-300 grid-bg",
+          "flex-1 transition-all duration-300",
           isMobileMenuOpen && "pt-16 sm:pt-0"
         )}
       >
