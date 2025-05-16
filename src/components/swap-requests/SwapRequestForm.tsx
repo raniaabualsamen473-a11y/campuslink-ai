@@ -27,13 +27,60 @@ interface SwapRequestFormProps {
   onCancelEdit: () => void;
 }
 
-// Define possible start times based on day pattern
-const START_TIMES = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", 
-  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", 
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", 
-  "17:00", "17:30"
-];
+// Helper function to generate time slots based on semester type and day pattern
+const generateTimeSlots = (semesterType: string, dayPattern: string): string[] => {
+  const timeSlots: string[] = [];
+  let startHour = 8;
+  let startMinute = 30;
+  
+  // Regular semester, Sun/Tue/Thu (1 hour classes)
+  if (semesterType === "regular" && dayPattern === "stt") {
+    for (let i = 0; i < 10; i++) {
+      const formattedHour = startHour.toString().padStart(2, '0');
+      const formattedMinute = startMinute.toString().padStart(2, '0');
+      timeSlots.push(`${formattedHour}:${formattedMinute}`);
+      
+      // Add 1 hour
+      startMinute += 60;
+      if (startMinute >= 60) {
+        startHour += Math.floor(startMinute / 60);
+        startMinute %= 60;
+      }
+    }
+  }
+  // Regular semester, Mon/Wed (1.5 hour classes)
+  else if (semesterType === "regular" && dayPattern === "mw") {
+    for (let i = 0; i < 7; i++) {
+      const formattedHour = startHour.toString().padStart(2, '0');
+      const formattedMinute = startMinute.toString().padStart(2, '0');
+      timeSlots.push(`${formattedHour}:${formattedMinute}`);
+      
+      // Add 1.5 hours (90 minutes)
+      startMinute += 90;
+      if (startMinute >= 60) {
+        startHour += Math.floor(startMinute / 60);
+        startMinute %= 60;
+      }
+    }
+  }
+  // Summer semester (1.25 hour classes)
+  else if (semesterType === "summer") {
+    for (let i = 0; i < 8; i++) {
+      const formattedHour = startHour.toString().padStart(2, '0');
+      const formattedMinute = startMinute.toString().padStart(2, '0');
+      timeSlots.push(`${formattedHour}:${formattedMinute}`);
+      
+      // Add 1.25 hours (75 minutes)
+      startMinute += 75;
+      if (startMinute >= 60) {
+        startHour += Math.floor(startMinute / 60);
+        startMinute %= 60;
+      }
+    }
+  }
+  
+  return timeSlots;
+};
 
 export const SwapRequestForm = ({ 
   editingRequestId,
@@ -62,6 +109,10 @@ export const SwapRequestForm = ({
   const [desiredDaysPattern, setDesiredDaysPattern] = useState("stt");
   const [desiredStartTime, setDesiredStartTime] = useState("");
   
+  // Available time slots based on semester and days pattern
+  const [currentTimeSlots, setCurrentTimeSlots] = useState<string[]>([]);
+  const [desiredTimeSlots, setDesiredTimeSlots] = useState<string[]>([]);
+  
   const [summerFormat, setSummerFormat] = useState("everyday");
   
   // Sample data - in a real app this would come from backend
@@ -74,6 +125,16 @@ export const SwapRequestForm = ({
     "Database Systems",
     "Computer Networks",
   ]);
+
+  // Update time slots when semester or days pattern changes
+  useEffect(() => {
+    setCurrentTimeSlots(generateTimeSlots(semester, currentDaysPattern));
+    setDesiredTimeSlots(generateTimeSlots(semester, desiredDaysPattern));
+    
+    // Reset selected times when the available options change
+    setCurrentStartTime("");
+    setDesiredStartTime("");
+  }, [semester, currentDaysPattern, desiredDaysPattern]);
 
   useEffect(() => {
     // Check for telegram username in user metadata
@@ -391,6 +452,15 @@ export const SwapRequestForm = ({
       }
     }
   };
+
+  // Get class duration based on semester and days pattern
+  const getClassDuration = (semesterType: string, dayPattern: string): string => {
+    if (semesterType === "regular") {
+      return dayPattern === "mw" ? "1 hour 30 minutes" : "1 hour";
+    } else {
+      return "1 hour 15 minutes";
+    }
+  };
   
   // Format time for display
   const formatTime = (time: string): string => {
@@ -512,6 +582,7 @@ export const SwapRequestForm = ({
     sectionNumber: string,
     daysPattern: string,
     startTime: string,
+    timeSlots: string[],
     setNumber: (value: string) => void,
     setDaysPattern: (value: string) => void,
     setStartTime: (value: string) => void
@@ -554,7 +625,7 @@ export const SwapRequestForm = ({
               <SelectValue placeholder="Select start time" />
             </SelectTrigger>
             <SelectContent>
-              {START_TIMES.map((time) => (
+              {timeSlots.map((time) => (
                 <SelectItem key={`${type}-${time}`} value={time}>
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-2" />
@@ -564,12 +635,8 @@ export const SwapRequestForm = ({
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-gray-500">
-            {semester === "regular" && daysPattern === "mw" 
-              ? "Classes are 1.5 hours long"
-              : semester === "regular" && daysPattern === "stt"
-                ? "Classes are 1 hour long" 
-                : "Summer classes are 1 hour and 15 minutes long"}
+          <p className="text-xs text-gray-500 mt-1">
+            Class duration: {getClassDuration(semester, daysPattern)}
           </p>
         </div>
         
@@ -660,6 +727,7 @@ export const SwapRequestForm = ({
                   currentSectionNumber,
                   currentDaysPattern,
                   currentStartTime,
+                  currentTimeSlots,
                   setCurrentSectionNumber,
                   setCurrentDaysPattern,
                   setCurrentStartTime
@@ -671,6 +739,7 @@ export const SwapRequestForm = ({
                   desiredSectionNumber,
                   desiredDaysPattern,
                   desiredStartTime,
+                  desiredTimeSlots,
                   setDesiredSectionNumber,
                   setDesiredDaysPattern,
                   setDesiredStartTime
@@ -684,6 +753,7 @@ export const SwapRequestForm = ({
                   desiredSectionNumber,
                   desiredDaysPattern,
                   desiredStartTime,
+                  desiredTimeSlots,
                   setDesiredSectionNumber,
                   setDesiredDaysPattern,
                   setDesiredStartTime
