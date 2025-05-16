@@ -269,7 +269,7 @@ export const useSwapRequestForm = ({
         }
         // The success case is handled in the petition hook (onSuccess callback)
       } else {
-        // Handle swap request submission (existing code)
+        // Handle swap request submission
         // Create structured section data for checking duplicates
         const currentSectionData = {
           number: parseInt(currentSectionNumber), 
