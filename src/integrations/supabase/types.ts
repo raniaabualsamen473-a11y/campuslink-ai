@@ -13,10 +13,16 @@ export type Database = {
         Row: {
           anonymous: boolean | null
           created_at: string
+          current_days_pattern: string | null
           current_section: string | null
+          current_section_number: number | null
+          current_start_time: string | null
           days_pattern: string | null
           desired_course: string | null
+          desired_days_pattern: string | null
           desired_section: string | null
+          desired_section_number: number | null
+          desired_start_time: string | null
           email: string | null
           flexible_days: boolean | null
           flexible_time: boolean | null
@@ -28,6 +34,7 @@ export type Database = {
           petition: boolean | null
           preferred_time: string | null
           reason: string | null
+          semester_type: string | null
           summer_format: string | null
           telegram_username: string | null
           university_id: number | null
@@ -36,10 +43,16 @@ export type Database = {
         Insert: {
           anonymous?: boolean | null
           created_at?: string
+          current_days_pattern?: string | null
           current_section?: string | null
+          current_section_number?: number | null
+          current_start_time?: string | null
           days_pattern?: string | null
           desired_course?: string | null
+          desired_days_pattern?: string | null
           desired_section?: string | null
+          desired_section_number?: number | null
+          desired_start_time?: string | null
           email?: string | null
           flexible_days?: boolean | null
           flexible_time?: boolean | null
@@ -51,6 +64,7 @@ export type Database = {
           petition?: boolean | null
           preferred_time?: string | null
           reason?: string | null
+          semester_type?: string | null
           summer_format?: string | null
           telegram_username?: string | null
           university_id?: number | null
@@ -59,10 +73,16 @@ export type Database = {
         Update: {
           anonymous?: boolean | null
           created_at?: string
+          current_days_pattern?: string | null
           current_section?: string | null
+          current_section_number?: number | null
+          current_start_time?: string | null
           days_pattern?: string | null
           desired_course?: string | null
+          desired_days_pattern?: string | null
           desired_section?: string | null
+          desired_section_number?: number | null
+          desired_start_time?: string | null
           email?: string | null
           flexible_days?: boolean | null
           flexible_time?: boolean | null
@@ -74,6 +94,7 @@ export type Database = {
           petition?: boolean | null
           preferred_time?: string | null
           reason?: string | null
+          semester_type?: string | null
           summer_format?: string | null
           telegram_username?: string | null
           university_id?: number | null
@@ -101,7 +122,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      swap_request_matches: {
+        Row: {
+          current_section: string | null
+          desired_course: string | null
+          desired_section: string | null
+          match_full_name: string | null
+          match_telegram: string | null
+          match_user_id: string | null
+          normalized_current_section: string | null
+          normalized_desired_section: string | null
+          request_id: string | null
+          requester_user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       bytea_to_text: {
