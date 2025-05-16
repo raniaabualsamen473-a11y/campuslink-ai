@@ -4,10 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
 import { RefreshCcw, Users, MessageSquare } from "lucide-react";
+import { useTranslate } from "@/components/LanguageProvider";
 
 const Index = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslate();
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -23,7 +25,7 @@ const Index = () => {
           CampusLink <span className="text-campus-lightPurple">AI</span>
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          The intelligent way to manage your university class schedule, swap sections, and connect with classmates.
+          {t('home.tagline')}
         </p>
         
         <div className="mt-8 flex flex-wrap justify-center gap-4">
@@ -35,7 +37,7 @@ const Index = () => {
               className="btn-glow"
             >
               <RefreshCcw className="mr-2 h-5 w-5" />
-              Swap Classes
+              {t('home.viewSwapRequests')}
             </Button>
           ) : (
             <Button 
@@ -44,7 +46,7 @@ const Index = () => {
               size="lg"
               className="btn-glow"
             >
-              Get Started
+              {t('home.getStarted')}
             </Button>
           )}
           
@@ -53,7 +55,7 @@ const Index = () => {
             size="lg"
             asChild
           >
-            <a href="#features">Learn More</a>
+            <a href="#features">{t('home.learnMore')}</a>
           </Button>
         </div>
       </div>
@@ -65,9 +67,9 @@ const Index = () => {
               <div className="rounded-full bg-campus-purple/10 p-3 mb-4 neon-glow">
                 <RefreshCcw className="h-8 w-8 text-campus-purple" />
               </div>
-              <h2 className="text-xl font-bold mb-2 text-foreground">Class Swapping</h2>
+              <h2 className="text-xl font-bold mb-2 text-foreground">{t('home.features.swapping.title')}</h2>
               <p className="text-muted-foreground">
-                Easily swap class sections with other students. Submit your request and get automatically matched with compatible swaps.
+                {t('home.features.swapping.description')}
               </p>
             </div>
           </CardContent>
@@ -79,9 +81,9 @@ const Index = () => {
               <div className="rounded-full bg-campus-purple/10 p-3 mb-4 neon-glow">
                 <Users className="h-8 w-8 text-campus-purple" />
               </div>
-              <h2 className="text-xl font-bold mb-2 text-foreground">Section Petitions</h2>
+              <h2 className="text-xl font-bold mb-2 text-foreground">{t('home.features.petitions.title')}</h2>
               <p className="text-muted-foreground">
-                Create petitions for new section openings. Gather support from other students and present united requests to administration.
+                {t('home.features.petitions.description')}
               </p>
             </div>
           </CardContent>
@@ -93,9 +95,9 @@ const Index = () => {
               <div className="rounded-full bg-campus-purple/10 p-3 mb-4 neon-glow">
                 <MessageSquare className="h-8 w-8 text-campus-purple" />
               </div>
-              <h2 className="text-xl font-bold mb-2 text-foreground">Easy Communication</h2>
+              <h2 className="text-xl font-bold mb-2 text-foreground">{t('home.features.communication.title')}</h2>
               <p className="text-muted-foreground">
-                Connect with matched students via Telegram for seamless communication when arranging your class swaps.
+                {t('home.features.communication.description')}
               </p>
             </div>
           </CardContent>
@@ -104,7 +106,7 @@ const Index = () => {
 
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold text-campus-purple mb-6">
-          How It Works
+          {t('home.howItWorks.title')}
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -112,9 +114,9 @@ const Index = () => {
             <div className="bg-campus-purple/10 rounded-full w-12 h-12 flex items-center justify-center mb-4 neon-glow">
               <span className="text-xl font-bold text-campus-purple">1</span>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Create an Account</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">{t('home.howItWorks.step1.title')}</h3>
             <p className="text-muted-foreground">
-              Sign up with your university email and provide your Telegram username for contact.
+              {t('home.howItWorks.step1.description')}
             </p>
           </div>
           
@@ -122,9 +124,9 @@ const Index = () => {
             <div className="bg-campus-purple/10 rounded-full w-12 h-12 flex items-center justify-center mb-4 neon-glow">
               <span className="text-xl font-bold text-campus-purple">2</span>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Submit Your Request</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">{t('home.howItWorks.step2.title')}</h3>
             <p className="text-muted-foreground">
-              Create a swap request or petition with your current and desired class sections.
+              {t('home.howItWorks.step2.description')}
             </p>
           </div>
           
@@ -132,9 +134,9 @@ const Index = () => {
             <div className="bg-campus-purple/10 rounded-full w-12 h-12 flex items-center justify-center mb-4 neon-glow">
               <span className="text-xl font-bold text-campus-purple">3</span>
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Get Matched & Connect</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">{t('home.howItWorks.step3.title')}</h3>
             <p className="text-muted-foreground">
-              Get automatically matched with compatible requests and connect via Telegram to arrange the swap.
+              {t('home.howItWorks.step3.description')}
             </p>
           </div>
         </div>
@@ -142,7 +144,7 @@ const Index = () => {
 
       <div className="text-center glass py-8 px-4 rounded-3xl backdrop-blur-md animate-fade-in" style={{animationDelay: "0.8s"}}>
         <h2 className="text-2xl font-bold text-campus-purple mb-6">
-          Ready to start swapping classes?
+          {t('home.readyToStart')}
         </h2>
         
         {user ? (
@@ -152,7 +154,7 @@ const Index = () => {
             size="lg"
             className="btn-glow"
           >
-            View Swap Requests
+            {t('home.viewSwapRequests')}
           </Button>
         ) : (
           <Button 
@@ -161,7 +163,7 @@ const Index = () => {
             size="lg"
             className="btn-glow"
           >
-            Sign Up Now
+            {t('home.signUpNow')}
           </Button>
         )}
       </div>

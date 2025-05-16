@@ -5,6 +5,7 @@ import { usePetitions } from "@/hooks/usePetitions";
 import { useAuth } from "@/hooks/useAuth";
 import { PetitionList } from "@/components/petitions/PetitionList";
 import { PetitionInfo } from "@/components/petitions/PetitionInfo";
+import { useTranslate } from "@/components/LanguageProvider";
 
 const Petitions = () => {
   const { 
@@ -17,6 +18,7 @@ const Petitions = () => {
     refreshPetitions
   } = usePetitions();
   const { session } = useAuth();
+  const { t } = useTranslate();
 
   // Refresh petitions when the component mounts
   useEffect(() => {
@@ -27,18 +29,18 @@ const Petitions = () => {
     <div className="container mx-auto py-8 px-4 sm:px-6">
       <div className="mb-8 animate-fade-in">
         <h1 className="text-3xl font-bold mb-2 text-campus-darkPurple bg-gradient-to-r from-campus-neonPurple to-campus-lightPurple bg-clip-text text-transparent">
-          Section Petitions
+          {t('petitions.title')}
         </h1>
         <p className="text-muted-foreground">
-          Support and track petitions for new class sections
+          {t('petitions.subtitle')}
         </p>
       </div>
 
       <div className="glass-card p-6 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.1s"}}>
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="grid grid-cols-2 max-w-sm mb-6">
-            <TabsTrigger value="active">Active Petitions</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="active">{t('petitions.tabs.active')}</TabsTrigger>
+            <TabsTrigger value="completed">{t('petitions.tabs.completed')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="active">

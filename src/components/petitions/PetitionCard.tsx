@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PETITION_THRESHOLD } from "@/hooks/usePetitions";
+import { useTranslate } from "@/components/LanguageProvider";
 
 type PetitionCardProps = {
   petition: any;
@@ -23,6 +24,7 @@ export const PetitionCard = ({
 }: PetitionCardProps) => {
   const progress = Math.min(100, (petition.supporter_count / PETITION_THRESHOLD) * 100);
   const isSupported = isUserSupporting(petition.id);
+  const { t } = useTranslate();
 
   const renderSection = (petition: any) => {
     if (petition.semester_type === 'regular' && petition.days_pattern) {
@@ -56,34 +58,34 @@ export const PetitionCard = ({
           </CardTitle>
           {isCompleted && (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Completed
+              {t('petitions.tabs.completed')}
             </span>
           )}
         </div>
         <CardDescription>
-          {`Section Request: ${renderSection(petition)}`}
+          {`${t('petitionCard.sectionRequest')}: ${renderSection(petition)}`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <div>
             <div className="flex justify-between mb-1 text-sm">
-              <span>Progress</span>
-              <span>{petition.supporter_count}/{PETITION_THRESHOLD} supporters</span>
+              <span>{t('petitionCard.progress')}</span>
+              <span>{petition.supporter_count}/{PETITION_THRESHOLD} {t('petitionCard.supporters')}</span>
             </div>
             <Progress value={progress} className={isCompleted ? "bg-green-100" : ""} />
           </div>
           
           <div className="text-sm text-gray-500">
-            <p>Created: {renderPetitionTime()}</p>
+            <p>{t('petitionCard.created')}: {renderPetitionTime()}</p>
             {petition.supporter_count >= PETITION_THRESHOLD && !isCompleted && (
               <p className="text-green-600 font-medium mt-1">
-                Ready for submission!
+                {t('petitionCard.readyForSubmission')}
               </p>
             )}
             {isCompleted && (
               <p className="text-green-600 font-medium mt-1">
-                Status: Submitted to Faculty
+                {t('petitionCard.statusSubmitted')}
               </p>
             )}
           </div>
@@ -92,18 +94,18 @@ export const PetitionCard = ({
       <CardFooter className="flex justify-between">
         {isCompleted ? (
           <Button variant="outline" className="w-full">
-            View Petition Form
+            {t('petitionCard.viewPetitionForm')}
           </Button>
         ) : isSupported ? (
           <Button variant="outline" disabled className="w-full">
-            Already Supported
+            {t('petitionCard.alreadySupported')}
           </Button>
         ) : progress >= 100 ? (
           <Button 
             className="w-full" 
             onClick={() => onSubmit(petition)}
           >
-            Generate Petition Form
+            {t('petitionCard.generatePetitionForm')}
           </Button>
         ) : (
           <Button 
@@ -111,7 +113,7 @@ export const PetitionCard = ({
             disabled={!isSession}
             onClick={() => onSupport(petition)}
           >
-            {isSession ? "Support Petition" : "Sign In to Support"}
+            {isSession ? t('petitionCard.supportPetition') : t('petitionCard.signInToSupport')}
           </Button>
         )}
       </CardFooter>

@@ -4,12 +4,17 @@ import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "./LanguageProvider";
 
 const Layout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isRTL } = useLanguage();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background to-background dark:from-background dark:to-background/95">
+    <div className={cn(
+      "flex flex-col min-h-screen bg-gradient-to-br from-background to-background dark:from-background dark:to-background/95",
+      isRTL && "rtl"
+    )}>
       <Navbar 
         isMobileMenuOpen={isMobileMenuOpen} 
         setIsMobileMenuOpen={setIsMobileMenuOpen} 

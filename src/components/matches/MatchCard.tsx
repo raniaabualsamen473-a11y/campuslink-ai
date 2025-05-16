@@ -5,12 +5,15 @@ import { Separator } from "@/components/ui/separator";
 import { Match } from "@/types/swap";
 import { MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslate } from "@/components/LanguageProvider";
 
 interface MatchCardProps {
   match: Match;
 }
 
 export const MatchCard = ({ match }: MatchCardProps) => {
+  const { t } = useTranslate();
+
   const handleContact = (match: Match) => {
     if (match.telegram_username) {
       openTelegramChat(match.telegram_username);
@@ -48,12 +51,12 @@ export const MatchCard = ({ match }: MatchCardProps) => {
           <div className="mt-1 space-y-1">
             {match.type === "swap" && match.currentSection && (
               <p className="text-sm text-adaptive-muted">
-                <span className="font-medium text-adaptive-soft">From: </span>
+                <span className="font-medium text-adaptive-soft">{t('matches.from')}: </span>
                 {match.currentSection}
               </p>
             )}
             <p className="text-sm text-adaptive-muted">
-              <span className="font-medium text-adaptive-soft">To: </span>
+              <span className="font-medium text-adaptive-soft">{t('matches.to')}: </span>
               {match.desiredSection}
             </p>
           </div>
@@ -63,13 +66,13 @@ export const MatchCard = ({ match }: MatchCardProps) => {
             ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50" 
             : "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-700/50"
         }`}>
-          {match.matchPercent}% Match
+          {match.matchPercent}% {t('matches.match')}
         </Badge>
       </div>
       
       <div className="mt-2">
         <p className="text-sm font-medium text-adaptive">
-          Posted by: {match.isAnonymous ? "Anonymous Student" : match.user}
+          {t('matches.postedBy')}: {match.isAnonymous ? t('matches.anonymous') : match.user}
         </p>
         <p className="text-xs text-adaptive-soft">{match.dateCreated}</p>
       </div>
@@ -85,7 +88,7 @@ export const MatchCard = ({ match }: MatchCardProps) => {
             title={`Chat with ${match.isAnonymous ? "user" : match.user} on Telegram`}
           >
             <MessageSquare size={16} className="mr-1" />
-            Chat on Telegram
+            {t('matches.chatOnTelegram')}
           </Button>
         )}
       </div>

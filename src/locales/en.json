@@ -1,0 +1,102 @@
+
+{
+  "common": {
+    "languageName": "English",
+    "otherLanguage": "العربية"
+  },
+  "navbar": {
+    "dashboard": "Dashboard",
+    "swapRequests": "Swap Requests",
+    "petitions": "Petitions",
+    "login": "Login",
+    "signOut": "Sign Out",
+    "loggedIn": "Logged In"
+  },
+  "home": {
+    "tagline": "The intelligent way to manage your university class schedule, swap sections, and connect with classmates.",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "features": {
+      "title": "Features",
+      "swapping": {
+        "title": "Class Swapping",
+        "description": "Easily swap class sections with other students. Submit your request and get automatically matched with compatible swaps."
+      },
+      "petitions": {
+        "title": "Section Petitions",
+        "description": "Create petitions for new section openings. Gather support from other students and present united requests to administration."
+      },
+      "communication": {
+        "title": "Easy Communication",
+        "description": "Connect with matched students via Telegram for seamless communication when arranging your class swaps."
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Create an Account",
+        "description": "Sign up with your university email and provide your Telegram username for contact."
+      },
+      "step2": {
+        "title": "Submit Your Request",
+        "description": "Create a swap request or petition with your current and desired class sections."
+      },
+      "step3": {
+        "title": "Get Matched & Connect",
+        "description": "Get automatically matched with compatible requests and connect via Telegram to arrange the swap."
+      }
+    },
+    "readyToStart": "Ready to start swapping classes?",
+    "signUpNow": "Sign Up Now",
+    "viewSwapRequests": "View Swap Requests"
+  },
+  "petitions": {
+    "title": "Section Petitions",
+    "subtitle": "Support and track petitions for new class sections",
+    "tabs": {
+      "active": "Active Petitions",
+      "completed": "Completed"
+    },
+    "info": {
+      "title": "How Petitions Work",
+      "step1": "Create or support a petition for a new class section",
+      "step2": "When a petition reaches enough support, a formal request form is generated",
+      "step3": "Submit the completed form to your department",
+      "step4": "Track the status of your petition here"
+    }
+  },
+  "petitionCard": {
+    "sectionRequest": "Section Request",
+    "progress": "Progress",
+    "supporters": "supporters",
+    "created": "Created",
+    "readyForSubmission": "Ready for submission!",
+    "statusSubmitted": "Status: Submitted to Faculty",
+    "viewPetitionForm": "View Petition Form",
+    "alreadySupported": "Already Supported",
+    "generatePetitionForm": "Generate Petition Form",
+    "supportPetition": "Support Petition",
+    "signInToSupport": "Sign In to Support"
+  },
+  "swapRequests": {
+    "title": "Class Swap Requests",
+    "subtitle": "Submit and manage your class section swap requests"
+  },
+  "matches": {
+    "chatOnTelegram": "Chat on Telegram",
+    "from": "From",
+    "to": "To",
+    "postedBy": "Posted by",
+    "anonymous": "Anonymous Student",
+    "match": "Match"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?"
+  }
+}
