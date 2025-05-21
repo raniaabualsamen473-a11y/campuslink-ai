@@ -6,6 +6,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { profileCompletionSchema, ProfileCompletionValues } from "@/schemas/authSchema";
 import { User } from "@supabase/supabase-js";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface ProfileCompletionFormProps {
   user: User | null;
@@ -15,14 +16,13 @@ interface ProfileCompletionFormProps {
 
 const ProfileCompletionForm = ({ user, isSubmitting, onSubmit }: ProfileCompletionFormProps) => {
   const userData = user?.user_metadata || {};
+  const { language } = useLanguage();
+  const isArabic = language === 'ar';
   
   const form = useForm<ProfileCompletionValues>({
     resolver: zodResolver(profileCompletionSchema),
     defaultValues: {
-      firstName: userData.first_name || "",
-      secondName: userData.second_name || "",
-      thirdName: userData.third_name || "",
-      lastName: userData.last_name || "",
+      fullName: userData.full_name || "",
       universityId: userData.university_id || "",
       telegramUsername: userData.telegram_username || "",
     },
@@ -38,94 +38,41 @@ const ProfileCompletionForm = ({ user, isSubmitting, onSubmit }: ProfileCompleti
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-foreground">First Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="First Name" 
-                    {...field} 
-                    className="glass-input"
-                    required
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="secondName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-foreground">Second Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Second Name" 
-                    {...field} 
-                    className="glass-input"
-                    required
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="thirdName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-foreground">Third Name (Optional)</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Third Name" 
-                    {...field} 
-                    className="glass-input"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-foreground">Last Name</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="Last Name" 
-                    {...field} 
-                    className="glass-input"
-                    required
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-foreground">
+                {isArabic ? "الاسم الكامل" : "Full Name"}
+              </FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder={isArabic 
+                    ? "الاسم الكامل كما هو مكتوب على بطاقة الجامعة" 
+                    : "Full name as it's shown on your university ID"
+                  } 
+                  {...field} 
+                  className="glass-input"
+                  required
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
           name="universityId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-foreground">University ID</FormLabel>
+              <FormLabel className="text-foreground">
+                {isArabic ? "رقم الطالب الجامعي" : "University ID"}
+              </FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="7-digit ID number" 
+                  placeholder={isArabic ? "رقم مكون من 7 أرقام" : "7-digit ID number"} 
                   {...field} 
                   className="glass-input"
                   required
@@ -139,13 +86,19 @@ const ProfileCompletionForm = ({ user, isSubmitting, onSubmit }: ProfileCompleti
 
         {universityId && universityId.length === 7 && (
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">University Email</label>
+            <label className="text-sm font-medium text-foreground">
+              {isArabic ? "البريد الإلكتروني الجامعي" : "University Email"}
+            </label>
             <Input 
               value={universityEmail}
               className="glass-input"
               disabled
             />
-            <p className="text-xs text-muted-foreground">Auto-generated from your university ID</p>
+            <p className="text-xs text-muted-foreground">
+              {isArabic 
+                ? "تم إنشاؤه تلقائيًا من رقم الطالب الجامعي" 
+                : "Auto-generated from your university ID"}
+            </p>
           </div>
         )}
         
@@ -154,21 +107,27 @@ const ProfileCompletionForm = ({ user, isSubmitting, onSubmit }: ProfileCompleti
           name="telegramUsername"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-foreground">Telegram Username</FormLabel>
+              <FormLabel className="text-foreground">
+                {isArabic ? "اسم المستخدم في تيليجرام" : "Telegram Username"}
+              </FormLabel>
               <div className="flex items-center">
                 <span className="bg-muted border border-r-0 border-input rounded-l-md px-3 py-2 text-sm text-foreground">
                   @
                 </span>
                 <FormControl>
                   <Input 
-                    placeholder="username" 
+                    placeholder={isArabic ? "اسم المستخدم" : "username"} 
                     {...field} 
                     className="glass-input rounded-l-none"
                   />
                 </FormControl>
               </div>
               <FormMessage />
-              <p className="text-xs text-muted-foreground">Required for contacting you when a match is found</p>
+              <p className="text-xs text-muted-foreground">
+                {isArabic 
+                  ? "مطلوب للتواصل معك عند العثور على مطابقة" 
+                  : "Required for contacting you when a match is found"}
+              </p>
             </FormItem>
           )}
         />
@@ -182,10 +141,10 @@ const ProfileCompletionForm = ({ user, isSubmitting, onSubmit }: ProfileCompleti
           {isSubmitting ? (
             <span className="flex items-center">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Saving Profile...
+              {isArabic ? "جاري حفظ الملف الشخصي..." : "Saving Profile..."}
             </span>
           ) : (
-            <>Complete Profile</>
+            <>{isArabic ? "إكمال الملف الشخصي" : "Complete Profile"}</>
           )}
         </Button>
       </form>

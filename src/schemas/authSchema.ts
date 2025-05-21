@@ -4,10 +4,7 @@ import { z } from "zod";
 export const authSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  firstName: z.string().min(2, { message: "First name is required" }),
-  secondName: z.string().min(2, { message: "Second name is required" }),
-  thirdName: z.string().optional(),
-  lastName: z.string().min(2, { message: "Last name is required" }),
+  fullName: z.string().min(6, { message: "Please enter your full name as shown on your university ID" }),
   universityId: z.string()
     .regex(/^\d{7}$/, { message: "University ID must be exactly 7 digits" }),
   universityEmail: z.string()
@@ -26,10 +23,7 @@ export const authSchema = z.object({
 });
 
 export const profileCompletionSchema = z.object({
-  firstName: z.string().min(2, { message: "First name is required" }),
-  secondName: z.string().min(2, { message: "Second name is required" }),
-  thirdName: z.string().optional(),
-  lastName: z.string().min(2, { message: "Last name is required" }),
+  fullName: z.string().min(6, { message: "Please enter your full name as shown on your university ID" }),
   universityId: z.string()
     .regex(/^\d{7}$/, { message: "University ID must be exactly 7 digits" }),
   telegramUsername: z.string()
