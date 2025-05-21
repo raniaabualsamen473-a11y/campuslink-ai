@@ -1,3 +1,4 @@
+
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,31 +37,38 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
   };
 
   const checkUniversityIdExists = async (universityId: string) => {
-    // Use RPC function or a custom query to check university ID
+    // Use a custom query instead of RPC to check university ID
     const { data, error } = await supabase
-      .rpc('check_university_id_exists', { uni_id: universityId })
+      .from('auth.users')
+      .select('id')
+      .eq('raw_user_meta_data->>university_id', universityId)
       .single();
       
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 is the error code for "no rows returned"
       console.error("Error checking university ID:", error);
       return false;
     }
     
-    return data?.exists || false;
+    // If we got data back, the ID exists
+    return !!data;
   };
 
   const checkUniversityEmailExists = async (universityEmail: string) => {
-    // Use RPC function or a custom query to check university email
+    // Use a custom query instead of RPC to check university email
     const { data, error } = await supabase
-      .rpc('check_university_email_exists', { uni_email: universityEmail })
+      .from('auth.users')
+      .select('id')
+      .eq('raw_user_meta_data->>university_email', universityEmail)
       .single();
       
-    if (error) {
+    if (error && error.code !== 'PGRST116') {
       console.error("Error checking university email:", error);
       return false;
     }
     
-    return data?.exists || false;
+    // If we got data back, the email exists
+    return !!data;
   };
 
   const signUpWithEmail = async (email: string, password: string, userData?: {
