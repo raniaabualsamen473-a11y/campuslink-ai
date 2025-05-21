@@ -6,7 +6,7 @@ export const authSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   firstName: z.string().min(1, { message: "First name is required" }),
   secondName: z.string().min(1, { message: "Second name is required" }).optional(),
-  thirdName: z.string().min(1, { message: "Third name is required" }).optional(),
+  thirdName: z.string().optional().or(z.literal('')),
   lastName: z.string().min(1, { message: "Last name is required" }),
   fullName: z.string().min(6, { message: "Please enter your full name as shown on your university ID" }),
   universityId: z.string()
