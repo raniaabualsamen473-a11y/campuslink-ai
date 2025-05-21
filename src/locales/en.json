@@ -1,3 +1,4 @@
+
 {
   "common": {
     "languageName": "English",
@@ -129,9 +130,7 @@
     "Add New Course": "Add New Course",
     "Select a course": "Select a course",
     "Enter Course Name": "Enter Course Name",
-    "Course": "Course",
-    "Search courses...": "Search courses...",
-    "No match found. You can type in the name of the desired course.": "No match found. You can type in the name of the desired course."
+    "Course": "Course"
   },
   "contact": {
     "title": "Contact Information",

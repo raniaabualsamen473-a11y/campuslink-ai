@@ -8,6 +8,9 @@ interface CourseMatchGroupProps {
 }
 
 export const CourseMatchGroup = ({ courseName, matches }: CourseMatchGroupProps) => {
+  // Sort matches by percentage (highest first)
+  const sortedMatches = [...matches].sort((a, b) => b.matchPercent - a.matchPercent);
+  
   return (
     <div className="space-y-4">
       <h3 className="font-semibold text-lg text-campus-darkPurple border-b border-campus-purple/20 pb-2">
@@ -18,7 +21,7 @@ export const CourseMatchGroup = ({ courseName, matches }: CourseMatchGroupProps)
       </h3>
       
       <div className="space-y-4">
-        {matches.map((match) => (
+        {sortedMatches.map((match) => (
           <MatchCard key={match.id} match={match} />
         ))}
       </div>
