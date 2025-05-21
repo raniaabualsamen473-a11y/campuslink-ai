@@ -29,6 +29,9 @@ const Auth = () => {
       setAuthMode("signin");
     }
 
+    console.log("Auth page - User state:", user ? "Logged in" : "Not logged in");
+    console.log("Profile complete:", isProfileComplete);
+
     // Check if user is already logged in
     if (user) {
       console.log("User is logged in, checking profile completion status");
@@ -48,10 +51,16 @@ const Auth = () => {
   const handleSubmit = async (values: AuthFormValues) => {
     setIsSubmitting(true);
     try {
+      console.log(`Handling ${authMode} submission`);
+      
       if (authMode === "signin") {
+        console.log("Signing in with:", values.email);
         const result = await signInWithEmail(values.email, values.password);
+        console.log("Sign in result:", result.data ? "Success" : "Failed", result.error);
+        
         if (result.data) {
           // Success! Check if profile needs completion in the useEffect above
+          console.log("Sign in successful, user should be redirected by useEffect");
         }
       } else {
         // For signup, create full name from parts if not already set
@@ -78,9 +87,13 @@ const Auth = () => {
           last_name: values.lastName
         };
         
+        console.log("Signing up with:", values.email, userData);
         const result = await signUpWithEmail(values.email, values.password, userData);
+        console.log("Sign up result:", result.data ? "Success" : "Verification needed/Failed", result.error);
+        
         if (result.data) {
           // Profile should be complete since we collected all data at signup
+          console.log("Sign up with immediate session successful, redirecting to swap-requests");
           navigate("/swap-requests", { replace: true });
         }
       }

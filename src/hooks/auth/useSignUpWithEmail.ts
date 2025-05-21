@@ -16,7 +16,7 @@ type UserSignupData = {
 };
 
 // Define the base URL for the application
-const APP_BASE_URL = "https://campuslink.app";
+const APP_BASE_URL = "https://preview--campuslink-ai.lovable.app";
 
 export const useSignUpWithEmail = () => {
   const { checkUniversityIdExists, checkUniversityEmailExists } = useProfileVerification();
