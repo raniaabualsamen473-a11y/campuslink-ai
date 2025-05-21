@@ -17,15 +17,6 @@ import { toast } from "sonner";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { LanguageProvider } from "./components/LanguageProvider";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -58,43 +49,56 @@ const Home = () => {
   return <Index />;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="campuslink-theme">
-      <LanguageProvider defaultLanguage="en" storageKey="campuslink-language">
-        <TooltipProvider>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Home />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/swap-requests" element={
-                    <ProtectedRoute>
-                      <SwapRequests />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/petitions" element={
-                    <ProtectedRoute>
-                      <Petitions />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </LanguageProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+// Create App component with QueryClient initialization inside
+const App = () => {
+  // Move queryClient initialization inside the component
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="dark" storageKey="campuslink-theme">
+        <LanguageProvider defaultLanguage="en" storageKey="campuslink-language">
+          <TooltipProvider>
+            <AuthProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Home />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/swap-requests" element={
+                      <ProtectedRoute>
+                        <SwapRequests />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/petitions" element={
+                      <ProtectedRoute>
+                        <Petitions />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
+                </Routes>
+              </BrowserRouter>
+            </AuthProvider>
+          </TooltipProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
