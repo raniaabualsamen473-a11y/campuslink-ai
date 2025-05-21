@@ -22,6 +22,13 @@ const Auth = () => {
   const isVerified = new URLSearchParams(location.search).get('verified') === 'true';
 
   useEffect(() => {
+    // If verification was successful, show a toast message
+    if (isVerified) {
+      toast.success("Email verified successfully! Please sign in.");
+      // Automatically switch to sign in tab if verified
+      setAuthMode("signin");
+    }
+
     // Check if user is already logged in
     if (user) {
       console.log("User is logged in, checking profile completion status");
@@ -35,11 +42,6 @@ const Auth = () => {
         console.log("Profile is complete, redirecting to swap-requests");
         navigate("/swap-requests", { replace: true });
       }
-    }
-    
-    // Handle email verification success
-    if (isVerified) {
-      toast.success("Email verified successfully! Please sign in.");
     }
   }, [user, isProfileComplete, navigate, isVerified]);
 

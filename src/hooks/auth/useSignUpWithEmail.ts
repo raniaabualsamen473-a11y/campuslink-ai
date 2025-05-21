@@ -1,3 +1,4 @@
+
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -13,6 +14,9 @@ type UserSignupData = {
   university_id?: string;
   university_email?: string;
 };
+
+// Define the base URL for the application
+const APP_BASE_URL = "https://campuslink.app";
 
 export const useSignUpWithEmail = () => {
   const { checkUniversityIdExists, checkUniversityEmailExists } = useProfileVerification();
@@ -68,12 +72,16 @@ export const useSignUpWithEmail = () => {
         university_email: userData?.university_email || null,
       };
 
+      // Use the hardcoded APP_BASE_URL instead of window.location.origin
+      const redirectUrl = `${APP_BASE_URL}/auth?verified=true`;
+      console.log("Using redirect URL for verification:", redirectUrl);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: metadata,
-          emailRedirectTo: window.location.origin + '/auth?verified=true'
+          emailRedirectTo: redirectUrl
         },
       });
 

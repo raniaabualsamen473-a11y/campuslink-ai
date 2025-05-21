@@ -25,6 +25,9 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Define the base URL for the application
+const APP_BASE_URL = "https://campuslink.app";
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -41,13 +44,16 @@ const handler = async (req: Request): Promise<Response> => {
     let bodyHtml = "";
 
     if (type === "email_confirmation") {
+      // Ensure we use our hardcoded URL instead of any passed URL
+      const confirmationUrl = details.confirmationUrl || `${APP_BASE_URL}/auth?verified=true`;
+      
       subject = `Verify Your Email - CampusLink`;
       bodyHtml = `
         <h1>Verify Your Email Address</h1>
         <p>Hi ${name},</p>
         <p>Thank you for creating an account with CampusLink. To complete your registration, please verify your email address by clicking the button below:</p>
         <p style="text-align: center; margin: 30px 0;">
-          <a href="${details.confirmationUrl}" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+          <a href="${confirmationUrl}" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
             Verify Email Address
           </a>
         </p>
