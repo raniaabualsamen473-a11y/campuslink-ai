@@ -36,21 +36,30 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
   };
 
   const checkUniversityIdExists = async (universityId: string) => {
-    // We can't directly query auth.users, so instead we need to find users with this metadata
-    // We'll check in all publicly accessible tables for matching university_id
     try {
-      // Query existing users by university ID in their metadata
-      const { count, error } = await supabase
+      // First fetch user IDs that might have this university ID in their metadata
+      const { data: userIdsData } = await supabase
         .from('user_roles')
-        .select('user_id', { count: 'exact', head: true })
-        .filter('user_id', 'in', supabase.rpc('get_users_by_meta', { meta_key: 'university_id', meta_value: universityId }));
+        .select('user_id');
       
-      if (error) {
-        console.error("Error checking university ID:", error);
+      if (!userIdsData || userIdsData.length === 0) {
         return false;
       }
       
-      return count !== null && count > 0;
+      // Now check each user to see if they have the matching university ID
+      // Since we can't directly query auth.users metadata, we'll use the auth.getUser function
+      for (const { user_id } of userIdsData) {
+        try {
+          const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+          if (userData?.user?.user_metadata?.university_id === universityId) {
+            return true;
+          }
+        } catch (error) {
+          console.error(`Error checking user ${user_id}:`, error);
+        }
+      }
+      
+      return false;
     } catch (error) {
       console.error("Error in checkUniversityIdExists:", error);
       return false;
@@ -58,20 +67,29 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
   };
 
   const checkUniversityEmailExists = async (universityEmail: string) => {
-    // Similar approach for university email
     try {
-      // Query existing users by university email in their metadata
-      const { count, error } = await supabase
+      // First fetch user IDs that might have this university email in their metadata
+      const { data: userIdsData } = await supabase
         .from('user_roles')
-        .select('user_id', { count: 'exact', head: true })
-        .filter('user_id', 'in', supabase.rpc('get_users_by_meta', { meta_key: 'university_email', meta_value: universityEmail }));
+        .select('user_id');
       
-      if (error) {
-        console.error("Error checking university email:", error);
+      if (!userIdsData || userIdsData.length === 0) {
         return false;
       }
       
-      return count !== null && count > 0;
+      // Now check each user to see if they have the matching university email
+      for (const { user_id } of userIdsData) {
+        try {
+          const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+          if (userData?.user?.user_metadata?.university_email === universityEmail) {
+            return true;
+          }
+        } catch (error) {
+          console.error(`Error checking user ${user_id}:`, error);
+        }
+      }
+      
+      return false;
     } catch (error) {
       console.error("Error in checkUniversityEmailExists:", error);
       return false;
