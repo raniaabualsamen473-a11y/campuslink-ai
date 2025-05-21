@@ -1,4 +1,3 @@
-
 {
   "common": {
     "languageName": "English",
@@ -98,5 +97,47 @@
     "forgotPassword": "Forgot Password?",
     "noAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?"
+  },
+  "courses": {
+    "Calculus I": "Calculus I",
+    "Calculus II": "Calculus II",
+    "Linear Algebra": "Linear Algebra",
+    "Physics": "Physics",
+    "Chemistry": "Chemistry",
+    "Biology": "Biology",
+    "Computer Science": "Computer Science",
+    "Economics": "Economics",
+    "Psychology": "Psychology",
+    "Introduction to Programming": "Introduction to Programming",
+    "Data Structures": "Data Structures",
+    "Database Systems": "Database Systems",
+    "Artificial Intelligence": "Artificial Intelligence",
+    "Software Engineering": "Software Engineering",
+    "Web Development": "Web Development",
+    "Statistics": "Statistics",
+    "Marketing": "Marketing",
+    "Finance": "Finance",
+    "Accounting": "Accounting",
+    "Management": "Management",
+    "English Literature": "English Literature",
+    "Arabic Literature": "Arabic Literature",
+    "History": "History",
+    "Geography": "Geography",
+    "Political Science": "Political Science",
+    "Sociology": "Sociology",
+    "other": "Other",
+    "Add New Course": "Add New Course",
+    "Select a course": "Select a course",
+    "Enter Course Name": "Enter Course Name",
+    "Course": "Course",
+    "Search courses...": "Search courses...",
+    "No match found. You can type in the name of the desired course.": "No match found. You can type in the name of the desired course."
+  },
+  "contact": {
+    "title": "Contact Information",
+    "telegramUsername": "Your Telegram Username",
+    "usageInfo": "Used to connect you with matching students",
+    "anonymous": "Submit Anonymously",
+    "anonymousInfo": "Your name won't be visible to other students"
   }
 }
