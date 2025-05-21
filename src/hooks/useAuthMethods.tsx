@@ -1,3 +1,4 @@
+
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -99,6 +100,10 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
   const signUpWithEmail = async (email: string, password: string, userData?: {
     telegram_username?: string;
     full_name?: string;
+    first_name?: string;
+    second_name?: string;
+    third_name?: string;
+    last_name?: string;
     university_id?: string;
     university_email?: string;
   }) => {
@@ -125,6 +130,10 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
       const metadata = {
         telegram_username: userData?.telegram_username || null,
         full_name: userData?.full_name || null,
+        first_name: userData?.first_name || null,
+        second_name: userData?.second_name || null,
+        third_name: userData?.third_name || null,
+        last_name: userData?.last_name || null,
         university_id: userData?.university_id || null,
         university_email: userData?.university_email || null,
       };

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,12 +40,28 @@ const Auth = () => {
           // Success! Check if profile needs completion in the useEffect above
         }
       } else {
+        // For signup, create full name from parts if not already set
+        if (!values.fullName && (values.firstName || values.lastName)) {
+          const nameParts = [
+            values.firstName || "",
+            values.secondName || "",
+            values.thirdName || "",
+            values.lastName || ""
+          ].filter(Boolean);
+          
+          values.fullName = nameParts.join(" ");
+        }
+        
         // For signup, include additional user data
         const userData = {
           full_name: values.fullName,
           university_id: values.universityId,
           university_email: values.universityEmail,
           telegram_username: values.telegramUsername,
+          first_name: values.firstName,
+          second_name: values.secondName,
+          third_name: values.thirdName, 
+          last_name: values.lastName
         };
         
         const result = await signUpWithEmail(values.email, values.password, userData);

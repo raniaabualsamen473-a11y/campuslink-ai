@@ -21,6 +21,10 @@ const SignUpForm = ({ isSubmitting, onSubmit }: SignUpFormProps) => {
     defaultValues: {
       email: "",
       password: "",
+      firstName: "",
+      secondName: "",
+      thirdName: "",
+      lastName: "",
       fullName: "",
       universityId: "",
       universityEmail: "",
