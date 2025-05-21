@@ -20,7 +20,7 @@ interface CourseSelectionFieldsProps {
 export const CourseSelectionFields = ({
   courseName,
   customCourseName,
-  courses,
+  courses = [], // Provide default empty array
   setCourseName,
   setCustomCourseName
 }: CourseSelectionFieldsProps) => {
@@ -31,22 +31,24 @@ export const CourseSelectionFields = ({
 
   // Initialize filteredCourses with the full course list
   useEffect(() => {
-    setFilteredCourses(courses || []);
+    // Ensure courses is always an array even if it's undefined
+    setFilteredCourses(Array.isArray(courses) ? courses : []);
   }, [courses]);
 
   // Filter courses based on search query
   useEffect(() => {
-    if (!courses) return;
+    // Ensure courses is always an array
+    const coursesList = Array.isArray(courses) ? courses : [];
     
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
-      const filtered = courses.filter(course => 
+      const filtered = coursesList.filter(course => 
         course.toLowerCase().includes(lowercaseQuery) || 
         (language === 'ar' && t(`courses.${course}`, { defaultValue: course }).toLowerCase().includes(lowercaseQuery))
       );
       setFilteredCourses(filtered);
     } else {
-      setFilteredCourses(courses);
+      setFilteredCourses(coursesList);
     }
   }, [searchQuery, courses, language, t]);
 
@@ -113,7 +115,7 @@ export const CourseSelectionFields = ({
               </Button>
             </CommandEmpty>
             <CommandGroup className="max-h-[300px] overflow-y-auto">
-              {filteredCourses.map((course) => (
+              {filteredCourses && filteredCourses.length > 0 && filteredCourses.map((course) => (
                 <CommandItem
                   key={course}
                   value={course}
