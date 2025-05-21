@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ProfileCompletionForm from "@/components/auth/ProfileCompletionForm";
 import { ProfileCompletionValues } from "@/schemas/authSchema";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ProfileCompletionHeader } from "@/components/auth/ProfileCompletionHeader";
 
 const ProfileCompletion = () => {
   const navigate = useNavigate();
@@ -40,7 +42,7 @@ const ProfileCompletion = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-        <div className="animate-glow-pulse rounded-full h-12 w-12 border-2 border-campus-purple"></div>
+        <LoadingSpinner size="md" />
       </div>
     );
   }
@@ -49,17 +51,7 @@ const ProfileCompletion = () => {
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-10rem)] px-4 py-12">
       <Card className="w-full max-w-md shadow-glass">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img 
-              src="https://pbqpbupsmzafbzlxccov.supabase.co/storage/v1/object/public/logo//CampusLink.ai(Logo)%20(Logo).png" 
-              alt="CampusLink AI Logo" 
-              className="h-16 w-16 object-contain"
-            />
-          </div>
-          <CardTitle className="text-2xl font-bold text-foreground">Complete Your Profile</CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Please provide the following information to complete your profile
-          </CardDescription>
+          <ProfileCompletionHeader />
         </CardHeader>
         <CardContent className="glass-card backdrop-blur-md">
           <ProfileCompletionForm 
