@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,8 +16,16 @@ import { toast } from "sonner";
 const authSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  fullName: z.string().min(2, { message: "Full name is required" }).optional().or(z.literal('')),
-  universityId: z.string().optional().or(z.literal('')),
+  firstName: z.string().min(2, { message: "First name is required" }),
+  secondName: z.string().min(2, { message: "Second name is required" }),
+  thirdName: z.string().min(2, { message: "Third name is required" }),
+  lastName: z.string().min(2, { message: "Last name is required" }),
+  universityId: z.string()
+    .regex(/^\d{7}$/, { message: "University ID must be exactly 7 digits" }),
+  universityEmail: z.string()
+    .regex(/^[a-z]{3}\d{7}@ju\.edu\.jo$/, { 
+      message: "University email must follow the format: abc1234567@ju.edu.jo" 
+    }),
   telegramUsername: z.string()
     .refine(val => !val || !/^@/.test(val), {
       message: "Please enter the username without the @ symbol"
@@ -43,11 +51,28 @@ const Auth = () => {
     defaultValues: {
       email: "",
       password: "",
-      fullName: "",
+      firstName: "",
+      secondName: "",
+      thirdName: "",
+      lastName: "",
       universityId: "",
+      universityEmail: "",
       telegramUsername: "",
     },
+    mode: "onChange"
   });
+
+  const watchFirstName = form.watch("firstName");
+  const watchUniversityId = form.watch("universityId");
+
+  // Auto-generate university email when first name and university ID change
+  useEffect(() => {
+    if (watchFirstName && watchUniversityId && watchFirstName.length >= 3 && watchUniversityId.length === 7) {
+      const firstThreeLetters = watchFirstName.slice(0, 3).toLowerCase();
+      const universityEmail = `${firstThreeLetters}${watchUniversityId}@ju.edu.jo`;
+      form.setValue("universityEmail", universityEmail);
+    }
+  }, [watchFirstName, watchUniversityId, form]);
 
   useEffect(() => {
     // Check if user is already logged in and redirect
@@ -68,9 +93,15 @@ const Auth = () => {
         }
       } else {
         // For signup, include additional user data
+        const fullName = `${values.firstName} ${values.secondName} ${values.thirdName} ${values.lastName}`;
         const userData = {
-          full_name: values.fullName,
+          full_name: fullName,
+          first_name: values.firstName,
+          second_name: values.secondName,
+          third_name: values.thirdName,
+          last_name: values.lastName,
           university_id: values.universityId,
+          university_email: values.universityEmail,
           telegram_username: values.telegramUsername,
         };
         
@@ -158,40 +189,123 @@ const Auth = () => {
 
                 {authMode === "signup" && (
                   <>
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Full Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="John Doe" 
-                              {...field} 
-                              className="glass-input"
-                              required
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">First Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="First" 
+                                {...field} 
+                                className="glass-input"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="secondName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">Second Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Second" 
+                                {...field} 
+                                className="glass-input"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="thirdName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">Third Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Third" 
+                                {...field} 
+                                className="glass-input"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">Last Name</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Last" 
+                                {...field} 
+                                className="glass-input"
+                                required
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <FormField
                       control={form.control}
                       name="universityId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-foreground">University ID</FormLabel>
+                          <FormLabel className="text-foreground">University ID (7 digits)</FormLabel>
                           <FormControl>
                             <Input 
-                              placeholder="Your student ID number" 
+                              placeholder="1234567" 
                               {...field} 
                               className="glass-input"
                               required
+                              maxLength={7}
                             />
                           </FormControl>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="universityEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">University Email</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="abc1234567@ju.edu.jo" 
+                              {...field} 
+                              className="glass-input"
+                              required
+                              readOnly
+                            />
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Auto-generated from your first name and university ID
+                          </p>
                         </FormItem>
                       )}
                     />
