@@ -18,13 +18,9 @@ export const CourseMatchGroup = ({ courseName, matches }: CourseMatchGroupProps)
       </h3>
       
       <div className="space-y-4">
-        {matches.length > 0 ? (
-          matches.map((match) => (
-            <MatchCard key={match.id} match={match} />
-          ))
-        ) : (
-          <div className="text-sm text-gray-500 italic">No matches found for this course</div>
-        )}
+        {matches.map((match) => (
+          <MatchCard key={match.id} match={match} />
+        ))}
       </div>
     </div>
   );

@@ -1,13 +1,10 @@
 
 import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTranslate } from "@/components/LanguageProvider";
-import { Search, X } from "lucide-react";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
 
 interface CourseSelectionFieldsProps {
   courseName: string;
@@ -20,118 +17,79 @@ interface CourseSelectionFieldsProps {
 export const CourseSelectionFields = ({
   courseName,
   customCourseName,
-  courses = [], // Provide default empty array
+  courses,
   setCourseName,
   setCustomCourseName
 }: CourseSelectionFieldsProps) => {
   const { t, language } = useTranslate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredCourses, setFilteredCourses] = useState<string[]>([]);
-  const [open, setOpen] = useState(false);
-
-  // Initialize filteredCourses with the full course list
-  useEffect(() => {
-    // Ensure courses is always an array even if it's undefined
-    setFilteredCourses(Array.isArray(courses) ? [...courses] : []);
-  }, [courses]);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [filteredCourses, setFilteredCourses] = useState<string[]>(courses);
 
   // Filter courses based on search query
   useEffect(() => {
-    // Ensure courses is always an array
-    const coursesList = Array.isArray(courses) ? [...courses] : [];
-    
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
-      const filtered = coursesList.filter(course => 
-        course?.toLowerCase().includes(lowercaseQuery) || 
+      const filtered = courses.filter(course => 
+        course.toLowerCase().includes(lowercaseQuery) || 
         (language === 'ar' && t(`courses.${course}`, { defaultValue: course }).toLowerCase().includes(lowercaseQuery))
       );
       setFilteredCourses(filtered);
     } else {
-      setFilteredCourses(coursesList);
+      setFilteredCourses(courses);
     }
   }, [searchQuery, courses, language, t]);
 
-  const handleSelect = (value: string) => {
-    setCourseName(value);
-    setOpen(false);
-    setSearchQuery("");
-  };
-
-  const clearSelection = () => {
-    setCourseName("");
-    setCustomCourseName("");
-    setOpen(false);
-  };
+  // Reset search query when dropdown closes
+  useEffect(() => {
+    if (!isSelectOpen) {
+      setSearchQuery("");
+      setFilteredCourses(courses);
+    }
+  }, [isSelectOpen, courses]);
 
   return (
     <div className="space-y-2">
       <Label htmlFor="course" className="text-foreground">{t('courses.Course')}</Label>
-      
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between bg-white dark:bg-gray-900 border-input h-10"
-          >
-            <span className="truncate">
-              {courseName === "other" 
-                ? customCourseName || t('courses.Add New Course')
-                : courseName 
-                  ? (language === 'ar' ? t(`courses.${courseName}`, { defaultValue: courseName }) : courseName)
-                  : t('courses.Select a course')
-              }
-            </span>
-            {courseName && (
-              <X 
-                className="ml-2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  clearSelection();
-                }}
+      <Select 
+        value={courseName} 
+        onValueChange={setCourseName}
+        onOpenChange={(open) => setIsSelectOpen(open)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder={t('courses.Select a course')} />
+        </SelectTrigger>
+        <SelectContent className="bg-white dark:bg-gray-800 text-foreground max-h-[300px]">
+          <div className="sticky top-0 p-2 bg-white dark:bg-gray-800 z-10 border-b">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('courses.Search courses...')}
+                className="pl-8 text-sm"
               />
-            )}
-            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full p-0" align="start">
-          <Command className="rounded-lg border shadow-md">
-            <CommandInput
-              placeholder={t('courses.Search courses...')}
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              className="h-9"
-            />
-            <CommandEmpty>
+            </div>
+          </div>
+          
+          {filteredCourses.length > 0 ? (
+            filteredCourses.map((course) => (
+              <SelectItem key={course} value={course} className="cursor-pointer">
+                {language === 'ar' ? t(`courses.${course}`, { defaultValue: course }) : course}
+              </SelectItem>
+            ))
+          ) : (
+            <div className="p-2 text-sm text-muted-foreground">
               {t('courses.No match found. You can type in the name of the desired course.')}
-              <Button
-                variant="ghost"
-                onClick={() => handleSelect("other")}
-                className="w-full justify-start text-left mt-2 text-sm text-campus-purple"
-              >
-                + {t('courses.Add New Course')}
-              </Button>
-            </CommandEmpty>
-            <CommandGroup className="max-h-[300px] overflow-y-auto">
-              {Array.isArray(filteredCourses) && filteredCourses.length > 0 && filteredCourses.map((course) => (
-                <CommandItem
-                  key={course}
-                  value={course}
-                  onSelect={() => handleSelect(course)}
-                  className="cursor-pointer"
-                >
-                  <span>{language === 'ar' ? t(`courses.${course}`, { defaultValue: course }) : course}</span>
-                </CommandItem>
-              ))}
-              <CommandItem onSelect={() => handleSelect("other")} className="border-t mt-1 pt-1">
-                + {t('courses.Add New Course')}
-              </CommandItem>
-            </CommandGroup>
-          </Command>
-        </PopoverContent>
-      </Popover>
+            </div>
+          )}
+          
+          <SelectItem value="other" className="border-t mt-1 pt-1">
+            + {t('courses.Add New Course')}
+          </SelectItem>
+        </SelectContent>
+      </Select>
       
       {courseName === "other" && (
         <div className="mt-2">
@@ -141,7 +99,7 @@ export const CourseSelectionFields = ({
             value={customCourseName}
             onChange={(e) => setCustomCourseName(e.target.value)}
             placeholder={t('courses.Enter Course Name')}
-            className="mt-1 text-foreground bg-white dark:bg-gray-900" 
+            className="mt-1 text-foreground" 
           />
         </div>
       )}
