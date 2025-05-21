@@ -27,7 +27,7 @@ export const UniversityEmailField = ({ form }: UniversityEmailFieldProps) => {
           </FormControl>
           <FormMessage />
           <p className="text-xs text-muted-foreground mt-1">
-            Auto-generated from your university ID
+            Auto-generated from your name and university ID
           </p>
         </FormItem>
       )}

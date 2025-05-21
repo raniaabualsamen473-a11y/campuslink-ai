@@ -14,8 +14,9 @@ export const useProfileCompletion = ({ setUser }: UseProfileCompletionProps) => 
 
   const completeUserProfile = async (profileData: ProfileCompletionValues) => {
     try {
-      // Generate university email from ID
-      const universityEmail = `${profileData.universityId.slice(0, 3)}${profileData.universityId}@ju.edu.jo`;
+      // Generate university email from name and ID
+      const namePrefix = profileData.fullName.slice(0, 3).toLowerCase();
+      const universityEmail = `${namePrefix}${profileData.universityId}@ju.edu.jo`;
       
       // Check if university ID is already in use by another user
       const { exists: universityIdExists } = await checkUniversityIdExists(profileData.universityId);

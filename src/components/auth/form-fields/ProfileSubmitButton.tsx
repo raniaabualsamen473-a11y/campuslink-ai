@@ -1,5 +1,6 @@
 
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface ProfileSubmitButtonProps {
   isSubmitting: boolean;
@@ -17,8 +18,8 @@ export const ProfileSubmitButton = ({ isSubmitting, text, loadingText }: Profile
     >
       {isSubmitting ? (
         <span className="flex items-center">
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-          {loadingText}
+          <LoadingSpinner size="sm" color="white" />
+          <span className="ml-2">{loadingText}</span>
         </span>
       ) : (
         <>{text}</>

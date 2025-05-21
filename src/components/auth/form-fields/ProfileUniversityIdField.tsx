@@ -14,10 +14,13 @@ export const ProfileUniversityIdField = ({ form }: ProfileUniversityIdFieldProps
   const { language } = useLanguage();
   const isArabic = language === 'ar';
   
-  // Watch university ID to generate email
+  // Watch university ID and full name to generate email
   const universityId = form.watch("universityId");
-  const universityEmail = universityId && universityId.length === 7 
-    ? `${universityId.slice(0, 3)}${universityId}@ju.edu.jo` 
+  const fullName = form.watch("fullName");
+  
+  // Generate email using first 3 characters of the name and university ID
+  const universityEmail = (universityId && universityId.length === 7 && fullName) 
+    ? `${fullName.slice(0, 3).toLowerCase()}${universityId}@ju.edu.jo` 
     : "";
 
   return (
@@ -44,7 +47,7 @@ export const ProfileUniversityIdField = ({ form }: ProfileUniversityIdFieldProps
         )}
       />
 
-      {universityId && universityId.length === 7 && (
+      {universityId && universityId.length === 7 && fullName && (
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">
             {isArabic ? "البريد الإلكتروني الجامعي" : "University Email"}
@@ -56,8 +59,8 @@ export const ProfileUniversityIdField = ({ form }: ProfileUniversityIdFieldProps
           />
           <p className="text-xs text-muted-foreground">
             {isArabic 
-              ? "تم إنشاؤه تلقائيًا من رقم الطالب الجامعي" 
-              : "Auto-generated from your university ID"}
+              ? "تم إنشاؤه تلقائيًا من اسمك ورقم الطالب الجامعي" 
+              : "Auto-generated from your name and university ID"}
           </p>
         </div>
       )}

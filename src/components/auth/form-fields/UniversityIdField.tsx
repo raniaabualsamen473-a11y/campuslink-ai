@@ -11,15 +11,16 @@ interface UniversityIdFieldProps {
 
 export const UniversityIdField = ({ form }: UniversityIdFieldProps) => {
   const watchUniversityId = form.watch("universityId");
+  const watchFullName = form.watch("fullName");
   
-  // Auto-generate university email when university ID changes
+  // Auto-generate university email when university ID or full name changes
   useEffect(() => {
-    if (watchUniversityId && watchUniversityId.length === 7) {
-      const firstThreeLetters = watchUniversityId.slice(0, 3).toLowerCase();
+    if (watchUniversityId && watchUniversityId.length === 7 && watchFullName) {
+      const firstThreeLetters = watchFullName.slice(0, 3).toLowerCase();
       const universityEmail = `${firstThreeLetters}${watchUniversityId}@ju.edu.jo`;
       form.setValue("universityEmail", universityEmail);
     }
-  }, [watchUniversityId, form]);
+  }, [watchUniversityId, watchFullName, form]);
 
   return (
     <FormField
