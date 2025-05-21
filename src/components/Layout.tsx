@@ -12,7 +12,7 @@ const Layout = () => {
 
   return (
     <div className={cn(
-      "flex flex-col min-h-screen bg-gradient-to-br from-background to-background/95",
+      "flex flex-col min-h-screen bg-gradient-to-br from-background to-background dark:from-background dark:to-background/95",
       isRTL && "rtl"
     )}>
       <Navbar 
