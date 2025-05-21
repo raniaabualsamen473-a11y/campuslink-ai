@@ -17,6 +17,25 @@ type UserSignupData = {
 export const useSignUpWithEmail = () => {
   const { checkUniversityIdExists, checkUniversityEmailExists } = useProfileVerification();
 
+  const sendWelcomeEmail = async (email: string, name: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("send-notification", {
+        body: {
+          type: "welcome",
+          email: email,
+          name: name || email,
+          details: {}
+        }
+      });
+      
+      if (error) {
+        console.error("Error sending welcome email:", error);
+      }
+    } catch (error) {
+      console.error("Failed to send welcome email:", error);
+    }
+  };
+
   const signUpWithEmail = async (email: string, password: string, userData?: UserSignupData) => {
     try {
       // Check if university ID is already in use
@@ -54,11 +73,19 @@ export const useSignUpWithEmail = () => {
         password,
         options: {
           data: metadata,
+          emailRedirectTo: window.location.origin + '/auth?verified=true'
         },
       });
 
       if (error) {
-        toast.error(error.message || "Failed to sign up");
+        // Handle specific errors
+        if (error.message.includes("User already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else if (error.message.includes("rate limit")) {
+          toast.error("Too many attempts. Please try again later.");
+        } else {
+          toast.error(error.message || "Failed to sign up");
+        }
         console.error("Sign up error:", error);
         return { error, data: null };
       }
@@ -66,12 +93,18 @@ export const useSignUpWithEmail = () => {
       // If email confirmation is not required, we'll have a session
       if (data.session) {
         toast.success("Account created! You are now logged in.");
+        
+        // Send welcome email if user is immediately logged in
+        if (data.user) {
+          await sendWelcomeEmail(email, userData?.full_name || email.split('@')[0]);
+        }
+        
         return { data: data.session, error: null };
       }
       
       // Otherwise, show a message about email confirmation
-      toast.success("Account created! Check your email for verification.", {
-        duration: 6000,
+      toast.success("Account created! Please check your email for verification.", {
+        duration: 8000,
       });
       
       return { data: null, error: null };

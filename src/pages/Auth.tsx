@@ -1,18 +1,25 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircleIcon } from "lucide-react";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
 import { AuthFormValues } from "@/schemas/authSchema";
+import { toast } from "sonner";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading, isProfileComplete, signInWithEmail, signUpWithEmail } = useAuth();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check for verification success parameter
+  const isVerified = new URLSearchParams(location.search).get('verified') === 'true';
 
   useEffect(() => {
     // Check if user is already logged in
@@ -29,7 +36,12 @@ const Auth = () => {
         navigate("/swap-requests", { replace: true });
       }
     }
-  }, [user, isProfileComplete, navigate]);
+    
+    // Handle email verification success
+    if (isVerified) {
+      toast.success("Email verified successfully! Please sign in.");
+    }
+  }, [user, isProfileComplete, navigate, isVerified]);
 
   const handleSubmit = async (values: AuthFormValues) => {
     setIsSubmitting(true);
@@ -98,6 +110,16 @@ const Auth = () => {
           <CardDescription className="text-muted-foreground">
             Sign in or create an account to continue
           </CardDescription>
+          
+          {isVerified && (
+            <Alert className="mt-4 bg-green-50 border-green-200">
+              <CheckCircleIcon className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-800">Email verified!</AlertTitle>
+              <AlertDescription className="text-green-700">
+                Your email has been successfully verified. You can now sign in.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardHeader>
         <CardContent className="glass-card backdrop-blur-md">
           <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "signin" | "signup")}>
