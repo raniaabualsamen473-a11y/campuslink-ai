@@ -1,4 +1,3 @@
-
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,33 +36,31 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
   };
 
   const checkUniversityIdExists = async (universityId: string) => {
+    // Use RPC function or a custom query to check university ID
     const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .eq('raw_user_meta_data->university_id', universityId)
-      .maybeSingle();
+      .rpc('check_university_id_exists', { uni_id: universityId })
+      .single();
       
     if (error) {
       console.error("Error checking university ID:", error);
       return false;
     }
     
-    return !!data;
+    return data?.exists || false;
   };
 
   const checkUniversityEmailExists = async (universityEmail: string) => {
+    // Use RPC function or a custom query to check university email
     const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .eq('raw_user_meta_data->university_email', universityEmail)
-      .maybeSingle();
+      .rpc('check_university_email_exists', { uni_email: universityEmail })
+      .single();
       
     if (error) {
       console.error("Error checking university email:", error);
       return false;
     }
     
-    return !!data;
+    return data?.exists || false;
   };
 
   const signUpWithEmail = async (email: string, password: string, userData?: {
