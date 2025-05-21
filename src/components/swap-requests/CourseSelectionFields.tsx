@@ -32,18 +32,18 @@ export const CourseSelectionFields = ({
   // Initialize filteredCourses with the full course list
   useEffect(() => {
     // Ensure courses is always an array even if it's undefined
-    setFilteredCourses(Array.isArray(courses) ? courses : []);
+    setFilteredCourses(Array.isArray(courses) ? [...courses] : []);
   }, [courses]);
 
   // Filter courses based on search query
   useEffect(() => {
     // Ensure courses is always an array
-    const coursesList = Array.isArray(courses) ? courses : [];
+    const coursesList = Array.isArray(courses) ? [...courses] : [];
     
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
       const filtered = coursesList.filter(course => 
-        course.toLowerCase().includes(lowercaseQuery) || 
+        course?.toLowerCase().includes(lowercaseQuery) || 
         (language === 'ar' && t(`courses.${course}`, { defaultValue: course }).toLowerCase().includes(lowercaseQuery))
       );
       setFilteredCourses(filtered);
@@ -115,7 +115,7 @@ export const CourseSelectionFields = ({
               </Button>
             </CommandEmpty>
             <CommandGroup className="max-h-[300px] overflow-y-auto">
-              {filteredCourses && filteredCourses.length > 0 && filteredCourses.map((course) => (
+              {Array.isArray(filteredCourses) && filteredCourses.length > 0 && filteredCourses.map((course) => (
                 <CommandItem
                   key={course}
                   value={course}
