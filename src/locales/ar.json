@@ -1,3 +1,4 @@
+
 {
   "common": {
     "languageName": "العربية",
@@ -75,7 +76,7 @@
     "alreadySupported": "تم الدعم بالفعل",
     "generatePetitionForm": "إنشاء نموذج الالتماس",
     "supportPetition": "دعم الالتماس",
-    "signInToSupport": "��سجيل الدخول للدعم"
+    "signInToSupport": "تسجيل الدخول للدعم"
   },
   "swapRequests": {
     "title": "طلبات تبديل الدروس",
@@ -129,9 +130,7 @@
     "Add New Course": "إضافة مادة جديدة",
     "Select a course": "اختر مادة",
     "Enter Course Name": "أدخل اسم المادة",
-    "Course": "المادة",
-    "Search courses...": "البحث عن المساقات...",
-    "No match found. You can type in the name of the desired course.": "لم يتم العثور على نتائج. يمكنك كتابة اسم المساق المطلوب."
+    "Course": "المادة"
   },
   "contact": {
     "title": "معلومات الاتصال",
