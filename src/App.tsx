@@ -60,7 +60,7 @@ const Home = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="campuslink-theme">
+    <ThemeProvider defaultTheme="light" storageKey="campuslink-theme">
       <LanguageProvider defaultLanguage="en" storageKey="campuslink-language">
         <TooltipProvider>
           <AuthProvider>

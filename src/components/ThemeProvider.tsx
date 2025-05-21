@@ -23,7 +23,7 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 export function ThemeProvider({
   children,
-  defaultTheme = "dark", // Changed from "system" to "dark"
+  defaultTheme = "system",
   storageKey = "campuslink-theme",
   ...props
 }: ThemeProviderProps) {
