@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,17 +10,26 @@ import { AuthFormValues } from "@/schemas/authSchema";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, isLoading, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { user, isLoading, isProfileComplete, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in and redirect
+    // Check if user is already logged in
     if (user) {
-      console.log("User is logged in, redirecting to swap-requests");
-      navigate("/swap-requests", { replace: true });
+      console.log("User is logged in, checking profile completion status");
+      
+      // If profile is not complete, redirect to profile completion
+      if (!isProfileComplete) {
+        console.log("Profile is incomplete, redirecting to profile completion");
+        navigate("/profile-completion", { replace: true });
+      } else {
+        // Otherwise go to swap requests
+        console.log("Profile is complete, redirecting to swap-requests");
+        navigate("/swap-requests", { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, isProfileComplete, navigate]);
 
   const handleSubmit = async (values: AuthFormValues) => {
     setIsSubmitting(true);
@@ -29,12 +37,14 @@ const Auth = () => {
       if (authMode === "signin") {
         const result = await signInWithEmail(values.email, values.password);
         if (result.data) {
-          // Success! The toast is already shown in the auth hook
-          navigate("/swap-requests", { replace: true });
+          // Success! Check if profile needs completion in the useEffect above
         }
       } else {
         // For signup, include additional user data
-        const fullName = `${values.firstName} ${values.secondName} ${values.thirdName} ${values.lastName}`;
+        const fullName = values.thirdName 
+          ? `${values.firstName} ${values.secondName} ${values.thirdName} ${values.lastName}`
+          : `${values.firstName} ${values.secondName} ${values.lastName}`;
+          
         const userData = {
           full_name: fullName,
           first_name: values.firstName,
@@ -48,6 +58,7 @@ const Auth = () => {
         
         const result = await signUpWithEmail(values.email, values.password, userData);
         if (result.data) {
+          // Profile should be complete since we collected all data at signup
           navigate("/swap-requests", { replace: true });
         }
       }

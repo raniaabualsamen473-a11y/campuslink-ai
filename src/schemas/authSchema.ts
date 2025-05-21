@@ -6,7 +6,7 @@ export const authSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
   firstName: z.string().min(2, { message: "First name is required" }),
   secondName: z.string().min(2, { message: "Second name is required" }),
-  thirdName: z.string().min(2, { message: "Third name is required" }),
+  thirdName: z.string().optional(),
   lastName: z.string().min(2, { message: "Last name is required" }),
   universityId: z.string()
     .regex(/^\d{7}$/, { message: "University ID must be exactly 7 digits" }),
@@ -23,6 +23,31 @@ export const authSchema = z.object({
     })
     .optional()
     .or(z.literal('')),
+}).refine(data => {
+  // Ensure that if thirdName is empty or undefined, we still have three name parts
+  return data.firstName && data.secondName && data.lastName;
+}, {
+  message: "Full name must contain at least first name, second name, and last name",
+  path: ["thirdName"],
+});
+
+export const profileCompletionSchema = z.object({
+  firstName: z.string().min(2, { message: "First name is required" }),
+  secondName: z.string().min(2, { message: "Second name is required" }),
+  thirdName: z.string().optional(),
+  lastName: z.string().min(2, { message: "Last name is required" }),
+  universityId: z.string()
+    .regex(/^\d{7}$/, { message: "University ID must be exactly 7 digits" }),
+  telegramUsername: z.string()
+    .refine(val => !val || !/^@/.test(val), {
+      message: "Please enter the username without the @ symbol"
+    })
+    .refine(val => !val || /^[a-zA-Z0-9_]+$/.test(val), {
+      message: "Username can only contain letters, numbers, and underscores"
+    })
+    .optional()
+    .or(z.literal('')),
 });
 
 export type AuthFormValues = z.infer<typeof authSchema>;
+export type ProfileCompletionValues = z.infer<typeof profileCompletionSchema>;

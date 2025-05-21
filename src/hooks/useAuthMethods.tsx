@@ -1,6 +1,8 @@
+
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ProfileCompletionValues } from "@/schemas/authSchema";
 
 interface UseAuthMethodsProps {
   setSession: React.Dispatch<React.SetStateAction<Session | null>>;
@@ -25,7 +27,7 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
         return { error, data: null };
       }
 
-      toast.success("Signed in successfully! Redirecting to your swap requests...");
+      toast.success("Signed in successfully!");
       return { data: data.session, error: null };
     } catch (error) {
       console.error("Sign in error:", error);
@@ -73,7 +75,7 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
 
       // If email confirmation is not required, we'll have a session
       if (data.session) {
-        toast.success("Account created! You are now logged in. Redirecting to your swap requests...");
+        toast.success("Account created! You are now logged in.");
         return { data: data.session, error: null };
       }
       
@@ -95,7 +97,7 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/swap-requests',
+          redirectTo: window.location.origin,
         }
       });
       
@@ -108,10 +110,49 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
     }
   };
 
+  const completeUserProfile = async (profileData: ProfileCompletionValues) => {
+    try {
+      // Prepare full name from parts
+      const fullName = profileData.thirdName 
+        ? `${profileData.firstName} ${profileData.secondName} ${profileData.thirdName} ${profileData.lastName}`
+        : `${profileData.firstName} ${profileData.secondName} ${profileData.lastName}`;
+      
+      // Generate university email from ID
+      const universityEmail = `${profileData.universityId.slice(0, 3)}${profileData.universityId}@ju.edu.jo`;
+      
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          full_name: fullName,
+          first_name: profileData.firstName,
+          second_name: profileData.secondName,
+          third_name: profileData.thirdName || null,
+          last_name: profileData.lastName,
+          university_id: profileData.universityId,
+          university_email: universityEmail,
+          telegram_username: profileData.telegramUsername || null,
+        }
+      });
+
+      if (error) {
+        toast.error(error.message || "Failed to update profile");
+        return { error, success: false };
+      }
+
+      setUser(data.user);
+      toast.success("Profile completed successfully!");
+      return { success: true, error: null };
+    } catch (error) {
+      console.error("Profile completion error:", error);
+      toast.error("An unexpected error occurred");
+      return { error, success: false };
+    }
+  };
+
   return {
     signOut,
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
+    completeUserProfile,
   };
 };
