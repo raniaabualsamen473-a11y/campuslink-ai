@@ -12,8 +12,8 @@ export const authSchema = z.object({
   universityId: z.string()
     .regex(/^\d{7}$/, { message: "University ID must be exactly 7 digits" }),
   universityEmail: z.string()
-    .regex(/^[a-z]{3}\d{7}@ju\.edu\.jo$/, { 
-      message: "University email must follow the format: abc1234567@ju.edu.jo" 
+    .regex(/^[a-zA-Z0-9_.+-]+@ju\.edu\.jo$/, { 
+      message: "University email must end with @ju.edu.jo" 
     }),
   telegramUsername: z.string()
     .refine(val => !val || !/^@/.test(val), {

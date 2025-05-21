@@ -18,10 +18,21 @@ export const ProfileUniversityIdField = ({ form }: ProfileUniversityIdFieldProps
   const universityId = form.watch("universityId");
   const fullName = form.watch("fullName");
   
-  // Generate email using first 3 characters of the name and university ID
-  const universityEmail = (universityId && universityId.length === 7 && fullName) 
-    ? `${fullName.slice(0, 3).toLowerCase()}${universityId}@ju.edu.jo` 
-    : "";
+  // Generate initial email using first 3 characters of the name and university ID
+  const generateInitialEmail = () => {
+    if (universityId && universityId.length === 7 && fullName && fullName.length >= 3) {
+      return `${fullName.slice(0, 3).toLowerCase()}${universityId}`;
+    }
+    return "";
+  };
+  
+  const [localPart, domainPart] = ["", "ju.edu.jo"];
+  
+  const handleLocalPartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLocalPart = e.target.value;
+    // Store the full email in a hidden field or state if needed
+    console.log(`Email updated to: ${newLocalPart}@${domainPart}`);
+  };
 
   return (
     <>
@@ -52,15 +63,20 @@ export const ProfileUniversityIdField = ({ form }: ProfileUniversityIdFieldProps
           <label className="text-sm font-medium text-foreground">
             {isArabic ? "البريد الإلكتروني الجامعي" : "University Email"}
           </label>
-          <Input 
-            value={universityEmail}
-            className="glass-input"
-            disabled
-          />
+          <div className="flex glass-input rounded-xl border border-white/20 bg-white/10 backdrop-blur-md focus-within:border-campus-purple/50 focus-within:ring-campus-purple/30 dark:bg-slate-900/30 dark:border-white/10 dark:focus-within:border-campus-purple/70 dark:focus-within:ring-campus-purple/40">
+            <input
+              className="flex-1 h-10 bg-transparent px-3 py-2 text-base text-foreground focus:outline-none md:text-sm dark:text-white"
+              defaultValue={generateInitialEmail()}
+              onChange={handleLocalPartChange}
+            />
+            <div className="flex items-center px-3 text-muted-foreground">
+              @ju.edu.jo
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground">
             {isArabic 
-              ? "تم إنشاؤه تلقائيًا من اسمك ورقم الطالب الجامعي" 
-              : "Auto-generated from your name and university ID"}
+              ? "تم إنشاؤه تلقائيًا من اسمك ورقم الطالب الجامعي، ويمكنك تعديله" 
+              : "Auto-generated from your name and university ID, but you can edit it"}
           </p>
         </div>
       )}

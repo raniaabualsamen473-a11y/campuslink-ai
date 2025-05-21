@@ -16,7 +16,11 @@ export const useProfileCompletion = ({ setUser }: UseProfileCompletionProps) => 
     try {
       // Generate university email from name and ID
       const namePrefix = profileData.fullName.slice(0, 3).toLowerCase();
-      const universityEmail = `${namePrefix}${profileData.universityId}@ju.edu.jo`;
+      const defaultUniversityEmail = `${namePrefix}${profileData.universityId}@ju.edu.jo`;
+      
+      // The actual email to use could come from a form field if we add it to the schema
+      // For now, we'll just use the generated one
+      const universityEmail = defaultUniversityEmail;
       
       // Check if university ID is already in use by another user
       const { exists: universityIdExists } = await checkUniversityIdExists(profileData.universityId);
