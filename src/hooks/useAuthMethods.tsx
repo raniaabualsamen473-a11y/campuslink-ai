@@ -1,3 +1,4 @@
+
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +36,36 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
     }
   };
 
+  const checkUniversityIdExists = async (universityId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('raw_user_meta_data->university_id', universityId)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error checking university ID:", error);
+      return false;
+    }
+    
+    return !!data;
+  };
+
+  const checkUniversityEmailExists = async (universityEmail: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('raw_user_meta_data->university_email', universityEmail)
+      .maybeSingle();
+      
+    if (error) {
+      console.error("Error checking university email:", error);
+      return false;
+    }
+    
+    return !!data;
+  };
+
   const signUpWithEmail = async (email: string, password: string, userData?: {
     telegram_username?: string;
     full_name?: string;
@@ -42,6 +73,24 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
     university_email?: string;
   }) => {
     try {
+      // Check if university ID is already in use
+      if (userData?.university_id) {
+        const universityIdExists = await checkUniversityIdExists(userData.university_id);
+        if (universityIdExists) {
+          toast.error("This University ID is already registered with an account");
+          return { error: new Error("University ID already in use"), data: null };
+        }
+      }
+      
+      // Check if university email is already in use
+      if (userData?.university_email) {
+        const universityEmailExists = await checkUniversityEmailExists(userData.university_email);
+        if (universityEmailExists) {
+          toast.error("This University email is already registered with an account");
+          return { error: new Error("University email already in use"), data: null };
+        }
+      }
+
       // Prepare metadata with user profile information
       const metadata = {
         telegram_username: userData?.telegram_username || null,
@@ -88,6 +137,20 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
       // Generate university email from ID
       const universityEmail = `${profileData.universityId.slice(0, 3)}${profileData.universityId}@ju.edu.jo`;
       
+      // Check if university ID is already in use by another user
+      const universityIdExists = await checkUniversityIdExists(profileData.universityId);
+      if (universityIdExists) {
+        toast.error("This University ID is already registered with an account");
+        return { error: new Error("University ID already in use"), success: false };
+      }
+      
+      // Check if university email is already in use by another user
+      const universityEmailExists = await checkUniversityEmailExists(universityEmail);
+      if (universityEmailExists) {
+        toast.error("This University email is already registered with an account");
+        return { error: new Error("University email already in use"), success: false };
+      }
+
       const { data, error } = await supabase.auth.updateUser({
         data: {
           full_name: profileData.fullName,

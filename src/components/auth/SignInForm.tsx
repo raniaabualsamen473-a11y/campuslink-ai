@@ -17,10 +17,7 @@ const SignInForm = ({ isSubmitting, onSubmit }: SignInFormProps) => {
     defaultValues: {
       email: "",
       password: "",
-      firstName: "",
-      secondName: "",
-      thirdName: "",
-      lastName: "",
+      fullName: "",
       universityId: "",
       universityEmail: "",
       telegramUsername: "",

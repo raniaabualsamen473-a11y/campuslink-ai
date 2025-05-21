@@ -40,16 +40,8 @@ const Auth = () => {
         }
       } else {
         // For signup, include additional user data
-        const fullName = values.thirdName 
-          ? `${values.firstName} ${values.secondName} ${values.thirdName} ${values.lastName}`
-          : `${values.firstName} ${values.secondName} ${values.lastName}`;
-          
         const userData = {
-          full_name: fullName,
-          first_name: values.firstName,
-          second_name: values.secondName,
-          third_name: values.thirdName,
-          last_name: values.lastName,
+          full_name: values.fullName,
           university_id: values.universityId,
           university_email: values.universityEmail,
           telegram_username: values.telegramUsername,
