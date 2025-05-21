@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useTranslate } from "@/components/LanguageProvider";
 import { Search, X } from "lucide-react";
@@ -27,11 +26,18 @@ export const CourseSelectionFields = ({
 }: CourseSelectionFieldsProps) => {
   const { t, language } = useTranslate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredCourses, setFilteredCourses] = useState<string[]>(courses);
+  const [filteredCourses, setFilteredCourses] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
+
+  // Initialize filteredCourses with the full course list
+  useEffect(() => {
+    setFilteredCourses(courses || []);
+  }, [courses]);
 
   // Filter courses based on search query
   useEffect(() => {
+    if (!courses) return;
+    
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
       const filtered = courses.filter(course => 
