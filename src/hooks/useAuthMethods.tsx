@@ -1,4 +1,3 @@
-
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -92,24 +91,6 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
     }
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        }
-      });
-      
-      if (error) {
-        toast.error(error.message || "Failed to sign in with Google");
-      }
-    } catch (error) {
-      console.error("Google sign in error:", error);
-      toast.error("An unexpected error occurred");
-    }
-  };
-
   const completeUserProfile = async (profileData: ProfileCompletionValues) => {
     try {
       // Prepare full name from parts
@@ -152,7 +133,6 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
     signOut,
     signInWithEmail,
     signUpWithEmail,
-    signInWithGoogle,
     completeUserProfile,
   };
 };

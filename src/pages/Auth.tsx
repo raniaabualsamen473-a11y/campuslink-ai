@@ -5,12 +5,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import SignInForm from "@/components/auth/SignInForm";
 import SignUpForm from "@/components/auth/SignUpForm";
-import SocialAuth from "@/components/auth/SocialAuth";
 import { AuthFormValues } from "@/schemas/authSchema";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, isLoading, isProfileComplete, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { user, isLoading, isProfileComplete, signInWithEmail, signUpWithEmail } = useAuth();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -105,8 +104,6 @@ const Auth = () => {
             <TabsContent value="signup">
               <SignUpForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
             </TabsContent>
-            
-            <SocialAuth onGoogleSignIn={signInWithGoogle} />
           </Tabs>
         </CardContent>
         <CardFooter className="text-center text-xs text-muted-foreground">

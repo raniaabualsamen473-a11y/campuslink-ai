@@ -30,7 +30,6 @@ interface AuthContextType {
     error: Error | null;
     data: Session | null;
   }>;
-  signInWithGoogle: () => Promise<void>;
   completeUserProfile: (profileData: ProfileCompletionValues) => Promise<{
     success: boolean;
     error: Error | null;
@@ -45,13 +44,12 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   signInWithEmail: async () => ({ error: null, data: null }),
   signUpWithEmail: async () => ({ error: null, data: null }),
-  signInWithGoogle: async () => {},
   completeUserProfile: async () => ({ success: false, error: null }),
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { session, user, isLoading, setSession, setUser, setIsLoading } = useAuthSession();
-  const { signOut, signInWithEmail, signUpWithEmail, signInWithGoogle, completeUserProfile } = useAuthMethods({ setSession, setUser });
+  const { signOut, signInWithEmail, signUpWithEmail, completeUserProfile } = useAuthMethods({ setSession, setUser });
   
   const profileComplete = !user ? false : isProfileComplete(user);
 
@@ -65,7 +63,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         signOut, 
         signInWithEmail, 
         signUpWithEmail,
-        signInWithGoogle,
         completeUserProfile
       }}
     >
