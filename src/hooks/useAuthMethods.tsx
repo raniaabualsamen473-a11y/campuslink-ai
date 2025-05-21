@@ -1,4 +1,3 @@
-
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,38 +36,46 @@ export const useAuthMethods = ({ setSession, setUser }: UseAuthMethodsProps) => 
   };
 
   const checkUniversityIdExists = async (universityId: string) => {
-    // Use a custom query instead of RPC to check university ID
-    const { data, error } = await supabase
-      .from('auth.users')
-      .select('id')
-      .eq('raw_user_meta_data->>university_id', universityId)
-      .single();
+    // We can't directly query auth.users, so instead we need to find users with this metadata
+    // We'll check in all publicly accessible tables for matching university_id
+    try {
+      // Query existing users by university ID in their metadata
+      const { count, error } = await supabase
+        .from('user_roles')
+        .select('user_id', { count: 'exact', head: true })
+        .filter('user_id', 'in', supabase.rpc('get_users_by_meta', { meta_key: 'university_id', meta_value: universityId }));
       
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 is the error code for "no rows returned"
-      console.error("Error checking university ID:", error);
+      if (error) {
+        console.error("Error checking university ID:", error);
+        return false;
+      }
+      
+      return count !== null && count > 0;
+    } catch (error) {
+      console.error("Error in checkUniversityIdExists:", error);
       return false;
     }
-    
-    // If we got data back, the ID exists
-    return !!data;
   };
 
   const checkUniversityEmailExists = async (universityEmail: string) => {
-    // Use a custom query instead of RPC to check university email
-    const { data, error } = await supabase
-      .from('auth.users')
-      .select('id')
-      .eq('raw_user_meta_data->>university_email', universityEmail)
-      .single();
+    // Similar approach for university email
+    try {
+      // Query existing users by university email in their metadata
+      const { count, error } = await supabase
+        .from('user_roles')
+        .select('user_id', { count: 'exact', head: true })
+        .filter('user_id', 'in', supabase.rpc('get_users_by_meta', { meta_key: 'university_email', meta_value: universityEmail }));
       
-    if (error && error.code !== 'PGRST116') {
-      console.error("Error checking university email:", error);
+      if (error) {
+        console.error("Error checking university email:", error);
+        return false;
+      }
+      
+      return count !== null && count > 0;
+    } catch (error) {
+      console.error("Error in checkUniversityEmailExists:", error);
       return false;
     }
-    
-    // If we got data back, the email exists
-    return !!data;
   };
 
   const signUpWithEmail = async (email: string, password: string, userData?: {
