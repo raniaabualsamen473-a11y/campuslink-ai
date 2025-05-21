@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,7 +7,7 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  type: "request_submitted" | "match_found" | "welcome" | "email_confirmation";
+  type: "request_submitted" | "match_found" | "welcome";
   email: string;
   name: string;
   details: {
@@ -17,16 +16,8 @@ interface NotificationRequest {
     targetSection?: string;
     matchedWith?: string;
     telegramUsername?: string;
-    confirmationUrl?: string;
   };
 }
-
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Define the base URL for the application
-const APP_BASE_URL = "https://campuslink.app";
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -37,40 +28,26 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { type, email, name, details }: NotificationRequest = await req.json();
 
-    console.log(`Processing notification type: ${type} for ${email}`);
-    
+    // In a real implementation, you would integrate with an email service
+    console.log(`Email notification would be sent to: ${email}`);
+    console.log(`Type: ${type}`);
+    console.log(`Details:`, details);
+
     // Email content based on notification type
     let subject = "";
     let bodyHtml = "";
 
-    if (type === "email_confirmation") {
-      // Ensure we use our hardcoded URL instead of any passed URL
-      const confirmationUrl = details.confirmationUrl || `${APP_BASE_URL}/auth?verified=true`;
-      
-      subject = `Verify Your Email - CampusLink`;
+    if (type === "welcome") {
+      subject = `Welcome to ClassSwap!`;
       bodyHtml = `
-        <h1>Verify Your Email Address</h1>
+        <h1>Welcome to ClassSwap!</h1>
         <p>Hi ${name},</p>
-        <p>Thank you for creating an account with CampusLink. To complete your registration, please verify your email address by clicking the button below:</p>
-        <p style="text-align: center; margin: 30px 0;">
-          <a href="${confirmationUrl}" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            Verify Email Address
-          </a>
-        </p>
-        <p>If you didn't create an account with CampusLink, you can safely ignore this email.</p>
-        <p>Thank you,<br>The CampusLink Team</p>
-      `;
-    } else if (type === "welcome") {
-      subject = `Welcome to CampusLink!`;
-      bodyHtml = `
-        <h1>Welcome to CampusLink!</h1>
-        <p>Hi ${name},</p>
-        <p>Thank you for creating an account with CampusLink. Your account has been successfully created.</p>
+        <p>Thank you for creating an account with ClassSwap. Your account has been successfully created.</p>
         <p>You can now start creating swap requests or petitions for your courses.</p>
-        <p>Thank you for using CampusLink!</p>
+        <p>Thank you for using ClassSwap!</p>
       `;
     } else if (type === "request_submitted") {
-      subject = `CampusLink: Your ${details.course} swap request has been submitted`;
+      subject = `ClassSwap: Your ${details.course} swap request has been submitted`;
       bodyHtml = `
         <h1>Your swap request has been submitted!</h1>
         <p>Hi ${name},</p>
@@ -82,10 +59,10 @@ const handler = async (req: Request): Promise<Response> => {
           <li><strong>Desired Section:</strong> ${details.targetSection || "N/A"}</li>
         </ul>
         <p>We'll notify you when we find a match for your request.</p>
-        <p>Thank you for using CampusLink!</p>
+        <p>Thank you for using ClassSwap!</p>
       `;
     } else if (type === "match_found") {
-      subject = `CampusLink: Match Found for ${details.course}!`;
+      subject = `ClassSwap: Match Found for ${details.course}!`;
       bodyHtml = `
         <h1>We've found a match for your class swap!</h1>
         <p>Hi ${name},</p>
@@ -98,39 +75,27 @@ const handler = async (req: Request): Promise<Response> => {
         </ul>
         ${details.matchedWith ? `<p><strong>Matched with:</strong> ${details.matchedWith}</p>` : ""}
         ${details.telegramUsername ? `<p>You can contact your match via Telegram: @${details.telegramUsername}</p>` : ""}
-        <p>Thank you for using CampusLink!</p>
+        <p>Thank you for using ClassSwap!</p>
       `;
     }
 
-    // Send the email using our send-email function
-    const emailResponse = await supabase.functions.invoke("send-email", {
-      body: {
-        to: email,
-        subject: subject,
-        html: bodyHtml,
-      }
+    // You would implement actual email sending here with a service like Resend, SendGrid, etc.
+    /*
+    Example with SendGrid:
+    const emailResponse = await sgMail.send({
+      to: email,
+      from: "noreply@yourapp.com",
+      subject: subject,
+      html: bodyHtml,
     });
-
-    // Check for errors in the response
-    if (emailResponse.error) {
-      console.error("Error sending email:", emailResponse.error);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: emailResponse.error 
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
+    */
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Notification processed successfully",
-        emailSubject: subject
+        emailSubject: subject,
+        emailBody: bodyHtml
       }),
       {
         status: 200,
@@ -143,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-notification function:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ error: error.message }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

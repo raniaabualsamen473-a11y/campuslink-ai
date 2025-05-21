@@ -1,99 +1,81 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircleIcon } from "lucide-react";
-import SignInForm from "@/components/auth/SignInForm";
-import SignUpForm from "@/components/auth/SignUpForm";
-import { AuthFormValues } from "@/schemas/authSchema";
+import { Input } from "@/components/ui/input";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
+
+// Form validation schema
+const authSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  fullName: z.string().min(2, { message: "Full name is required" }).optional().or(z.literal('')),
+  universityId: z.string().optional().or(z.literal('')),
+  telegramUsername: z.string()
+    .refine(val => !val || !/^@/.test(val), {
+      message: "Please enter the username without the @ symbol"
+    })
+    .refine(val => !val || /^[a-zA-Z0-9_]+$/.test(val), {
+      message: "Username can only contain letters, numbers, and underscores"
+    })
+    .optional()
+    .or(z.literal('')),
+});
+
+type AuthFormValues = z.infer<typeof authSchema>;
 
 const Auth = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user, isLoading, isProfileComplete, signInWithEmail, signUpWithEmail } = useAuth();
+  const { user, isLoading, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Check for verification success parameter
-  const isVerified = new URLSearchParams(location.search).get('verified') === 'true';
+
+  // Create form
+  const form = useForm<AuthFormValues>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      fullName: "",
+      universityId: "",
+      telegramUsername: "",
+    },
+  });
 
   useEffect(() => {
-    // If verification was successful, show a toast message
-    if (isVerified) {
-      toast.success("Email verified successfully! Please sign in.");
-      // Automatically switch to sign in tab if verified
-      setAuthMode("signin");
-    }
-
-    console.log("Auth page - User state:", user ? "Logged in" : "Not logged in");
-    console.log("Profile complete:", isProfileComplete);
-
-    // Check if user is already logged in
+    // Check if user is already logged in and redirect
     if (user) {
-      console.log("User is logged in, checking profile completion status");
-      
-      // If profile is not complete, redirect to profile completion
-      if (!isProfileComplete) {
-        console.log("Profile is incomplete, redirecting to profile completion");
-        navigate("/profile-completion", { replace: true });
-      } else {
-        // Otherwise go to swap requests
-        console.log("Profile is complete, redirecting to swap-requests");
-        navigate("/swap-requests", { replace: true });
-      }
+      console.log("User is logged in, redirecting to swap-requests");
+      navigate("/swap-requests", { replace: true });
     }
-  }, [user, isProfileComplete, navigate, isVerified]);
+  }, [user, navigate]);
 
-  const handleSubmit = async (values: AuthFormValues) => {
+  const onSubmit = async (values: AuthFormValues) => {
     setIsSubmitting(true);
     try {
-      console.log(`Handling ${authMode} submission`);
-      
       if (authMode === "signin") {
-        console.log("Signing in with:", values.email);
         const result = await signInWithEmail(values.email, values.password);
-        console.log("Sign in result:", result.data ? "Success" : "Failed", result.error);
-        
         if (result.data) {
-          // Success! Check if profile needs completion in the useEffect above
-          console.log("Sign in successful, user should be redirected by useEffect");
+          // Success! The toast is already shown in the auth hook
+          navigate("/swap-requests", { replace: true });
         }
       } else {
-        // For signup, create full name from parts if not already set
-        if (!values.fullName && (values.firstName || values.lastName)) {
-          const nameParts = [
-            values.firstName || "",
-            values.secondName || "",
-            values.thirdName || "",
-            values.lastName || ""
-          ].filter(Boolean);
-          
-          values.fullName = nameParts.join(" ");
-        }
-        
         // For signup, include additional user data
         const userData = {
           full_name: values.fullName,
           university_id: values.universityId,
-          university_email: values.universityEmail,
           telegram_username: values.telegramUsername,
-          first_name: values.firstName,
-          second_name: values.secondName,
-          third_name: values.thirdName, 
-          last_name: values.lastName
         };
         
-        console.log("Signing up with:", values.email, userData);
         const result = await signUpWithEmail(values.email, values.password, userData);
-        console.log("Sign up result:", result.data ? "Success" : "Verification needed/Failed", result.error);
-        
         if (result.data) {
-          // Profile should be complete since we collected all data at signup
-          console.log("Sign up with immediate session successful, redirecting to swap-requests");
           navigate("/swap-requests", { replace: true });
         }
       }
@@ -125,16 +107,6 @@ const Auth = () => {
           <CardDescription className="text-muted-foreground">
             Sign in or create an account to continue
           </CardDescription>
-          
-          {isVerified && (
-            <Alert className="mt-4 bg-green-50 border-green-200">
-              <CheckCircleIcon className="h-4 w-4 text-green-600" />
-              <AlertTitle className="text-green-800">Email verified!</AlertTitle>
-              <AlertDescription className="text-green-700">
-                Your email has been successfully verified. You can now sign in.
-              </AlertDescription>
-            </Alert>
-          )}
         </CardHeader>
         <CardContent className="glass-card backdrop-blur-md">
           <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "signin" | "signup")}>
@@ -143,13 +115,167 @@ const Auth = () => {
               <TabsTrigger value="signup">Create Account</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="signin">
-              <SignInForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <SignUpForm isSubmitting={isSubmitting} onSubmit={handleSubmit} />
-            </TabsContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground">Email</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="your.email@example.com" 
+                          {...field} 
+                          className="glass-input"
+                          required
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-foreground">Password</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="password" 
+                          placeholder="••••••••" 
+                          {...field} 
+                          className="glass-input"
+                          required
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {authMode === "signup" && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">Full Name</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="John Doe" 
+                              {...field} 
+                              className="glass-input"
+                              required
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="universityId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">University ID</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Your student ID number" 
+                              {...field} 
+                              className="glass-input"
+                              required
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="telegramUsername"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">Telegram Username</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center">
+                              <span className="glass border border-white/20 border-r-0 rounded-l-xl px-3 py-2 text-sm text-muted-foreground">
+                                @
+                              </span>
+                              <Input 
+                                placeholder="username" 
+                                {...field} 
+                                className="glass-input rounded-l-none"
+                                required
+                              />
+                            </div>
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground mt-1">Enter your Telegram username (no @ symbol). Required for contact when a match is found.</p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+                
+                <Button 
+                  type="submit" 
+                  variant="neon"
+                  className="w-full btn-glow"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      {authMode === "signin" ? "Signing in..." : "Creating account..."}
+                    </span>
+                  ) : (
+                    <>{authMode === "signin" ? "Sign In" : "Create Account"}</>
+                  )}
+                </Button>
+              </form>
+            </Form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            <Button
+              variant="glass"
+              type="button"
+              className="w-full"
+              onClick={() => signInWithGoogle()}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 mr-2">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              Continue with Google
+            </Button>
           </Tabs>
         </CardContent>
         <CardFooter className="text-center text-xs text-muted-foreground">

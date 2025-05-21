@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageProvider";
 
@@ -26,9 +27,7 @@ const Layout = () => {
       >
         <Outlet />
       </main>
-      <div className="py-4 text-center text-xs text-muted-foreground bg-background/50 backdrop-blur-sm">
-        <p>© {new Date().getFullYear()} CampusLink AI. All rights reserved.</p>
-      </div>
+      <Footer />
     </div>
   );
 };

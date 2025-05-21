@@ -11,7 +11,6 @@ import Dashboard from "./pages/Dashboard";
 import SwapRequests from "./pages/SwapRequests";
 import Petitions from "./pages/Petitions";
 import Auth from "./pages/Auth";
-import ProfileCompletion from "./pages/ProfileCompletion";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -29,20 +28,7 @@ const queryClient = new QueryClient({
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading, isProfileComplete } = useAuth();
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        toast.error("You need to log in to access this page");
-        navigate("/auth", { replace: true });
-      } else if (!isProfileComplete) {
-        toast.info("Please complete your profile to continue");
-        navigate("/profile-completion", { replace: true });
-      }
-    }
-  }, [user, isLoading, isProfileComplete, navigate]);
+  const { user, isLoading } = useAuth();
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">
@@ -50,31 +36,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     </div>;
   }
   
-  // Only render children if user is logged in and profile is complete
-  if (user && isProfileComplete) {
-    return <>{children}</>;
+  if (!user) {
+    toast.error("You need to log in to access this page");
+    return <Navigate to="/auth" replace />;
   }
   
-  // Return loading state while redirection happens
-  return <div className="flex items-center justify-center h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-campus-purple"></div>
-  </div>;
+  return <>{children}</>;
 };
 
 // Home page with automatic redirection if logged in
 const Home = () => {
-  const { user, isLoading, isProfileComplete } = useAuth();
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading && user) {
-      if (!isProfileComplete) {
-        navigate("/profile-completion", { replace: true });
-      } else {
-        navigate("/swap-requests", { replace: true });
-      }
+    if (user && !isLoading) {
+      navigate("/swap-requests", { replace: true });
     }
-  }, [user, isLoading, isProfileComplete, navigate]);
+  }, [user, isLoading, navigate]);
 
   return <Index />;
 };
@@ -92,7 +71,6 @@ const App = () => (
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Home />} />
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/profile-completion" element={<ProfileCompletion />} />
                   <Route path="/dashboard" element={
                     <ProtectedRoute>
                       <Dashboard />
