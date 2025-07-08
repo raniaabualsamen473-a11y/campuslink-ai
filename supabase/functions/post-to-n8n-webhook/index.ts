@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
-const N8N_WEBHOOK_URL = "https://artificialdynamo04.app.n8n.cloud/webhook/swap-request";
+const N8N_WEBHOOK_URL = "https://acegrowthlo.app.n8n.cloud/webhook/swap-request";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
