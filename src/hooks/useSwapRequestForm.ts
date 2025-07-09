@@ -12,7 +12,7 @@ import {
   prepareRequestData,
   mapRequestDataToForm 
 } from "@/utils/requestDataUtils";
-import { usePetitionForm } from "@/hooks/usePetitionForm";
+
 
 interface UseSwapRequestFormProps {
   user: any;
@@ -100,19 +100,6 @@ export const useSwapRequestForm = ({
   "اللغة الأجنبية"
   ]);
 
-  // Initialize petition form hook
-  const { 
-    isLoading: isPetitionSubmitting,
-    handlePetitionSubmit 
-  } = usePetitionForm({
-    userId: user?.id,
-    userMetadata: user?.user_metadata,
-    onSuccess: () => {
-      // Reset form and notify parent component
-      resetForm();
-      onRequestSubmitted();
-    }
-  });
 
   // Update time slots when semester or days pattern changes
   useEffect(() => {
@@ -167,7 +154,7 @@ export const useSwapRequestForm = ({
       if (error) throw error;
       
       if (data) {
-        const formData = mapRequestDataToForm(data as SwapRequest);
+        const formData = mapRequestDataToForm(data);
         populateFormWithData(formData);
       }
     } catch (error) {
@@ -287,25 +274,6 @@ export const useSwapRequestForm = ({
       
       const finalCourseName = customCourseName || courseName;
       
-      if (requestType === "petition") {
-        // Handle petition submission by calling our extracted hook
-        const success = await handlePetitionSubmit({
-          courseName: finalCourseName,
-          sectionNumber: desiredSectionNumber,
-          daysPattern: desiredDaysPattern,
-          startTime: desiredStartTime,
-          semester: semester,
-          summerFormat: semester === 'summer' ? summerFormat : null,
-          isAnonymous: isAnonymous,
-          telegramUsername: telegramUsername,
-          reason: reason
-        });
-        
-        if (!success) {
-          setIsLoading(false);
-        }
-        // The success case is handled in the petition hook (onSuccess callback)
-      } else {
         // Handle swap request submission
         // Create structured section data for checking duplicates
         const currentSectionData = {
@@ -367,7 +335,6 @@ export const useSwapRequestForm = ({
           onRequestSubmitted();
         }
         setIsLoading(false);
-      }
     } catch (error: any) {
       console.error("Error in form submission:", error);
       toast.error("An unexpected error occurred");
@@ -417,7 +384,7 @@ export const useSwapRequestForm = ({
   };
 
   return {
-    isLoading: isLoading || isPetitionSubmitting,
+    isLoading,
     isAnonymous,
     requestType,
     semester,

@@ -7,7 +7,7 @@ export interface Match {
   user: string;
   isAnonymous: boolean;
   matchPercent: number;
-  type: "swap" | "petition";
+  type: "swap";
   dateCreated: string;
   user_id: string;
   telegram_username: string | null;
@@ -17,7 +17,7 @@ export interface SwapRequest {
   id: string;
   user_id: string;
   anonymous: boolean;
-  petition: boolean;
+  
   telegram_username: string | null;
   desired_course: string | null;
   current_section: string | null;

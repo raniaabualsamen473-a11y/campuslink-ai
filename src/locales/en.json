@@ -6,7 +6,7 @@
   "navbar": {
     "dashboard": "Dashboard",
     "swapRequests": "Swap Requests",
-    "petitions": "Petitions",
+    
     "login": "Login",
     "signOut": "Sign Out",
     "loggedIn": "Logged In"
@@ -21,10 +21,6 @@
         "title": "Class Swapping",
         "description": "Easily swap class sections with other students. Submit your request and get automatically matched with compatible swaps."
       },
-      "petitions": {
-        "title": "Section Petitions",
-        "description": "Create petitions for new section openings. Gather support from other students and present united requests to administration."
-      },
       "communication": {
         "title": "Easy Communication",
         "description": "Connect with matched students via Telegram for seamless communication when arranging your class swaps."
@@ -38,7 +34,7 @@
       },
       "step2": {
         "title": "Submit Your Request",
-        "description": "Create a swap request or petition with your current and desired class sections."
+        "description": "Create a swap request with your current and desired class sections."
       },
       "step3": {
         "title": "Get Matched & Connect",
@@ -48,34 +44,6 @@
     "readyToStart": "Ready to start swapping classes?",
     "signUpNow": "Sign Up Now",
     "viewSwapRequests": "View Swap Requests"
-  },
-  "petitions": {
-    "title": "Section Petitions",
-    "subtitle": "Support and track petitions for new class sections",
-    "tabs": {
-      "active": "Active Petitions",
-      "completed": "Completed"
-    },
-    "info": {
-      "title": "How Petitions Work",
-      "step1": "Create or support a petition for a new class section",
-      "step2": "When a petition reaches enough support, a formal request form is generated",
-      "step3": "Submit the completed form to your department",
-      "step4": "Track the status of your petition here"
-    }
-  },
-  "petitionCard": {
-    "sectionRequest": "Section Request",
-    "progress": "Progress",
-    "supporters": "supporters",
-    "created": "Created",
-    "readyForSubmission": "Ready for submission!",
-    "statusSubmitted": "Status: Submitted to Faculty",
-    "viewPetitionForm": "View Petition Form",
-    "alreadySupported": "Already Supported",
-    "generatePetitionForm": "Generate Petition Form",
-    "supportPetition": "Support Petition",
-    "signInToSupport": "Sign In to Support"
   },
   "swapRequests": {
     "title": "Class Swap Requests",

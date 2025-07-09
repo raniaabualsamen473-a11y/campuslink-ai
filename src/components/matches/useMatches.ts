@@ -59,11 +59,6 @@ export const useMatches = (userId: string | undefined, refreshTrigger: number) =
       const allMatches: Match[] = [];
       
       for (const request of userRequests) {
-        // Skip petition requests as they don't have a current section to swap
-        if (request.petition) {
-          console.log("Skipping petition request:", request.id);
-          continue;
-        }
 
         if (!request.desired_course || !request.current_section || !request.desired_section) {
           console.log("Skipping incomplete request:", request.id);
@@ -84,7 +79,7 @@ export const useMatches = (userId: string | undefined, refreshTrigger: number) =
           .from('swap_requests')
           .select('*')
           .neq('user_id', userId) // Not from the same user
-          .eq('petition', false) // Not petitions (since we need both current and desired sections)
+          
           .eq('desired_course', request.desired_course) // Same course
           .limit(50);  // Get a reasonable number of potential matches to filter locally
           
@@ -164,7 +159,7 @@ export const useMatches = (userId: string | undefined, refreshTrigger: number) =
                   user: match.full_name || "Anonymous Student",
                   isAnonymous: match.anonymous || false,
                   matchPercent,
-                  type: match.petition ? "petition" : "swap",
+                  type: "swap",
                   dateCreated: new Date(match.created_at).toLocaleDateString(),
                   user_id: match.user_id,
                   telegram_username: match.telegram_username

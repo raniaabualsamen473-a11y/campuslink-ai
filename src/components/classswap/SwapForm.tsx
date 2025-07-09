@@ -53,7 +53,7 @@ const formSchema = z.object({
   course: z.string().min(1, "Course is required"),
   currentSection: z.string().optional(),
   targetSection: z.string().min(1, "Target section is required"),
-  isPetition: z.boolean().default(false),
+  
   isAnonymous: z.boolean().default(false),
   fullName: z.string().optional(),
   telegramUsername: z.string().optional(),
@@ -120,7 +120,7 @@ const SwapForm = () => {
       course: "",
       currentSection: "",
       targetSection: "",
-      isPetition: false,
+      
       isAnonymous: false,
       fullName: "",
       telegramUsername: "",
@@ -135,7 +135,7 @@ const SwapForm = () => {
     },
   });
 
-  const watchIsPetition = form.watch("isPetition");
+  
 
   const handleSubmit = async (data: FormValues) => {
     if (!user) {
@@ -148,26 +148,23 @@ const SwapForm = () => {
     try {
       // Get final values (using custom input if provided)
       const finalCourseName = data.course;
-      const finalCurrentSection = watchIsPetition ? null : normalizeSection(data.currentSection || '');
+      const finalCurrentSection = normalizeSection(data.currentSection || '');
       const finalTargetSection = normalizeSection(data.targetSection || '');
       
       // Prepare the data for submission
       const requestData = {
         desired_course: finalCourseName,
-        current_section: watchIsPetition ? null : finalCurrentSection,
+        current_section: finalCurrentSection,
         desired_section: finalTargetSection,
         desired_days_pattern: semesterType === "regular" ? data.dayPattern : null,
         desired_section_number: parseInt(data.targetSection?.split('-')[1] || '1'),
         desired_start_time: data.preferredTime || '08:00',
-        petition: data.isPetition,
         anonymous: data.isAnonymous,
         full_name: data.isAnonymous ? null : data.fullName,
         telegram_username: data.telegramUsername || null,
         email: data.email || user.email,
         user_id: user.id,
         days_pattern: semesterType === "regular" ? data.dayPattern : null,
-        preferred_time: data.isPetition ? data.preferredTime : null,
-        reason: data.isPetition ? data.reason : null,
         summer_format: semesterType === "summer" ? data.summerFormat : null,
         flexible_time: data.flexibleTime,
         flexible_days: data.flexibleDays,
@@ -212,15 +209,6 @@ const SwapForm = () => {
               </Tabs>
             </div>
 
-            {/* Petition or Swap Selection */}
-            <div className="mb-6">
-              <Tabs onValueChange={(value) => form.setValue("isPetition", value === "petition")}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="swap">Swap Request</TabsTrigger>
-                  <TabsTrigger value="petition">Section Petition</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
 
             {/* Course Selection */}
             <FormField
@@ -260,8 +248,8 @@ const SwapForm = () => {
               )}
             />
 
-            {/* Current Section - Only show if not petition */}
-            {!watchIsPetition && (
+            {/* Current Section */}
+            {(
               <FormField
                 control={form.control}
                 name="currentSection"
@@ -409,112 +397,8 @@ const SwapForm = () => {
               />
             )}
 
-            {/* Preferred Time - Show if petition */}
-            {watchIsPetition && (
-              <FormField
-                control={form.control}
-                name="preferredTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Time</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select preferred time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          <SelectLabel>Time Slots</SelectLabel>
-                          {timeSlots.map((slot) => (
-                            <SelectItem key={slot.value} value={slot.value}>
-                              <div className="flex items-center">
-                                {slot.icon}
-                                <span>{slot.label}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Flexibility Options - Show if petition */}
-            {watchIsPetition && (
-              <div className="space-y-4 pt-2">
-                <FormField
-                  control={form.control}
-                  name="flexibleTime"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Flexible with time</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="flexibleDays"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Flexible with days</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
           </CardContent>
         </Card>
-
-        {/* Petition Reason - Show if petition */}
-        {watchIsPetition && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Petition Reason</CardTitle>
-              <CardDescription>Explain why you need this section</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="reason"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Reason for Petition</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Explain why you need this specific section..."
-                        className="min-h-[120px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-        )}
 
         <Card>
           <CardHeader>

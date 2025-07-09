@@ -26,9 +26,7 @@ export const prepareRequestData = (
   telegramUsername: string
 ): SwapRequest => {
   // Create string representation of sections for backwards compatibility
-  const currentSectionString = requestType === "swap" 
-    ? `Section ${currentSectionNumber} (${formatDaysPattern(currentDaysPattern, semester)} ${formatTime(currentStartTime)})`
-    : null;
+  const currentSectionString = `Section ${currentSectionNumber} (${formatDaysPattern(currentDaysPattern, semester)} ${formatTime(currentStartTime)})`;
     
   const desiredSectionString = `Section ${desiredSectionNumber} (${formatDaysPattern(desiredDaysPattern, semester)} ${formatTime(desiredStartTime)})`;
   
@@ -36,30 +34,30 @@ export const prepareRequestData = (
     id: editingRequestId || uuidv4(),
     user_id: userId,
     anonymous: isAnonymous,
-    petition: requestType === "petition",
+    
     telegram_username: telegramUsername,
     desired_course: finalCourseName,
     current_section: currentSectionString,
     desired_section: desiredSectionString,
-    normalized_current_section: currentSectionString ? normalizeSection(currentSectionString) : null,
+    normalized_current_section: normalizeSection(currentSectionString),
     normalized_desired_section: normalizeSection(desiredSectionString),
     university_id: userMetadata?.university_id,
     full_name: isAnonymous ? null : userMetadata?.full_name,
     email: userMetadata?.email,
     
     // Structured section data
-    current_section_number: requestType === "swap" ? parseInt(currentSectionNumber) : null,
-    current_days_pattern: requestType === "swap" ? currentDaysPattern : null,
-    current_start_time: requestType === "swap" ? currentStartTime : null,
+    current_section_number: parseInt(currentSectionNumber),
+    current_days_pattern: currentDaysPattern,
+    current_start_time: currentStartTime,
     
     desired_section_number: parseInt(desiredSectionNumber),
     desired_days_pattern: desiredDaysPattern,
     desired_start_time: desiredStartTime,
     
-    reason: requestType === "petition" ? reason : null,
+    reason: null,
     summer_format: semester === "summer" ? summerFormat : null,
-    days_pattern: semester === "regular" ? (requestType === "petition" ? desiredDaysPattern : null) : null,
-    preferred_time: requestType === "petition" ? desiredStartTime : null
+    days_pattern: null,
+    preferred_time: null
   };
 };
 
@@ -83,7 +81,7 @@ export const mapRequestDataToForm = (data: SwapRequest): {
 } => {
   return {
     courseName: data.desired_course || "",
-    requestType: data.petition ? "petition" : "swap",
+    requestType: "swap",
     isAnonymous: data.anonymous || false,
     telegramUsername: data.telegram_username || "",
     semester: data.summer_format ? "summer" : "regular",

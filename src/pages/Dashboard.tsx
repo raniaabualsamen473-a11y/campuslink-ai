@@ -164,16 +164,12 @@ const Dashboard = () => {
                       <div className="flex justify-between">
                         <p className="font-medium text-foreground">{request.desired_course || "Unnamed Course"}</p>
                         <span 
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            request.petition 
-                              ? "bg-blue-100/50 text-blue-800 backdrop-blur-sm" 
-                              : "bg-green-100/50 text-green-800 backdrop-blur-sm"
-                          }`}
+                          className="text-xs px-2 py-1 rounded-full bg-green-100/50 text-green-800 backdrop-blur-sm"
                         >
-                          {request.petition ? "Petition" : "Swap"}
+                          Swap
                         </span>
                       </div>
-                      {!request.petition && request.current_section && (
+                      {request.current_section && (
                         <p className="text-sm text-muted-foreground mt-1">
                           <span className="text-muted-foreground">From: </span>
                           {request.current_section}
@@ -219,13 +215,9 @@ const Dashboard = () => {
                       <div className="flex justify-between">
                         <p className="font-medium text-foreground">{request.desired_course || "Unnamed Course"}</p>
                         <span 
-                          className={`text-xs px-2 py-1 rounded-full ${
-                            request.petition 
-                              ? "bg-blue-100/50 text-blue-800 backdrop-blur-sm" 
-                              : "bg-green-100/50 text-green-800 backdrop-blur-sm"
-                          }`}
+                          className="text-xs px-2 py-1 rounded-full bg-green-100/50 text-green-800 backdrop-blur-sm"
                         >
-                          {request.petition ? "Petition" : "Swap"}
+                          Swap
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">

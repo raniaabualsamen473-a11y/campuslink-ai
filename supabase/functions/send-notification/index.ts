@@ -43,7 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
         <h1>Welcome to ClassSwap!</h1>
         <p>Hi ${name},</p>
         <p>Thank you for creating an account with ClassSwap. Your account has been successfully created.</p>
-        <p>You can now start creating swap requests or petitions for your courses.</p>
+        <p>You can now start creating swap requests for your courses.</p>
         <p>Thank you for using ClassSwap!</p>
       `;
     } else if (type === "request_submitted") {

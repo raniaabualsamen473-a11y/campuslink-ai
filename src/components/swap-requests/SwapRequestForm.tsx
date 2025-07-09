@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { SectionFields } from "./SectionFields";
 import { ContactInfoFields } from "./ContactInfoFields";
 import { CourseSelectionFields } from "./CourseSelectionFields";
-import { PetitionReasonField } from "./PetitionReasonField";
+
 import { useSwapRequestForm } from "@/hooks/useSwapRequestForm";
 
 interface SwapRequestFormProps {
@@ -74,16 +74,10 @@ export const SwapRequestForm = ({
         </CardTitle>
         <CardDescription className="text-gray-700">
           {editingRequestId 
-            ? "Modify your existing class section swap or petition request" 
-            : "Create a new class section swap or petition request"
+            ? "Modify your existing class section swap request" 
+            : "Create a new class section swap request"
           }
         </CardDescription>
-        <Tabs defaultValue={requestType} className="mt-4" onValueChange={(value) => setRequestType(value)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="swap">Swap Request</TabsTrigger>
-            <TabsTrigger value="petition">Section Petition</TabsTrigger>
-          </TabsList>
-        </Tabs>
       </CardHeader>
 
       <form onSubmit={handleSwapSubmit}>
@@ -112,57 +106,31 @@ export const SwapRequestForm = ({
               setCustomCourseName={setCustomCourseName}
             />
 
-            {/* Structured Section Fields */}
-            {requestType === "swap" ? (
-              <>
-                {/* Current Section */}
-                <SectionFields
-                  type="current"
-                  sectionNumber={currentSectionNumber}
-                  daysPattern={currentDaysPattern}
-                  startTime={currentStartTime}
-                  timeSlots={currentTimeSlots}
-                  setNumber={setCurrentSectionNumber}
-                  setDaysPattern={setCurrentDaysPattern}
-                  setStartTime={setCurrentStartTime}
-                  semester={semester}
-                />
-                
-                {/* Desired Section */}
-                <SectionFields
-                  type="desired"
-                  sectionNumber={desiredSectionNumber}
-                  daysPattern={desiredDaysPattern}
-                  startTime={desiredStartTime}
-                  timeSlots={desiredTimeSlots}
-                  setNumber={setDesiredSectionNumber}
-                  setDaysPattern={setDesiredDaysPattern}
-                  setStartTime={setDesiredStartTime}
-                  semester={semester}
-                />
-              </>
-            ) : (
-              <>
-                {/* Petition - only desired section */}
-                <SectionFields
-                  type="desired"
-                  sectionNumber={desiredSectionNumber}
-                  daysPattern={desiredDaysPattern}
-                  startTime={desiredStartTime}
-                  timeSlots={desiredTimeSlots}
-                  setNumber={setDesiredSectionNumber}
-                  setDaysPattern={setDesiredDaysPattern}
-                  setStartTime={setDesiredStartTime}
-                  semester={semester}
-                />
-                
-                {/* Petition Reason */}
-                <PetitionReasonField 
-                  reason={reason}
-                  setReason={setReason}
-                />
-              </>
-            )}
+            {/* Current Section */}
+            <SectionFields
+              type="current"
+              sectionNumber={currentSectionNumber}
+              daysPattern={currentDaysPattern}
+              startTime={currentStartTime}
+              timeSlots={currentTimeSlots}
+              setNumber={setCurrentSectionNumber}
+              setDaysPattern={setCurrentDaysPattern}
+              setStartTime={setCurrentStartTime}
+              semester={semester}
+            />
+            
+            {/* Desired Section */}
+            <SectionFields
+              type="desired"
+              sectionNumber={desiredSectionNumber}
+              daysPattern={desiredDaysPattern}
+              startTime={desiredStartTime}
+              timeSlots={desiredTimeSlots}
+              setNumber={setDesiredSectionNumber}
+              setDaysPattern={setDesiredDaysPattern}
+              setStartTime={setDesiredStartTime}
+              semester={semester}
+            />
 
             {/* Contact Information */}
             <ContactInfoFields
@@ -191,14 +159,10 @@ export const SwapRequestForm = ({
             {isLoading 
               ? editingRequestId 
                 ? "Saving Changes..." 
-                : requestType === "swap" 
-                  ? "Submitting Request..." 
-                  : "Creating Petition..." 
+                : "Submitting Request..." 
               : editingRequestId
                 ? "Save Changes"
-                : requestType === "swap" 
-                  ? "Submit Swap Request" 
-                  : "Create Petition"
+                : "Submit Swap Request"
             }
           </Button>
         </CardFooter>

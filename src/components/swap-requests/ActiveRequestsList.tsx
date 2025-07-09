@@ -33,10 +33,10 @@ export const ActiveRequestsList = ({
                     {request.desired_course || "Unnamed Course"}
                   </h3>
                   <span className="inline-block px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/70 dark:text-green-100 rounded-full text-xs">
-                    {request.petition ? "Petition" : "Swap Request"}
+                    Swap Request
                   </span>
                 </div>
-                {!request.petition && request.current_section && (
+                {request.current_section && (
                   <p className="text-sm mb-1 text-foreground">
                     <span className="text-muted-foreground">From: </span>
                     {request.current_section}

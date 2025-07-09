@@ -9,7 +9,7 @@ const SwapBenefits = () => {
       <CardHeader>
         <CardTitle className="text-xl font-bold text-foreground">Why use ClassSwap?</CardTitle>
         <CardDescription>
-          The easiest way to swap classes or petition for new sections
+          The easiest way to find and swap classes with other students
         </CardDescription>
       </CardHeader>
       <CardContent>

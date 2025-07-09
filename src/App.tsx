@@ -9,7 +9,7 @@ import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import SwapRequests from "./pages/SwapRequests";
-import Petitions from "./pages/Petitions";
+
 import Auth from "./pages/Auth";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
@@ -79,11 +79,6 @@ const App = () => (
                   <Route path="/swap-requests" element={
                     <ProtectedRoute>
                       <SwapRequests />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/petitions" element={
-                    <ProtectedRoute>
-                      <Petitions />
                     </ProtectedRoute>
                   } />
                   <Route path="*" element={<NotFound />} />

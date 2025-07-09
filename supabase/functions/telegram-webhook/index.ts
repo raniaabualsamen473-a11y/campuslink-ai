@@ -146,7 +146,7 @@ Without a username, we can't verify your identity for class swaps.`;
             // Send welcome message
             const welcomeMessage = `🎓 Welcome to CampusLink AI!
 
-I'm here to help you with class swaps and petitions.
+I'm here to help you with class swaps.
 
 ✅ Your profile has been set up with username: @${username}
 📱 Chat ID: ${chatId} (stored for verification codes)
