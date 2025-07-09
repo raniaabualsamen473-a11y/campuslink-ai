@@ -19,7 +19,15 @@ serve(async (req) => {
 
   try {
     // Test bot token first with getMe endpoint
-    const botToken = '7826037183:AAGe3HjAS8TXyozVkPKzMDhqsnRJwAYib9k';
+    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+    if (!botToken) {
+      console.error('TELEGRAM_BOT_TOKEN environment variable not found');
+      return new Response(
+        JSON.stringify({ error: 'Bot token configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     console.log('Testing bot token with getMe endpoint...');
     
     let botUsername = 'classSwap_notifier_bot'; // fallback
@@ -127,6 +135,41 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Query profiles table to get telegram_chat_id for the username
+    console.log('Looking up profile for username:', username);
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('telegram_chat_id, telegram_user_id')
+      .eq('telegram_username', username)
+      .single();
+
+    if (profileError || !profileData) {
+      console.log('Profile not found for username:', username, profileError);
+      return new Response(
+        JSON.stringify({ 
+          error: `Username @${username} not found. Please send /start to @${botUsername} first to register your account.`,
+          botUsername: botUsername,
+          needsRegistration: true
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const chatId = profileData.telegram_chat_id;
+    console.log('Found profile with chat_id:', chatId);
+
+    if (!chatId) {
+      console.log('No chat_id found for username:', username);
+      return new Response(
+        JSON.stringify({ 
+          error: `No chat ID found for @${username}. Please send /start to @${botUsername} first to complete your registration.`,
+          botUsername: botUsername,
+          needsRegistration: true
+        }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Test database connection by checking verification_codes table
     console.log('Testing database connection...');
     try {
@@ -225,13 +268,13 @@ serve(async (req) => {
 
     // Send verification code via Telegram Bot API
     const message = `🔐 Your CampusLink AI verification code is: ${verificationCode}\n\nThis code will expire in 5 minutes.`;
-    console.log('Preparing to send message to @' + username);
+    console.log('Preparing to send message to chat_id:', chatId, 'for username @' + username);
 
     try {
       // Construct exact Telegram API URL as specified
       const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
       const payload = {
-        chat_id: "6157932900",
+        chat_id: chatId,
         text: message,
         parse_mode: 'HTML'
       };

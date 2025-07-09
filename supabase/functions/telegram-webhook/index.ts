@@ -74,32 +74,64 @@ serve(async (req) => {
           
           // Handle /start command
           if (text.startsWith('/start')) {
+            // Handle users without username
+            if (!username) {
+              const noUsernameMessage = `❌ You need to set a Telegram username to use this service.
+
+Please:
+1. Go to Telegram Settings
+2. Set a username (starting with @)
+3. Send /start again
+
+Without a username, we can't verify your identity for class swaps.`;
+
+              await sendTelegramMessage(chatId, telegramBotToken, noUsernameMessage);
+              return new Response(
+                JSON.stringify({ success: true }),
+                { 
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  status: 200 
+                }
+              );
+            }
+
+            // Create or update user profile with UPSERT
+            console.log(`Creating/updating profile for @${username} with chat_id: ${chatId}`);
+            
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .upsert({
+                telegram_username: username,
+                telegram_user_id: userId,
+                telegram_chat_id: chatId,
+                first_name: firstName,
+                last_name: lastName,
+                updated_at: new Date().toISOString()
+              }, {
+                onConflict: 'telegram_username'
+              });
+
+            if (profileError) {
+              console.error('Error creating/updating profile:', profileError);
+            } else {
+              console.log('Profile created/updated successfully for:', username);
+            }
+
             const welcomeMessage = `🎓 Welcome to CampusLink AI!
 
 I'm here to help you with class swaps and petitions.
 
+✅ Your profile has been set up with username: @${username}
+
 To get started:
 1. Visit our website
-2. Enter your username (@${username || 'your_username'})
+2. Enter your username (@${username})
 3. I'll send you a verification code
 4. Use that code to complete your login
 
 Let's make class scheduling easier together! 🚀`;
 
             await sendTelegramMessage(chatId, telegramBotToken, welcomeMessage);
-          }
-
-          // Update user profile with chat_id when they interact
-          if (username) {
-            await supabase
-              .from('profiles')
-              .update({ 
-                telegram_chat_id: chatId,
-                telegram_user_id: userId,
-                first_name: firstName,
-                last_name: lastName
-              })
-              .eq('telegram_username', username);
           }
         }
 
