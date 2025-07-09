@@ -14,68 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      petition_requests: {
-        Row: {
-          anonymous: boolean | null
-          course_name: string
-          created_at: string
-          days_pattern: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          profile_id: string | null
-          section_number: number | null
-          semester_type: string
-          start_time: string | null
-          summer_format: string | null
-          telegram_username: string | null
-          university_id: number | null
-          user_id: string
-        }
-        Insert: {
-          anonymous?: boolean | null
-          course_name: string
-          created_at?: string
-          days_pattern?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          profile_id?: string | null
-          section_number?: number | null
-          semester_type: string
-          start_time?: string | null
-          summer_format?: string | null
-          telegram_username?: string | null
-          university_id?: number | null
-          user_id: string
-        }
-        Update: {
-          anonymous?: boolean | null
-          course_name?: string
-          created_at?: string
-          days_pattern?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          profile_id?: string | null
-          section_number?: number | null
-          semester_type?: string
-          start_time?: string | null
-          summer_format?: string | null
-          telegram_username?: string | null
-          university_id?: number | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "petition_requests_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           created_at: string
@@ -135,7 +73,6 @@ export type Database = {
           normalized_current_section: string | null
           normalized_desired_section: string | null
           notes: string | null
-          petition: boolean | null
           preferred_time: string | null
           profile_id: string | null
           reason: string | null
@@ -167,7 +104,6 @@ export type Database = {
           normalized_current_section?: string | null
           normalized_desired_section?: string | null
           notes?: string | null
-          petition?: boolean | null
           preferred_time?: string | null
           profile_id?: string | null
           reason?: string | null
@@ -199,7 +135,6 @@ export type Database = {
           normalized_current_section?: string | null
           normalized_desired_section?: string | null
           notes?: string | null
-          petition?: boolean | null
           preferred_time?: string | null
           profile_id?: string | null
           reason?: string | null
@@ -298,16 +233,6 @@ export type Database = {
       }
     }
     Views: {
-      petition_counts: {
-        Row: {
-          course_name: string | null
-          days_pattern: string | null
-          semester_type: string | null
-          summer_format: string | null
-          supporter_count: number | null
-        }
-        Relationships: []
-      }
       swap_request_matches: {
         Row: {
           current_section: string | null
