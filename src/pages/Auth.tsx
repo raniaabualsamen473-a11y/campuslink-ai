@@ -1,53 +1,15 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-// Form validation schema
-const authSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  fullName: z.string().min(2, { message: "Full name is required" }).optional().or(z.literal('')),
-  universityId: z.string().optional().or(z.literal('')),
-  telegramUsername: z.string()
-    .refine(val => !val || !/^@/.test(val), {
-      message: "Please enter the username without the @ symbol"
-    })
-    .refine(val => !val || /^[a-zA-Z0-9_]+$/.test(val), {
-      message: "Username can only contain letters, numbers, and underscores"
-    })
-    .optional()
-    .or(z.literal('')),
-});
-
-type AuthFormValues = z.infer<typeof authSchema>;
+import { MessageCircle, Users, Zap, ExternalLink } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, isLoading, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Create form
-  const form = useForm<AuthFormValues>({
-    resolver: zodResolver(authSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      fullName: "",
-      universityId: "",
-      telegramUsername: "",
-    },
-  });
+  const { user, isLoading, signInWithTelegram } = useAuth();
+  const [isAuthenticating, setIsAuthenticating] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and redirect
@@ -57,34 +19,37 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  const onSubmit = async (values: AuthFormValues) => {
-    setIsSubmitting(true);
-    try {
-      if (authMode === "signin") {
-        const result = await signInWithEmail(values.email, values.password);
-        if (result.data) {
-          // Success! The toast is already shown in the auth hook
+  useEffect(() => {
+    // Set up Telegram login callback
+    (window as any).onTelegramAuth = async (user: any) => {
+      console.log('Telegram auth callback received:', user);
+      setIsAuthenticating(true);
+      
+      try {
+        const result = await signInWithTelegram(user);
+        if (result.success) {
+          toast.success("Successfully signed in with Telegram!");
           navigate("/swap-requests", { replace: true });
+        } else {
+          toast.error(result.error || "Failed to authenticate with Telegram");
         }
-      } else {
-        // For signup, include additional user data
-        const userData = {
-          full_name: values.fullName,
-          university_id: values.universityId,
-          telegram_username: values.telegramUsername,
-        };
-        
-        const result = await signUpWithEmail(values.email, values.password, userData);
-        if (result.data) {
-          navigate("/swap-requests", { replace: true });
-        }
+      } catch (error) {
+        console.error('Telegram auth error:', error);
+        toast.error("An unexpected error occurred during authentication");
+      } finally {
+        setIsAuthenticating(false);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
-  if (isLoading) {
+    return () => {
+      // Cleanup
+      if ((window as any).onTelegramAuth) {
+        delete (window as any).onTelegramAuth;
+      }
+    };
+  }, [signInWithTelegram, navigate]);
+
+  if (isLoading || isAuthenticating) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
         <div className="animate-glow-pulse rounded-full h-12 w-12 border-2 border-campus-purple"></div>
@@ -105,146 +70,78 @@ const Auth = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">Welcome to CampusLink AI</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Sign in or create an account to continue
+            Sign in with your Telegram account to continue
           </CardDescription>
         </CardHeader>
-        <CardContent className="glass-card backdrop-blur-md">
-          <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "signin" | "signup")}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Create Account</TabsTrigger>
-            </TabsList>
+        
+        <CardContent className="glass-card backdrop-blur-md space-y-6">
+          {/* Features */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 p-3 rounded-lg glass border border-white/10">
+              <Users className="h-5 w-5 text-campus-purple" />
+              <div className="text-sm">
+                <p className="font-medium text-foreground">Find Class Swaps</p>
+                <p className="text-muted-foreground">Connect with students to swap class sections</p>
+              </div>
+            </div>
             
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground">Email</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="your.email@example.com" 
-                          {...field} 
-                          className="glass-input"
-                          required
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-foreground">Password</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="password" 
-                          placeholder="••••••••" 
-                          {...field} 
-                          className="glass-input"
-                          required
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div className="flex items-center space-x-3 p-3 rounded-lg glass border border-white/10">
+              <MessageCircle className="h-5 w-5 text-campus-purple" />
+              <div className="text-sm">
+                <p className="font-medium text-foreground">Instant Notifications</p>
+                <p className="text-muted-foreground">Get notified via Telegram when matches are found</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3 p-3 rounded-lg glass border border-white/10">
+              <Zap className="h-5 w-5 text-campus-purple" />
+              <div className="text-sm">
+                <p className="font-medium text-foreground">Quick & Secure</p>
+                <p className="text-muted-foreground">Telegram-based authentication for security</p>
+              </div>
+            </div>
+          </div>
 
-                {authMode === "signup" && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Full Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="John Doe" 
-                              {...field} 
-                              className="glass-input"
-                              required
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="universityId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">University ID</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Your student ID number" 
-                              {...field} 
-                              className="glass-input"
-                              required
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="telegramUsername"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Telegram Username</FormLabel>
-                          <FormControl>
-                            <div className="flex items-center">
-                              <span className="glass border border-white/20 border-r-0 rounded-l-xl px-3 py-2 text-sm text-muted-foreground">
-                                @
-                              </span>
-                              <Input 
-                                placeholder="username" 
-                                {...field} 
-                                className="glass-input rounded-l-none"
-                                required
-                              />
-                            </div>
-                          </FormControl>
-                          <p className="text-xs text-muted-foreground mt-1">Enter your Telegram username (no @ symbol). Required for contact when a match is found.</p>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
-                
+          {/* Telegram Login Button */}
+          <div className="text-center space-y-4">
+            <div className="p-4 rounded-lg border border-dashed border-campus-purple/50 bg-campus-purple/5">
+              <MessageCircle className="h-8 w-8 text-campus-purple mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground mb-4">
+                Click the button below to sign in with your Telegram account
+              </p>
+              
+              {/* Telegram Login Widget */}
+              <div className="flex justify-center">
+                <iframe 
+                  src="https://oauth.telegram.org/embed/classSwap_notifier_bot?origin=https%3A%2F%2Fpbqpbupsmzafbzlxccov.supabase.co&size=large&userpic=false&request_access=write"
+                  width="203" 
+                  height="40" 
+                  frameBorder="0" 
+                  scrolling="no" 
+                  className="rounded"
+                  style={{ border: 'none', overflow: 'hidden' }}
+                ></iframe>
+              </div>
+            </div>
+            
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>Don't have Telegram? 
                 <Button 
-                  type="submit" 
-                  variant="neon"
-                  className="w-full btn-glow"
-                  disabled={isSubmitting}
+                  variant="link" 
+                  size="sm" 
+                  className="text-campus-purple p-0 h-auto ml-1"
+                  onClick={() => window.open('https://telegram.org/', '_blank')}
                 >
-                  {isSubmitting ? (
-                    <span className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {authMode === "signin" ? "Signing in..." : "Creating account..."}
-                    </span>
-                  ) : (
-                    <>{authMode === "signin" ? "Sign In" : "Create Account"}</>
-                  )}
+                  Download it here <ExternalLink className="h-3 w-3 ml-1" />
                 </Button>
-              </form>
-            </Form>
-
-          </Tabs>
+              </p>
+              <p>Make sure you have a Telegram username set in your profile</p>
+            </div>
+          </div>
         </CardContent>
+        
         <CardFooter className="text-center text-xs text-muted-foreground">
-          <p>By signing up, you agree to our terms of service and privacy policy.</p>
+          <p>By signing in, you agree to our terms of service and privacy policy.</p>
         </CardFooter>
       </Card>
     </div>

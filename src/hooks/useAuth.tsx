@@ -1,168 +1,165 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
+interface UserProfile {
+  profile_id: string;
+  telegram_user_id: number;
+  telegram_username: string;
+  first_name?: string;
+  last_name?: string;
+  last_login_time?: string;
+  // Backward compatibility properties
+  id: string; // Maps to profile_id
+  email: string | null; // For components that expect email
+}
+
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
+  user: UserProfile | null;
+  session: any; // For backward compatibility
   isLoading: boolean;
   signOut: () => Promise<void>;
-  signInWithEmail: (email: string, password: string) => Promise<{
-    error: Error | null;
-    data: Session | null;
+  signInWithTelegram: (telegramUser: TelegramUser) => Promise<{
+    success: boolean;
+    error?: string;
   }>;
-  signUpWithEmail: (email: string, password: string, userData?: {
-    telegram_username?: string;
-    full_name?: string;
-    university_id?: string;
-  }) => Promise<{
-    error: Error | null;
-    data: Session | null;
-  }>;
-  signInWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  session: null,
   user: null,
+  session: null,
   isLoading: true,
   signOut: async () => {},
-  signInWithEmail: async () => ({ error: null, data: null }),
-  signUpWithEmail: async () => ({ error: null, data: null }),
-  signInWithGoogle: async () => {},
+  signInWithTelegram: async () => ({ success: false }),
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        console.log("Auth state changed:", event);
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        setIsLoading(false);
-      }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      console.log("Initial session check:", currentSession ? "Session found" : "No session");
-      setSession(currentSession);
-      setUser(currentSession?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Check for existing session token
+    checkExistingSession();
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out successfully");
-  };
-
-  const signInWithEmail = async (email: string, password: string) => {
+  const checkExistingSession = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message || "Failed to sign in");
-        return { error, data: null };
+      const sessionToken = localStorage.getItem('telegram_session_token');
+      if (!sessionToken) {
+        setIsLoading(false);
+        return;
       }
 
-      toast.success("Signed in successfully! Redirecting to your swap requests...");
-      return { data: data.session, error: null };
+      // Validate session with our backend
+      const { data, error } = await supabase.functions.invoke('telegram-auth', {
+        body: { session_token: sessionToken }
+      });
+
+      if (error || !data?.success) {
+        console.log('Session validation failed:', error);
+        localStorage.removeItem('telegram_session_token');
+        setUser(null);
+      } else {
+        console.log('Session validated successfully:', data.user);
+        setUser(data.user);
+      }
     } catch (error) {
-      console.error("Sign in error:", error);
-      toast.error("An unexpected error occurred");
-      return { error: error as Error, data: null };
+      console.error('Error checking session:', error);
+      localStorage.removeItem('telegram_session_token');
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string, userData?: {
-    telegram_username?: string;
-    full_name?: string;
-    university_id?: string;
-  }) => {
+  const signInWithTelegram = async (telegramUser: TelegramUser) => {
     try {
-      // Prepare metadata with user profile information
-      const metadata = {
-        telegram_username: userData?.telegram_username || null,
-        full_name: userData?.full_name || null,
-        university_id: userData?.university_id || null,
+      console.log('Signing in with Telegram user:', telegramUser);
+
+      // Send auth data to our Edge Function
+      const { data, error } = await supabase.functions.invoke('telegram-webhook', {
+        body: telegramUser
+      });
+
+      if (error) {
+        console.error('Telegram auth error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (!data?.success) {
+        console.error('Telegram auth failed:', data);
+        return { success: false, error: data?.error || 'Authentication failed' };
+      }
+
+      // Store session token
+      const sessionToken = data.session_token;
+      const profileId = data.profile_id;
+      
+      localStorage.setItem('telegram_session_token', sessionToken);
+
+      // Set user data
+      const userProfile: UserProfile = {
+        profile_id: profileId,
+        telegram_user_id: telegramUser.id,
+        telegram_username: telegramUser.username || `user_${telegramUser.id}`,
+        first_name: telegramUser.first_name,
+        last_name: telegramUser.last_name,
+        // Backward compatibility
+        id: profileId,
+        email: null, // Telegram doesn't provide email
       };
 
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: metadata,
-        },
-      });
-
-      if (error) {
-        toast.error(error.message || "Failed to sign up");
-        console.error("Sign up error:", error);
-        return { error, data: null };
-      }
-
-      // If email confirmation is not required, we'll have a session
-      if (data.session) {
-        toast.success("Account created! You are now logged in. Redirecting to your swap requests...");
-        return { data: data.session, error: null };
-      }
+      setUser(userProfile);
+      console.log('Successfully signed in with Telegram');
       
-      // Otherwise, show a message about email confirmation
-      toast.success("Account created! Check your email for verification.", {
-        duration: 6000,
-      });
-      
-      return { data: null, error: null };
+      return { success: true };
     } catch (error) {
-      console.error("Sign up error:", error);
-      toast.error("An unexpected error occurred");
-      return { error: error as Error, data: null };
+      console.error('Telegram sign in error:', error);
+      return { success: false, error: 'An unexpected error occurred' };
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin + '/swap-requests',
-        }
-      });
-      
-      if (error) {
-        toast.error(error.message || "Failed to sign in with Google");
+      const sessionToken = localStorage.getItem('telegram_session_token');
+      if (sessionToken) {
+        // Call logout endpoint
+        await supabase.functions.invoke('telegram-auth', {
+          body: { session_token: sessionToken },
+          method: 'DELETE'
+        });
       }
+      
+      localStorage.removeItem('telegram_session_token');
+      setUser(null);
+      toast.success("Signed out successfully");
     } catch (error) {
-      console.error("Google sign in error:", error);
-      toast.error("An unexpected error occurred");
+      console.error('Sign out error:', error);
+      // Still clear local state even if server call fails
+      localStorage.removeItem('telegram_session_token');
+      setUser(null);
+      toast.success("Signed out successfully");
     }
   };
 
   return (
     <AuthContext.Provider 
       value={{ 
-        session, 
         user, 
+        session: user ? { user } : null, // Backward compatibility
         isLoading, 
         signOut, 
-        signInWithEmail, 
-        signUpWithEmail,
-        signInWithGoogle
+        signInWithTelegram
       }}
     >
       {children}
