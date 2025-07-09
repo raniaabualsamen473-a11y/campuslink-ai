@@ -93,7 +93,7 @@ serve(async (req) => {
     const session = sessionData[0];
 
     // Get user profile for response
-    const { data: profileData } = await supabase
+    const { data: userProfileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.profile_id)
@@ -104,7 +104,7 @@ serve(async (req) => {
         success: true,
         session_token: session.session_token,
         profile_id: session.profile_id,
-        user: profileData
+        user: userProfileData
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
