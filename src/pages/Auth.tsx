@@ -17,6 +17,7 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [isSendingCode, setIsSendingCode] = useState(false);
+  const [botUsername, setBotUsername] = useState('classSwap_notifier_bot');
 
   useEffect(() => {
     // Check if user is already logged in and redirect
@@ -25,6 +26,22 @@ const Auth = () => {
       navigate("/swap-requests", { replace: true });
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Get the actual bot username
+    const fetchBotInfo = async () => {
+      try {
+        const { data } = await supabase.functions.invoke('get-bot-info');
+        if (data?.success && data?.botUsername) {
+          setBotUsername(data.botUsername);
+        }
+      } catch (error) {
+        console.error('Failed to fetch bot info:', error);
+      }
+    };
+    
+    fetchBotInfo();
+  }, []);
 
   const handleSendCode = async () => {
     if (!username.trim()) {
@@ -50,8 +67,19 @@ const Auth = () => {
       }
 
       if (!data.success) {
-        toast.error(data.error || "Failed to send verification code");
+        const errorMessage = data.error || "Failed to send verification code";
+        toast.error(errorMessage);
+        
+        // Update bot username from response if available
+        if (data.botUsername) {
+          setBotUsername(data.botUsername);
+        }
         return;
+      }
+      
+      // Update bot username from response if available
+      if (data.botUsername) {
+        setBotUsername(data.botUsername);
       }
 
       toast.success("Verification code sent! Check your Telegram messages.");
@@ -256,9 +284,9 @@ const Auth = () => {
                   variant="link" 
                   size="sm" 
                   className="text-campus-purple p-0 h-auto ml-1"
-                  onClick={() => window.open('https://t.me/classSwap_notifier_bot', '_blank')}
+                  onClick={() => window.open(`https://t.me/${botUsername}`, '_blank')}
                 >
-                  @classSwap_notifier_bot <ExternalLink className="h-3 w-3 ml-1" />
+                  @{botUsername} <ExternalLink className="h-3 w-3 ml-1" />
                 </Button>
                 first
               </p>

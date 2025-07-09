@@ -22,6 +22,8 @@ serve(async (req) => {
     const botToken = '7826037183:AAGe3HjAS8TXyozVkPKzMDhqsnRJwAYib9k';
     console.log('Testing bot token with getMe endpoint...');
     
+    let botUsername = 'classSwap_notifier_bot'; // fallback
+    
     try {
       const getMeUrl = `https://api.telegram.org/bot${botToken}/getMe`;
       console.log('Testing bot API with URL:', getMeUrl.replace(botToken, 'BOT_TOKEN_HIDDEN'));
@@ -51,7 +53,8 @@ serve(async (req) => {
         );
       }
       
-      console.log('Bot token test successful, bot username:', getMeResult.result.username);
+      botUsername = getMeResult.result.username || 'classSwap_notifier_bot';
+      console.log('Bot token test successful, bot username:', botUsername);
     } catch (botTestError) {
       console.error('Bot token test error:', botTestError);
       return new Response(
@@ -283,21 +286,24 @@ serve(async (req) => {
           if (telegramResult.description?.includes('chat not found')) {
             return new Response(
               JSON.stringify({ 
-                error: 'Username not found. Please check your username and make sure you have started a chat with @classSwap_notifier_bot first.' 
+                error: `Username not found. Please check your username and make sure you have started a chat with @${botUsername} first.`,
+                botUsername: botUsername
               }),
               { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           } else if (telegramResult.description?.includes('bot was blocked')) {
             return new Response(
               JSON.stringify({ 
-                error: 'You have blocked the bot. Please unblock @classSwap_notifier_bot and try again.' 
+                error: `You have blocked the bot. Please unblock @${botUsername} and try again.`,
+                botUsername: botUsername
               }),
               { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
           } else {
             return new Response(
               JSON.stringify({ 
-                error: `Telegram API error: ${telegramResult.description || 'Unknown error'}` 
+                error: `Telegram API error: ${telegramResult.description || 'Unknown error'}`,
+                botUsername: botUsername
               }),
               { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             );
@@ -321,7 +327,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Verification code sent successfully!' 
+          message: 'Verification code sent successfully!',
+          botUsername: botUsername
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
