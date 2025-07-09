@@ -23,6 +23,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          profile_id: string | null
           section_number: number | null
           semester_type: string
           start_time: string | null
@@ -39,6 +40,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          profile_id?: string | null
           section_number?: number | null
           semester_type: string
           start_time?: string | null
@@ -55,6 +57,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          profile_id?: string | null
           section_number?: number | null
           semester_type?: string
           start_time?: string | null
@@ -62,6 +65,50 @@ export type Database = {
           telegram_username?: string | null
           university_id?: number | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "petition_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          last_login_time: string | null
+          last_name: string | null
+          telegram_chat_id: number
+          telegram_user_id: number
+          telegram_username: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_login_time?: string | null
+          last_name?: string | null
+          telegram_chat_id: number
+          telegram_user_id: number
+          telegram_username: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          last_login_time?: string | null
+          last_name?: string | null
+          telegram_chat_id?: number
+          telegram_user_id?: number
+          telegram_username?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -90,6 +137,7 @@ export type Database = {
           notes: string | null
           petition: boolean | null
           preferred_time: string | null
+          profile_id: string | null
           reason: string | null
           semester_type: string | null
           summer_format: string | null
@@ -121,6 +169,7 @@ export type Database = {
           notes?: string | null
           petition?: boolean | null
           preferred_time?: string | null
+          profile_id?: string | null
           reason?: string | null
           semester_type?: string | null
           summer_format?: string | null
@@ -152,6 +201,7 @@ export type Database = {
           notes?: string | null
           petition?: boolean | null
           preferred_time?: string | null
+          profile_id?: string | null
           reason?: string | null
           semester_type?: string | null
           summer_format?: string | null
@@ -159,7 +209,15 @@ export type Database = {
           university_id?: number | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "swap_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -178,6 +236,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          profile_id: string
+          session_token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          profile_id: string
+          session_token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          profile_id?: string
+          session_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -208,9 +298,30 @@ export type Database = {
       }
     }
     Functions: {
+      authenticate_session: {
+        Args: { token: string }
+        Returns: {
+          profile_id: string
+          telegram_user_id: number
+          telegram_username: string
+        }[]
+      }
       bytea_to_text: {
         Args: { data: string }
         Returns: string
+      }
+      create_user_session: {
+        Args: {
+          p_telegram_user_id: number
+          p_telegram_username: string
+          p_telegram_chat_id: number
+          p_first_name?: string
+          p_last_name?: string
+        }
+        Returns: {
+          session_token: string
+          profile_id: string
+        }[]
       }
       get_user_role: {
         Args: { user_id: string }
