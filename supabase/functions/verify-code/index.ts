@@ -57,14 +57,29 @@ serve(async (req) => {
       .update({ used: true })
       .eq('id', codeData.id);
 
+    // Get chat_id from profiles table
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('telegram_chat_id, telegram_user_id, first_name, last_name')
+      .eq('telegram_username', username)
+      .single();
+
+    if (profileError || !profileData) {
+      console.error('Profile not found for username:', username, profileError);
+      return new Response(
+        JSON.stringify({ error: 'Please send /start to the bot first to link your account' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Create user session using the existing function
     const { data: sessionData, error: sessionError } = await supabase
       .rpc('create_user_session', {
-        p_telegram_user_id: 0, // We don't have the actual Telegram user ID yet
+        p_telegram_user_id: profileData.telegram_user_id || 0,
         p_telegram_username: username,
-        p_telegram_chat_id: 0, // We'll update this when we get the actual chat ID
-        p_first_name: null,
-        p_last_name: null
+        p_telegram_chat_id: profileData.telegram_chat_id,
+        p_first_name: profileData.first_name,
+        p_last_name: profileData.last_name
       });
 
     if (sessionError || !sessionData || sessionData.length === 0) {
