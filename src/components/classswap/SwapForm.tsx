@@ -156,6 +156,9 @@ const SwapForm = () => {
         desired_course: finalCourseName,
         current_section: watchIsPetition ? null : finalCurrentSection,
         desired_section: finalTargetSection,
+        desired_days_pattern: semesterType === "regular" ? data.dayPattern : null,
+        desired_section_number: parseInt(data.targetSection?.split('-')[1] || '1'),
+        desired_start_time: data.preferredTime || '08:00',
         petition: data.isPetition,
         anonymous: data.isAnonymous,
         full_name: data.isAnonymous ? null : data.fullName,
@@ -174,7 +177,7 @@ const SwapForm = () => {
       // Submit to Supabase
       const { error } = await supabase
         .from('swap_requests')
-        .insert([requestData]);
+        .insert(requestData);
 
       if (error) {
         throw new Error(error.message);
