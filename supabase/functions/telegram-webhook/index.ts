@@ -64,15 +64,42 @@ serve(async (req) => {
         if (update.message && update.message.text) {
           const message = update.message;
           const chatId = message.chat.id;
+          const userId = message.from.id;
+          const username = message.from.username;
+          const firstName = message.from.first_name;
+          const lastName = message.from.last_name;
           const text = message.text;
           
-          console.log(`Received message from ${message.from.username || message.from.first_name}: ${text}`);
+          console.log(`Received message from ${username || firstName}: ${text}`);
           
-          // Handle /start command or authentication requests
+          // Handle /start command
           if (text.startsWith('/start')) {
-            await sendTelegramMessage(chatId, telegramBotToken, 
-              `Hello ${message.from.first_name}! 👋\n\nTo authenticate with our service, please use the Telegram Login button on our website.`
-            );
+            const welcomeMessage = `🎓 Welcome to CampusLink AI!
+
+I'm here to help you with class swaps and petitions.
+
+To get started:
+1. Visit our website
+2. Enter your username (@${username || 'your_username'})
+3. I'll send you a verification code
+4. Use that code to complete your login
+
+Let's make class scheduling easier together! 🚀`;
+
+            await sendTelegramMessage(chatId, telegramBotToken, welcomeMessage);
+          }
+
+          // Update user profile with chat_id when they interact
+          if (username) {
+            await supabase
+              .from('profiles')
+              .update({ 
+                telegram_chat_id: chatId,
+                telegram_user_id: userId,
+                first_name: firstName,
+                last_name: lastName
+              })
+              .eq('telegram_username', username);
           }
         }
 

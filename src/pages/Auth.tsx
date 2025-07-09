@@ -3,13 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { MessageCircle, Users, Zap, ExternalLink } from "lucide-react";
+import { MessageCircle, Users, Zap, ExternalLink, Send, Shield } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const { user, isLoading, signInWithTelegram } = useAuth();
+  const { user, isLoading, signInWithVerification } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [step, setStep] = useState<'username' | 'verification'>('username');
+  const [username, setUsername] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isSendingCode, setIsSendingCode] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in and redirect
@@ -19,35 +26,76 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    // Set up Telegram login callback
-    (window as any).onTelegramAuth = async (user: any) => {
-      console.log('Telegram auth callback received:', user);
-      setIsAuthenticating(true);
-      
-      try {
-        const result = await signInWithTelegram(user);
-        if (result.success) {
-          toast.success("Successfully signed in with Telegram!");
-          navigate("/swap-requests", { replace: true });
-        } else {
-          toast.error(result.error || "Failed to authenticate with Telegram");
-        }
-      } catch (error) {
-        console.error('Telegram auth error:', error);
-        toast.error("An unexpected error occurred during authentication");
-      } finally {
-        setIsAuthenticating(false);
-      }
-    };
+  const handleSendCode = async () => {
+    if (!username.trim()) {
+      toast.error("Please enter your Telegram username");
+      return;
+    }
 
-    return () => {
-      // Cleanup
-      if ((window as any).onTelegramAuth) {
-        delete (window as any).onTelegramAuth;
+    if (!username.startsWith('@')) {
+      toast.error("Username must start with @");
+      return;
+    }
+
+    setIsSendingCode(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-verification', {
+        body: { telegram_username: username.trim() }
+      });
+
+      if (error) {
+        console.error('Send verification error:', error);
+        toast.error(error.message || "Failed to send verification code");
+        return;
       }
-    };
-  }, [signInWithTelegram, navigate]);
+
+      if (!data.success) {
+        toast.error(data.error || "Failed to send verification code");
+        return;
+      }
+
+      toast.success("Verification code sent! Check your Telegram messages.");
+      setStep('verification');
+    } catch (error) {
+      console.error('Send code error:', error);
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!verificationCode.trim()) {
+      toast.error("Please enter the verification code");
+      return;
+    }
+
+    if (verificationCode.length !== 6) {
+      toast.error("Verification code must be 6 digits");
+      return;
+    }
+
+    setIsAuthenticating(true);
+    try {
+      const result = await signInWithVerification(username.trim(), verificationCode.trim());
+      if (result.success) {
+        toast.success("Successfully verified and signed in!");
+        navigate("/swap-requests", { replace: true });
+      } else {
+        toast.error(result.error || "Verification failed");
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      toast.error("An unexpected error occurred during verification");
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleBack = () => {
+    setStep('username');
+    setVerificationCode('');
+  };
 
   if (isLoading || isAuthenticating) {
     return (
@@ -102,27 +150,94 @@ const Auth = () => {
             </div>
           </div>
 
-          {/* Telegram Login Button */}
+          {/* Custom Verification Flow */}
           <div className="text-center space-y-4">
-            <div className="p-4 rounded-lg border border-dashed border-campus-purple/50 bg-campus-purple/5">
-              <MessageCircle className="h-8 w-8 text-campus-purple mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground mb-4">
-                Click the button below to sign in with your Telegram account
-              </p>
-              
-              {/* Telegram Login Widget */}
-              <div className="flex justify-center">
-                <iframe 
-                  src="https://oauth.telegram.org/embed/classSwap_notifier_bot?origin=https%3A%2F%2Fpbqpbupsmzafbzlxccov.supabase.co&size=large&userpic=false&request_access=write"
-                  width="203" 
-                  height="40" 
-                  frameBorder="0" 
-                  scrolling="no" 
-                  className="rounded"
-                  style={{ border: 'none', overflow: 'hidden' }}
-                ></iframe>
+            {step === 'username' ? (
+              <div className="p-4 rounded-lg border border-dashed border-campus-purple/50 bg-campus-purple/5">
+                <MessageCircle className="h-8 w-8 text-campus-purple mx-auto mb-4" />
+                <div className="space-y-4">
+                  <div className="text-left">
+                    <Label htmlFor="username" className="text-sm font-medium">
+                      Telegram Username
+                    </Label>
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="@username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      className="mt-1"
+                      disabled={isSendingCode}
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleSendCode}
+                    disabled={isSendingCode || !username.trim()}
+                    className="w-full"
+                  >
+                    {isSendingCode ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        <span>Sending Code...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Send className="h-4 w-4" />
+                        <span>Send Verification Code</span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 rounded-lg border border-dashed border-campus-purple/50 bg-campus-purple/5">
+                <Shield className="h-8 w-8 text-campus-purple mx-auto mb-4" />
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Enter the 6-digit code sent to your Telegram: <strong>{username}</strong>
+                  </p>
+                  <div className="text-left">
+                    <Label htmlFor="code" className="text-sm font-medium">
+                      Verification Code
+                    </Label>
+                    <Input
+                      id="code"
+                      type="text"
+                      placeholder="123456"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="mt-1 text-center text-lg tracking-widest"
+                      disabled={isAuthenticating}
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline"
+                      onClick={handleBack}
+                      disabled={isAuthenticating}
+                      className="flex-1"
+                    >
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={handleVerifyCode}
+                      disabled={isAuthenticating || verificationCode.length !== 6}
+                      className="flex-1"
+                    >
+                      {isAuthenticating ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          <span>Verifying...</span>
+                        </div>
+                      ) : (
+                        'Verify & Sign In'
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
             
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Don't have Telegram? 
@@ -135,7 +250,18 @@ const Auth = () => {
                   Download it here <ExternalLink className="h-3 w-3 ml-1" />
                 </Button>
               </p>
-              <p>Make sure you have a Telegram username set in your profile</p>
+              <p>
+                Start a chat with 
+                <Button 
+                  variant="link" 
+                  size="sm" 
+                  className="text-campus-purple p-0 h-auto ml-1"
+                  onClick={() => window.open('https://t.me/classSwap_notifier_bot', '_blank')}
+                >
+                  @classSwap_notifier_bot <ExternalLink className="h-3 w-3 ml-1" />
+                </Button>
+                first
+              </p>
             </div>
           </div>
         </CardContent>

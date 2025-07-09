@@ -33,6 +33,10 @@ interface AuthContextType {
     success: boolean;
     error?: string;
   }>;
+  signInWithVerification: (username: string, code: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -41,6 +45,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   signOut: async () => {},
   signInWithTelegram: async () => ({ success: false }),
+  signInWithVerification: async () => ({ success: false }),
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -129,6 +134,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const signInWithVerification = async (username: string, code: string) => {
+    try {
+      console.log('Signing in with verification:', { username, code });
+
+      const { data, error } = await supabase.functions.invoke('verify-code', {
+        body: { 
+          telegram_username: username,
+          verification_code: code
+        }
+      });
+
+      if (error) {
+        console.error('Verification error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (!data?.success) {
+        console.error('Verification failed:', data);
+        return { success: false, error: data?.error || 'Verification failed' };
+      }
+
+      // Store session token
+      const sessionToken = data.session_token;
+      const profileId = data.profile_id;
+      
+      localStorage.setItem('telegram_session_token', sessionToken);
+
+      // Set user data
+      const userProfile: UserProfile = {
+        profile_id: profileId,
+        telegram_user_id: data.user?.telegram_user_id || 0,
+        telegram_username: data.user?.telegram_username || username.replace('@', ''),
+        first_name: data.user?.first_name,
+        last_name: data.user?.last_name,
+        // Backward compatibility
+        id: profileId,
+        email: null,
+      };
+
+      setUser(userProfile);
+      console.log('Successfully signed in with verification');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Verification sign in error:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+
   const signOut = async () => {
     try {
       const sessionToken = localStorage.getItem('telegram_session_token');
@@ -159,7 +213,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session: user ? { user } : null, // Backward compatibility
         isLoading, 
         signOut, 
-        signInWithTelegram
+        signInWithTelegram,
+        signInWithVerification
       }}
     >
       {children}

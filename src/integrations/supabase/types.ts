@@ -269,6 +269,33 @@ export type Database = {
           },
         ]
       }
+      verification_codes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          telegram_username: string
+          used: boolean
+          verification_code: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          telegram_username: string
+          used?: boolean
+          verification_code: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          telegram_username?: string
+          used?: boolean
+          verification_code?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       petition_counts: {
@@ -309,6 +336,10 @@ export type Database = {
       bytea_to_text: {
         Args: { data: string }
         Returns: string
+      }
+      cleanup_expired_verification_codes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       create_user_session: {
         Args: {
