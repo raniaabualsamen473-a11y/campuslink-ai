@@ -18,22 +18,92 @@ serve(async (req) => {
   }
 
   try {
+    // Test bot token first with getMe endpoint
+    const botToken = '7826037183:AAGe3HjAS8TXyozVkPKzMDhqsnRJwAYib9k';
+    console.log('Testing bot token with getMe endpoint...');
+    
+    try {
+      const getMeUrl = `https://api.telegram.org/bot${botToken}/getMe`;
+      console.log('Testing bot API with URL:', getMeUrl.replace(botToken, 'BOT_TOKEN_HIDDEN'));
+      
+      const getMeResponse = await fetch(getMeUrl);
+      const getMeResult = await getMeResponse.json();
+      
+      console.log('getMe API response:', {
+        status: getMeResponse.status,
+        ok: getMeResult.ok,
+        result: getMeResult.result ? { 
+          id: getMeResult.result.id, 
+          username: getMeResult.result.username,
+          first_name: getMeResult.result.first_name
+        } : null,
+        error: getMeResult.error_code ? {
+          code: getMeResult.error_code,
+          description: getMeResult.description
+        } : null
+      });
+      
+      if (!getMeResult.ok) {
+        console.error('Bot token test failed:', getMeResult);
+        return new Response(
+          JSON.stringify({ error: 'Bot token is invalid or bot is not working' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('Bot token test successful, bot username:', getMeResult.result.username);
+    } catch (botTestError) {
+      console.error('Bot token test error:', botTestError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to test bot connection' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log('Parsing request body...');
     const body = await req.json();
-    console.log('Request body:', body);
+    console.log('Request body received:', body);
     
     const { telegram_username } = body;
+    console.log('Extracted telegram_username:', telegram_username);
 
-    if (!telegram_username || !telegram_username.startsWith('@')) {
-      console.log('Invalid username format:', telegram_username);
+    // Validate username format
+    if (!telegram_username) {
+      console.log('No telegram_username provided');
       return new Response(
-        JSON.stringify({ error: 'Invalid username format. Must start with @' }),
+        JSON.stringify({ error: 'Telegram username is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!telegram_username.startsWith('@')) {
+      console.log('Invalid username format, missing @:', telegram_username);
+      return new Response(
+        JSON.stringify({ error: 'Username must start with @' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const username = telegram_username.slice(1); // Remove @ symbol
-    console.log('Processing username:', username);
+    console.log('Processed username (without @):', username);
+    
+    // Additional username validation
+    if (username.length < 5 || username.length > 32) {
+      console.log('Username length invalid:', username.length);
+      return new Response(
+        JSON.stringify({ error: 'Username must be between 5 and 32 characters' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check for valid username characters
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      console.log('Username contains invalid characters:', username);
+      return new Response(
+        JSON.stringify({ error: 'Username can only contain letters, numbers, and underscores' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     console.log('Initializing Supabase client...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
@@ -41,10 +111,50 @@ serve(async (req) => {
     console.log('Environment check:', { 
       hasUrl: !!supabaseUrl, 
       hasKey: !!supabaseKey,
-      urlStart: supabaseUrl?.substring(0, 20) + '...'
+      urlStart: supabaseUrl?.substring(0, 30) + '...'
     });
     
-    const supabase = createClient(supabaseUrl ?? '', supabaseKey ?? '');
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Database configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Test database connection by checking verification_codes table
+    console.log('Testing database connection...');
+    try {
+      const { data: tableTest, error: tableError } = await supabase
+        .from('verification_codes')
+        .select('id')
+        .limit(1);
+      
+      console.log('Database table test result:', {
+        success: !tableError,
+        error: tableError ? {
+          code: tableError.code,
+          message: tableError.message,
+          details: tableError.details
+        } : null
+      });
+      
+      if (tableError) {
+        console.error('Database table access error:', tableError);
+        return new Response(
+          JSON.stringify({ error: 'Database table not accessible' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (dbTestError) {
+      console.error('Database connection test failed:', dbTestError);
+      return new Response(
+        JSON.stringify({ error: 'Database connection failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Rate limiting - check if user requested code recently
     console.log('Checking rate limiting for username:', username);
@@ -57,15 +167,22 @@ serve(async (req) => {
       .limit(1);
 
     if (rateCheckError) {
-      console.error('Rate check error:', rateCheckError);
+      console.error('Rate check database error:', rateCheckError);
+      return new Response(
+        JSON.stringify({ error: 'Database error during rate check' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     
-    console.log('Recent codes found:', recentCodes?.length || 0);
+    console.log('Recent codes check result:', {
+      found: recentCodes?.length || 0,
+      codes: recentCodes
+    });
 
     if (recentCodes && recentCodes.length > 0) {
       console.log('Rate limit hit for username:', username);
       return new Response(
-        JSON.stringify({ error: 'Please wait before requesting another code' }),
+        JSON.stringify({ error: 'Please wait before requesting another code (1 minute cooldown)' }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -73,50 +190,42 @@ serve(async (req) => {
     // Generate 6-digit verification code
     console.log('Generating verification code...');
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('Generated code for username:', username);
+    console.log('Generated 6-digit code for username:', username);
     
     // Store verification code (expires in 5 minutes)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    console.log('Storing verification code in database...');
+    console.log('Storing verification code in database with expiry:', expiresAt.toISOString());
     
-    const { error: dbError } = await supabase
+    const { data: insertData, error: dbError } = await supabase
       .from('verification_codes')
       .insert({
         telegram_username: username,
         verification_code: verificationCode,
         expires_at: expiresAt.toISOString()
-      });
+      })
+      .select();
 
     if (dbError) {
-      console.error('Database error:', dbError);
+      console.error('Database insert error:', {
+        code: dbError.code,
+        message: dbError.message,
+        details: dbError.details,
+        hint: dbError.hint
+      });
       return new Response(
-        JSON.stringify({ error: 'Failed to generate verification code' }),
+        JSON.stringify({ error: 'Failed to store verification code in database' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
     
-    console.log('Verification code stored successfully');
+    console.log('Verification code stored successfully:', insertData);
 
     // Send verification code via Telegram Bot API
-    const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
-    console.log('Bot token check:', { 
-      hasToken: !!botToken, 
-      tokenStart: botToken?.substring(0, 10) + '...'
-    });
-    
-    if (!botToken) {
-      console.error('TELEGRAM_BOT_TOKEN environment variable not set');
-      return new Response(
-        JSON.stringify({ error: 'Bot configuration error' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
     const message = `🔐 Your CampusLink AI verification code is: ${verificationCode}\n\nThis code will expire in 5 minutes.`;
     console.log('Preparing to send message to @' + username);
 
     try {
-      // Send message via Telegram Bot API
+      // Construct exact Telegram API URL as specified
       const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
       const payload = {
         chat_id: `@${username}`,
@@ -126,7 +235,12 @@ serve(async (req) => {
       
       console.log('Sending Telegram API request:', {
         url: telegramUrl.replace(botToken, 'BOT_TOKEN_HIDDEN'),
-        payload: { ...payload, text: 'MESSAGE_HIDDEN' }
+        method: 'POST',
+        payload: { 
+          chat_id: payload.chat_id, 
+          text: 'VERIFICATION_CODE_MESSAGE',
+          parse_mode: payload.parse_mode
+        }
       });
       
       const telegramResponse = await fetch(telegramUrl, {
@@ -135,38 +249,74 @@ serve(async (req) => {
         body: JSON.stringify(payload)
       });
 
-      console.log('Telegram API response status:', telegramResponse.status);
+      console.log('Telegram API response received:', {
+        status: telegramResponse.status,
+        statusText: telegramResponse.statusText,
+        headers: Object.fromEntries(telegramResponse.headers.entries())
+      });
+      
       const telegramResult = await telegramResponse.json();
-      console.log('Telegram API response:', telegramResult);
+      console.log('Full Telegram API response:', telegramResult);
       
       if (!telegramResult.ok) {
         console.error('Telegram API error details:', {
           ok: telegramResult.ok,
           error_code: telegramResult.error_code,
-          description: telegramResult.description
+          description: telegramResult.description,
+          parameters: telegramResult.parameters
         });
         
         // Clean up the verification code if we can't send it
-        await supabase
+        console.log('Cleaning up verification code due to Telegram API failure...');
+        const { error: cleanupError } = await supabase
           .from('verification_codes')
           .delete()
           .eq('telegram_username', username)
           .eq('verification_code', verificationCode);
+          
+        if (cleanupError) {
+          console.error('Cleanup error:', cleanupError);
+        }
 
+        // Return specific error messages based on Telegram API response
         if (telegramResult.error_code === 400) {
-          return new Response(
-            JSON.stringify({ 
-              error: 'Username not found or user has not started the bot. Please start a chat with @classSwap_notifier_bot first.' 
-            }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+          if (telegramResult.description?.includes('chat not found')) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'Username not found. Please check your username and make sure you have started a chat with @classSwap_notifier_bot first.' 
+              }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          } else if (telegramResult.description?.includes('bot was blocked')) {
+            return new Response(
+              JSON.stringify({ 
+                error: 'You have blocked the bot. Please unblock @classSwap_notifier_bot and try again.' 
+              }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          } else {
+            return new Response(
+              JSON.stringify({ 
+                error: `Telegram API error: ${telegramResult.description || 'Unknown error'}` 
+              }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
         }
 
         return new Response(
-          JSON.stringify({ error: 'Failed to send verification code. Please check your username.' }),
+          JSON.stringify({ 
+            error: `Failed to send verification code: ${telegramResult.description || 'Unknown Telegram API error'}` 
+          }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+
+      console.log('Telegram message sent successfully:', {
+        message_id: telegramResult.result?.message_id,
+        chat: telegramResult.result?.chat,
+        date: telegramResult.result?.date
+      });
 
       return new Response(
         JSON.stringify({ 
@@ -177,23 +327,36 @@ serve(async (req) => {
       );
 
     } catch (telegramError) {
-      console.error('Telegram send error:', telegramError);
+      console.error('Telegram request failed with exception:', {
+        name: telegramError.name,
+        message: telegramError.message,
+        stack: telegramError.stack
+      });
       
       // Clean up the verification code if we can't send it
-      await supabase
+      console.log('Cleaning up verification code due to Telegram request exception...');
+      const { error: cleanupError } = await supabase
         .from('verification_codes')
         .delete()
         .eq('telegram_username', username)
         .eq('verification_code', verificationCode);
+        
+      if (cleanupError) {
+        console.error('Cleanup error:', cleanupError);
+      }
 
       return new Response(
-        JSON.stringify({ error: 'Failed to send verification code via Telegram' }),
+        JSON.stringify({ error: 'Network error while sending verification code via Telegram' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
   } catch (error) {
-    console.error('Send verification error:', error);
+    console.error('Send verification function error:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
