@@ -24,9 +24,9 @@ export interface SwapRequest {
   desired_section: string | null;
   normalized_current_section: string | null;
   normalized_desired_section: string | null;
-  university_id: number | null;
+  university_id?: number | null;
   full_name: string | null;
-  email: string | null;
+  email?: string | null;
   
   // Structured section data
   current_section_number: number | null;

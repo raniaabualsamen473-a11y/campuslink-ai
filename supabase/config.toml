@@ -65,3 +65,9 @@ verify_jwt = false
 
 [functions.telegram-auth]
 verify_jwt = false
+
+[functions.forward-swap-request]
+verify_jwt = false
+
+[functions.match-notification-webhook]
+verify_jwt = false
