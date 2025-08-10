@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      matches: {
+        Row: {
+          current_section: string | null
+          desired_course: string | null
+          desired_section: string | null
+          match_full_name: string | null
+          match_telegram: string | null
+          match_user_id: string | null
+          normalized_current_section: string | null
+          normalized_desired_section: string | null
+          request_id: string | null
+          requester_user_id: string | null
+        }
+        Insert: {
+          current_section?: string | null
+          desired_course?: string | null
+          desired_section?: string | null
+          match_full_name?: string | null
+          match_telegram?: string | null
+          match_user_id?: string | null
+          normalized_current_section?: string | null
+          normalized_desired_section?: string | null
+          request_id?: string | null
+          requester_user_id?: string | null
+        }
+        Update: {
+          current_section?: string | null
+          desired_course?: string | null
+          desired_section?: string | null
+          match_full_name?: string | null
+          match_telegram?: string | null
+          match_user_id?: string | null
+          normalized_current_section?: string | null
+          normalized_desired_section?: string | null
+          request_id?: string | null
+          requester_user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -65,21 +104,16 @@ export type Database = {
           desired_section: string | null
           desired_section_number: number
           desired_start_time: string
-          email: string | null
-          flexible_days: boolean | null
-          flexible_time: boolean | null
           full_name: string | null
           id: string
           normalized_current_section: string | null
           normalized_desired_section: string | null
-          notes: string | null
           preferred_time: string | null
           profile_id: string | null
           reason: string | null
           semester_type: string | null
           summer_format: string | null
           telegram_username: string | null
-          university_id: number | null
           user_id: string
         }
         Insert: {
@@ -96,21 +130,16 @@ export type Database = {
           desired_section?: string | null
           desired_section_number: number
           desired_start_time: string
-          email?: string | null
-          flexible_days?: boolean | null
-          flexible_time?: boolean | null
           full_name?: string | null
           id?: string
           normalized_current_section?: string | null
           normalized_desired_section?: string | null
-          notes?: string | null
           preferred_time?: string | null
           profile_id?: string | null
           reason?: string | null
           semester_type?: string | null
           summer_format?: string | null
           telegram_username?: string | null
-          university_id?: number | null
           user_id: string
         }
         Update: {
@@ -127,21 +156,16 @@ export type Database = {
           desired_section?: string | null
           desired_section_number?: number
           desired_start_time?: string
-          email?: string | null
-          flexible_days?: boolean | null
-          flexible_time?: boolean | null
           full_name?: string | null
           id?: string
           normalized_current_section?: string | null
           normalized_desired_section?: string | null
-          notes?: string | null
           preferred_time?: string | null
           profile_id?: string | null
           reason?: string | null
           semester_type?: string | null
           summer_format?: string | null
           telegram_username?: string | null
-          university_id?: number | null
           user_id?: string
         }
         Relationships: [
