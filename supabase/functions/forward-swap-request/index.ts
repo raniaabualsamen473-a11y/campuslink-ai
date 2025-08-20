@@ -2,8 +2,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const N8N_WEBHOOK_URL = "https://acegrowthlo.app.n8n.cloud/webhook/swap-request";
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -61,24 +59,81 @@ serve(async (req) => {
 
     console.log("Processing swap request:", record.id);
 
-    // Forward the data to n8n webhook with the required format
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ record }),
-    });
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to forward to n8n webhook: ${response.status} ${errorText}`);
+    // Find potential matches for this swap request
+    const { data: potentialMatches, error: matchError } = await supabase
+      .from('swap_requests')
+      .select('*')
+      .eq('desired_course', record.desired_course)
+      .neq('user_id', record.user_id) // Don't match with self
+      .neq('id', record.id); // Don't match with the same request
+
+    if (matchError) {
+      console.error("Error finding potential matches:", matchError);
+      throw new Error(`Failed to find matches: ${matchError.message}`);
     }
 
-    console.log("Successfully forwarded swap request to n8n:", record.id);
+    console.log(`Found ${potentialMatches?.length || 0} potential matches for request ${record.id}`);
+
+    // Check for mutual matches (User A wants User B's section AND User B wants User A's section)
+    const matches = [];
+    if (potentialMatches && potentialMatches.length > 0) {
+      for (const potentialMatch of potentialMatches) {
+        // Check if it's a mutual match using normalized sections
+        const isMatch = (
+          normalizeSection(record.normalized_desired_section || record.desired_section || '') === 
+          normalizeSection(potentialMatch.normalized_current_section || potentialMatch.current_section || '')
+        ) && (
+          normalizeSection(record.normalized_current_section || record.current_section || '') === 
+          normalizeSection(potentialMatch.normalized_desired_section || potentialMatch.desired_section || '')
+        );
+
+        if (isMatch) {
+          matches.push(potentialMatch);
+          console.log(`Found mutual match: ${record.id} <-> ${potentialMatch.id}`);
+        }
+      }
+    }
+
+    // If matches found, call match-notification-webhook
+    if (matches.length > 0) {
+      console.log(`Processing ${matches.length} matches for request ${record.id}`);
+      
+      for (const match of matches) {
+        try {
+          // Call match-notification-webhook function internally
+          const notificationResponse = await supabase.functions.invoke('match-notification-webhook', {
+            body: {
+              request_a_id: record.id,
+              request_b_id: match.id
+            }
+          });
+
+          if (notificationResponse.error) {
+            console.error("Error calling match-notification-webhook:", notificationResponse.error);
+          } else {
+            console.log("Successfully triggered match notification for:", record.id, "<->", match.id);
+          }
+        } catch (notifyError) {
+          console.error("Error triggering notification:", notifyError);
+        }
+      }
+    } else {
+      console.log("No matches found for request:", record.id);
+    }
 
     return new Response(
-      JSON.stringify({ success: true, message: "Swap request forwarded to n8n" }),
+      JSON.stringify({ 
+        success: true, 
+        message: "Swap request processed successfully",
+        matchesFound: matches.length,
+        requestId: record.id
+      }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
