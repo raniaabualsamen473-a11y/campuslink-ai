@@ -4,11 +4,9 @@ import { useSwapRequests } from "@/hooks/useSwapRequests";
 import { SwapRequestForm } from "@/components/swap-requests/SwapRequestForm";
 import { ActiveRequestsList } from "@/components/swap-requests/ActiveRequestsList";
 import MatchResults from "@/components/MatchResults";
-import { useTranslate } from "@/components/LanguageProvider";
 
 const SwapRequests = () => {
   const { user } = useAuth();
-  const { t } = useTranslate();
   
   const {
     activeRequests,
@@ -23,9 +21,9 @@ const SwapRequests = () => {
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-bold mb-2 text-foreground">{t('swapRequests.title')}</h1>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">Class Swap Requests</h1>
         <p className="text-muted-foreground">
-          {t('swapRequests.subtitle')}
+          Submit and manage your class section swap requests
         </p>
       </div>
 

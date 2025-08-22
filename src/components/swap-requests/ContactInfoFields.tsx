@@ -2,7 +2,6 @@
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTranslate } from "@/components/LanguageProvider";
 
 interface ContactInfoFieldsProps {
   telegramUsername: string;
@@ -17,17 +16,16 @@ export const ContactInfoFields = ({
   setTelegramUsername,
   setIsAnonymous
 }: ContactInfoFieldsProps) => {
-  const { t } = useTranslate();
   
   return (
     <div className="space-y-4 pt-4">
       <h3 className="font-medium text-lg text-campus-darkPurple dark:text-campus-purple">
-        {t('contact.title', 'Contact Information')}
+        Contact Information
       </h3>
         
       {/* Telegram Username */}
       <div className="space-y-2">
-        <Label htmlFor="telegram" className="text-foreground">{t('contact.telegramUsername', 'Your Telegram Username')}</Label>
+        <Label htmlFor="telegram" className="text-foreground">Your Telegram Username</Label>
         <Input 
           id="telegram" 
           placeholder="@username" 
@@ -35,7 +33,7 @@ export const ContactInfoFields = ({
           onChange={(e) => setTelegramUsername(e.target.value)}
         />
         <p className="text-xs text-muted-foreground mt-1">
-          {t('contact.usageInfo', 'Used to connect you with matching students')}
+          Used to connect you with matching students
         </p>
       </div>
 
@@ -48,10 +46,10 @@ export const ContactInfoFields = ({
         />
         <div>
           <Label htmlFor="anonymous" className="font-medium text-foreground">
-            {t('contact.anonymous', 'Submit Anonymously')}
+            Submit Anonymously
           </Label>
           <p className="text-sm text-muted-foreground">
-            {t('contact.anonymousInfo', 'Your name won\'t be visible to other students')}
+            Your name won't be visible to other students
           </p>
         </div>
       </div>

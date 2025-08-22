@@ -196,47 +196,6 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
-        
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.5s"}}>
-          <CardHeader>
-            <CardTitle>Latest Activity</CardTitle>
-            <CardDescription>Recent swap requests from all students</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-6">
-                <div className="animate-glow-pulse rounded-full h-8 w-8 border-2 border-campus-purple"></div>
-              </div>
-            ) : recentRequests.length > 0 ? (
-              <ScrollArea className="h-80">
-                <div className="space-y-4">
-                  {recentRequests.map((request) => (
-                    <div key={request.id} className="glass-card p-3 hover:shadow-neon-purple transition-all duration-300">
-                      <div className="flex justify-between">
-                        <p className="font-medium text-foreground">{request.desired_course || "Unnamed Course"}</p>
-                        <span 
-                          className="text-xs px-2 py-1 rounded-full bg-green-100/50 text-green-800 backdrop-blur-sm"
-                        >
-                          Swap
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {request.anonymous ? "Anonymous Student" : (request.full_name || "Unknown Student")}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Posted: {formatDate(request.created_at)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">No recent activity</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

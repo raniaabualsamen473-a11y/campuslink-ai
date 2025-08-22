@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "./ThemeToggle";
-import { LanguageToggle } from "./LanguageToggle";
-import { useTranslate } from "./LanguageProvider";
 
 interface NavbarProps {
   isMobileMenuOpen: boolean;
@@ -18,7 +16,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const [email, setEmail] = useState<string | null>(null);
-  const { t } = useTranslate();
 
   useEffect(() => {
     setEmail(user?.email || null);
@@ -40,8 +37,8 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
 
   const navLinks = [
     // Removed Home link as requested
-    { name: t('navbar.dashboard'), path: "/dashboard", authRequired: true },
-    { name: t('navbar.swapRequests'), path: "/swap-requests", authRequired: true },
+    { name: "Dashboard", path: "/dashboard", authRequired: true },
+    { name: "Swap Requests", path: "/swap-requests", authRequired: true },
     
   ];
 
@@ -83,9 +80,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
             </div>
 
             <div className="ml-4 flex items-center space-x-2">
-              {/* Language Toggle */}
-              <LanguageToggle />
-              
               {/* Theme Toggle */}
               <ThemeToggle />
               
@@ -93,14 +87,14 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 <div className="flex items-center space-x-2">
                   <div className="hidden md:block text-right">
                     <p className="text-sm font-medium text-foreground truncate">{email}</p>
-                    <p className="text-xs text-muted-foreground">{t('navbar.loggedIn')}</p>
+                    <p className="text-xs text-muted-foreground">Logged In</p>
                   </div>
                   <Button
                     variant="glass"
                     size="icon"
                     onClick={handleSignOut}
                     className="text-foreground hover:text-campus-purple"
-                    title={t('navbar.signOut')}
+                    title="Sign Out"
                   >
                     <LogOut className="h-5 w-5" />
                   </Button>
@@ -112,7 +106,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                   className="btn-glow"
                 >
                   <LogIn className="h-4 w-4 mr-1" />
-                  {t('navbar.login')}
+                  Login
                 </Button>
               )}
             </div>
@@ -120,9 +114,6 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
 
           {/* Mobile menu button */}
           <div className="flex items-center sm:hidden gap-2">
-            {/* Language Toggle for Mobile */}
-            <LanguageToggle />
-            
             {/* Theme Toggle for Mobile */}
             <ThemeToggle />
             
@@ -172,7 +163,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
               <>
                 <div className="px-3 py-2">
                   <p className="text-sm font-medium text-foreground truncate">{email}</p>
-                  <p className="text-xs text-muted-foreground">{t('navbar.loggedIn')}</p>
+                  <p className="text-xs text-muted-foreground">Logged In</p>
                 </div>
                 <button
                   onClick={handleSignOut}
@@ -180,7 +171,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
                 >
                   <div className="flex items-center">
                     <LogOut className="h-5 w-5 mr-2" />
-                    {t('navbar.signOut')}
+                    Sign Out
                   </div>
                 </button>
               </>
@@ -191,7 +182,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
               >
                 <div className="flex items-center">
                   <LogIn className="h-5 w-5 mr-2" />
-                  {t('navbar.login')}
+                  Login
                 </div>
               </Link>
             )}

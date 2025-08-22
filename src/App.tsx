@@ -15,7 +15,6 @@ import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { ThemeProvider } from "./components/ThemeProvider";
-import { LanguageProvider } from "./components/LanguageProvider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,33 +60,31 @@ const Home = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider defaultTheme="dark" storageKey="campuslink-theme">
-      <LanguageProvider defaultLanguage="en" storageKey="campuslink-language">
-        <TooltipProvider>
-          <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Home />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/swap-requests" element={
-                    <ProtectedRoute>
-                      <SwapRequests />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </TooltipProvider>
-      </LanguageProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/swap-requests" element={
+                  <ProtectedRoute>
+                    <SwapRequests />
+                  </ProtectedRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
