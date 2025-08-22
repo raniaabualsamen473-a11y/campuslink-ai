@@ -16,6 +16,7 @@ export interface Match {
 export interface SwapRequest {
   id: string;
   user_id: string;
+  profile_id?: string | null;
   anonymous: boolean;
   
   telegram_username: string | null;

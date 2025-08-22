@@ -33,6 +33,7 @@ export const prepareRequestData = (
   return {
     id: editingRequestId || uuidv4(),
     user_id: userId,
+    profile_id: userId, // Set profile_id to link with profiles table
     anonymous: isAnonymous,
     
     telegram_username: telegramUsername,

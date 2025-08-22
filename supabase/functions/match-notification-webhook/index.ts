@@ -84,21 +84,21 @@ serve(async (req) => {
     const requestA = requests.find((r: any) => r.id === requestAId)!;
     const requestB = requests.find((r: any) => r.id === requestBId)!;
 
-    // Load profiles to get Telegram chat IDs
-    const profileIds: string[] = [requestA.profile_id, requestB.profile_id].filter(Boolean);
+    // Load profiles by linking user_id to profiles.id  
+    const userIds: string[] = [requestA.user_id, requestB.user_id].filter(Boolean);
 
     let profiles: any[] = [];
-    if (profileIds.length > 0) {
+    if (userIds.length > 0) {
       const { data: profs, error: profErr } = await supabase
         .from("profiles")
         .select("id, telegram_chat_id, telegram_username, first_name, last_name")
-        .in("id", profileIds);
+        .in("id", userIds);
       if (profErr) throw profErr;
       profiles = profs || [];
     }
 
-    const profileA = profiles.find((p) => p.id === requestA.profile_id);
-    const profileB = profiles.find((p) => p.id === requestB.profile_id);
+    const profileA = profiles.find((p) => p.id === requestA.user_id);
+    const profileB = profiles.find((p) => p.id === requestB.user_id);
 
     const chatIdA: number | undefined = profileA?.telegram_chat_id;
     const chatIdB: number | undefined = profileB?.telegram_chat_id;
