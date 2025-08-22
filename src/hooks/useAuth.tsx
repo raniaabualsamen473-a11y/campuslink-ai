@@ -147,7 +147,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Verification error:', error);
-        return { success: false, error: error.message };
+        // Extract the actual error message from the edge function response
+        const errorMessage = error.message || 'An unexpected error occurred';
+        if (errorMessage.includes('non-2xx status code')) {
+          return { success: false, error: 'Invalid or expired verification code' };
+        }
+        return { success: false, error: errorMessage };
       }
 
       if (!data?.success) {

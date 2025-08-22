@@ -60,7 +60,7 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16" id="features">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16" id="features">
         <Card className="hover:shadow-neon-purple transition-all duration-500 animate-fade-in" style={{animationDelay: "0.1s"}}>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center p-4">
@@ -76,20 +76,6 @@ const Index = () => {
         </Card>
         
         <Card className="hover:shadow-neon-purple transition-all duration-500 animate-fade-in" style={{animationDelay: "0.3s"}}>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center text-center p-4">
-              <div className="rounded-full bg-campus-purple/10 p-3 mb-4 neon-glow">
-                <Users className="h-8 w-8 text-campus-purple" />
-              </div>
-              <h2 className="text-xl font-bold mb-2 text-foreground">{t('home.features.petitions.title')}</h2>
-              <p className="text-muted-foreground">
-                {t('home.features.petitions.description')}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="hover:shadow-neon-purple transition-all duration-500 animate-fade-in" style={{animationDelay: "0.5s"}}>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center p-4">
               <div className="rounded-full bg-campus-purple/10 p-3 mb-4 neon-glow">

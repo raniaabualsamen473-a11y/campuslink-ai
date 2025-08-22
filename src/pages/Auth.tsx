@@ -184,6 +184,20 @@ const Auth = () => {
               <div className="p-4 rounded-lg border border-dashed border-campus-purple/50 bg-campus-purple/5">
                 <MessageCircle className="h-8 w-8 text-campus-purple mx-auto mb-4" />
                 <div className="space-y-4">
+                  <div className="text-xs text-muted-foreground mb-3 text-center">
+                    <p>
+                      Start a chat with 
+                      <Button 
+                        variant="link" 
+                        size="sm" 
+                        className="text-campus-purple p-0 h-auto ml-1"
+                        onClick={() => window.open(`https://t.me/${botUsername}`, '_blank')}
+                      >
+                        @{botUsername} <ExternalLink className="h-3 w-3 ml-1" />
+                      </Button>
+                      <span className="font-bold text-foreground"> first</span>
+                    </p>
+                  </div>
                   <div className="text-left">
                     <Label htmlFor="username" className="text-sm font-medium">
                       Telegram Username
@@ -267,7 +281,7 @@ const Auth = () => {
               </div>
             )}
             
-            <div className="text-xs text-muted-foreground space-y-1">
+            <div className="text-xs text-muted-foreground">
               <p>Don't have Telegram? 
                 <Button 
                   variant="link" 
@@ -277,18 +291,6 @@ const Auth = () => {
                 >
                   Download it here <ExternalLink className="h-3 w-3 ml-1" />
                 </Button>
-              </p>
-              <p>
-                Start a chat with 
-                <Button 
-                  variant="link" 
-                  size="sm" 
-                  className="text-campus-purple p-0 h-auto ml-1"
-                  onClick={() => window.open(`https://t.me/${botUsername}`, '_blank')}
-                >
-                  @{botUsername} <ExternalLink className="h-3 w-3 ml-1" />
-                </Button>
-                first
               </p>
             </div>
           </div>
