@@ -36,6 +36,12 @@ export const validateSwapFormFields = (
       });
       return false;
     }
+    
+    // Check if current and desired sections are identical
+    if (currentSectionNumber === desiredSectionNumber && currentStartTime === desiredStartTime) {
+      toast.error("Current section and desired section cannot be the same");
+      return false;
+    }
   }
   
   if (!desiredSectionNumber || !desiredStartTime) {

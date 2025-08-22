@@ -138,9 +138,15 @@ export const useSwapRequestForm = ({
   // Initialize user data from metadata
   const initializeUserData = () => {
     if (user) {
-      const metadata = user.user_metadata;
-      if (metadata && metadata.telegram_username) {
-        setTelegramUsername(metadata.telegram_username);
+      // Check direct telegram_username property first (from auth system)
+      if (user.telegram_username) {
+        setTelegramUsername(user.telegram_username);
+      } else {
+        // Fallback to user_metadata if direct property not available
+        const metadata = user.user_metadata;
+        if (metadata && metadata.telegram_username) {
+          setTelegramUsername(metadata.telegram_username);
+        }
       }
     }
   };
