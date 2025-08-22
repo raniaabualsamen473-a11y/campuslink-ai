@@ -103,13 +103,24 @@ export const useSwapRequestForm = ({
 
   // Update time slots when semester or days pattern changes
   useEffect(() => {
-    setCurrentTimeSlots(generateTimeSlots(semester, currentDaysPattern));
-    setDesiredTimeSlots(generateTimeSlots(semester, desiredDaysPattern));
+    console.log('Time slots effect triggered:', { semester, currentDaysPattern, desiredDaysPattern });
+    const newCurrentTimeSlots = generateTimeSlots(semester, currentDaysPattern);
+    const newDesiredTimeSlots = generateTimeSlots(semester, desiredDaysPattern);
     
-    // Reset selected times when the available options change
-    setCurrentStartTime("");
-    setDesiredStartTime("");
-  }, [semester, currentDaysPattern, desiredDaysPattern]);
+    setCurrentTimeSlots(newCurrentTimeSlots);
+    setDesiredTimeSlots(newDesiredTimeSlots);
+    
+    // Only reset selected times if they're not available in the new options
+    // This prevents unnecessary resets when user is actively filling the form
+    if (currentStartTime && !newCurrentTimeSlots.includes(currentStartTime)) {
+      console.log('Resetting currentStartTime - not in new options');
+      setCurrentStartTime("");
+    }
+    if (desiredStartTime && !newDesiredTimeSlots.includes(desiredStartTime)) {
+      console.log('Resetting desiredStartTime - not in new options');
+      setDesiredStartTime("");
+    }
+  }, [semester, currentDaysPattern, desiredDaysPattern, currentStartTime, desiredStartTime]);
 
   // Initialize user data and handle semester changes
   useEffect(() => {
@@ -238,7 +249,15 @@ export const useSwapRequestForm = ({
       return true;
     } catch (error: any) {
       console.error("Error submitting request:", error);
-      toast.error(error.message || "Error submitting request");
+      
+      // Handle specific database constraint violations
+      if (error.code === '23505' || error.message?.includes('duplicate key value violates unique constraint')) {
+        toast.error("You already have a request for this course and section combination", {
+          description: "Please edit your existing request instead of creating a new one"
+        });
+      } else {
+        toast.error(error.message || "Error submitting request");
+      }
       return false;
     }
   };

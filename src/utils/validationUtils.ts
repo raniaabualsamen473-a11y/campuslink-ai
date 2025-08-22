@@ -29,8 +29,11 @@ export const validateSwapFormFields = (
   }
   
   if (requestType === "swap") {
+    console.log('Validating current section fields:', { currentSectionNumber, currentStartTime });
     if (!currentSectionNumber || !currentStartTime) {
-      toast.error("Please complete all current section fields");
+      toast.error("Please complete all current section fields", {
+        description: `Missing: ${!currentSectionNumber ? 'section number' : ''} ${!currentStartTime ? 'start time' : ''}`
+      });
       return false;
     }
   }
