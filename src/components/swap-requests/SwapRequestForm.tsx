@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { SectionFields } from "./SectionFields";
-import { ContactInfoFields } from "./ContactInfoFields";
+
 import { CourseSelectionFields } from "./CourseSelectionFields";
 
 import { useSwapRequestForm } from "@/hooks/useSwapRequestForm";
@@ -132,13 +132,6 @@ export const SwapRequestForm = ({
               semester={semester}
             />
 
-            {/* Contact Information */}
-            <ContactInfoFields
-              telegramUsername={telegramUsername}
-              isAnonymous={isAnonymous}
-              setTelegramUsername={setTelegramUsername}
-              setIsAnonymous={setIsAnonymous}
-            />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

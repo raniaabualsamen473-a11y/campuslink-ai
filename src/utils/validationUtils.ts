@@ -38,7 +38,7 @@ export const validateSwapFormFields = (
     }
     
     // Check if current and desired sections are identical
-    if (currentSectionNumber === desiredSectionNumber && currentStartTime === desiredStartTime) {
+    if (currentSectionNumber === desiredSectionNumber) {
       toast.error("Current section and desired section cannot be the same");
       return false;
     }
@@ -49,10 +49,6 @@ export const validateSwapFormFields = (
     return false;
   }
   
-  if (!telegramUsername) {
-    toast.error("Please enter your Telegram username for contact");
-    return false;
-  }
 
   return true;
 };
