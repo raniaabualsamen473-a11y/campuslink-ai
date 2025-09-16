@@ -94,7 +94,7 @@
 }
 
 .glass-card {
-  @apply backdrop-blur-md bg-white/20 dark:bg-slate-900/20 border border-white/20 dark:border-white/5 rounded-xl shadow-lg;
+  @apply backdrop-blur-md bg-white/40 dark:bg-slate-900/80 border border-white/30 dark:border-white/20 rounded-xl shadow-lg;
 }
 
 .btn-glow {
