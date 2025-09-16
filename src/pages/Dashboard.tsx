@@ -105,78 +105,78 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6">
+    <div className="container mx-auto py-8 px-4 sm:px-6 galaxy-bg min-h-screen">
       <div className="flex items-center mb-6 animate-fade-in">
-        <h1 className="text-3xl font-bold text-campus-darkPurple">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground neon-glow">Dashboard</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.1s"}}>
+        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.1s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium">Swap Requests</CardTitle>
-              <div className="rounded-full bg-campus-purple/10 p-2 neon-glow">
+              <CardTitle className="text-lg font-medium text-foreground neon-glow">Swap Requests</CardTitle>
+              <div className="rounded-full bg-campus-purple/20 p-2 neon-glow shadow-neon-purple">
                 <Calendar className="h-5 w-5 text-campus-purple" />
               </div>
             </div>
-            <CardDescription>Active swap requests</CardDescription>
+            <CardDescription className="text-muted-foreground">Active swap requests</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-campus-darkPurple">{userRequests.length}</p>
+            <p className="text-3xl font-bold text-foreground neon-glow">{userRequests.length}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.15s"}}>
+        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.15s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium">Drop Requests</CardTitle>
-              <div className="rounded-full bg-campus-purple/10 p-2 neon-glow">
+              <CardTitle className="text-lg font-medium text-foreground neon-glow">Drop Requests</CardTitle>
+              <div className="rounded-full bg-campus-purple/20 p-2 neon-glow shadow-neon-purple">
                 <ArrowDownUp className="h-5 w-5 text-campus-purple" />
               </div>
             </div>
-            <CardDescription>Drop & request entries</CardDescription>
+            <CardDescription className="text-muted-foreground">Drop & request entries</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-campus-darkPurple">{userDropRequests.length}</p>
+            <p className="text-3xl font-bold text-foreground neon-glow">{userDropRequests.length}</p>
           </CardContent>
         </Card>
         
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.2s"}}>
+        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.2s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium">Total Requests</CardTitle>
-              <div className="rounded-full bg-campus-purple/10 p-2 neon-glow">
+              <CardTitle className="text-lg font-medium text-foreground neon-glow">Total Requests</CardTitle>
+              <div className="rounded-full bg-campus-purple/20 p-2 neon-glow shadow-neon-purple">
                 <MessageSquare className="h-5 w-5 text-campus-purple" />
               </div>
             </div>
-            <CardDescription>Across all students</CardDescription>
+            <CardDescription className="text-muted-foreground">Across all students</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-campus-darkPurple">{totalRequests}</p>
+            <p className="text-3xl font-bold text-foreground neon-glow">{totalRequests}</p>
           </CardContent>
         </Card>
         
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.25s"}}>
+        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.25s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium">Active Users</CardTitle>
-              <div className="rounded-full bg-campus-purple/10 p-2 neon-glow">
+              <CardTitle className="text-lg font-medium text-foreground neon-glow">Active Users</CardTitle>
+              <div className="rounded-full bg-campus-purple/20 p-2 neon-glow shadow-neon-purple">
                 <Users className="h-5 w-5 text-campus-purple" />
               </div>
             </div>
-            <CardDescription>Students using ClassSwap</CardDescription>
+            <CardDescription className="text-muted-foreground">Students using ClassSwap</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-campus-darkPurple">{activeUsers}</p>
+            <p className="text-3xl font-bold text-foreground neon-glow">{activeUsers}</p>
           </CardContent>
         </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.3s"}}>
+        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.3s"}}>
           <CardHeader>
-            <CardTitle>Recent Swap Requests</CardTitle>
-            <CardDescription>Your most recent swap requests</CardDescription>
+            <CardTitle className="text-foreground neon-glow">Recent Swap Requests</CardTitle>
+            <CardDescription className="text-muted-foreground">Your most recent swap requests</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -224,10 +224,10 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.35s"}}>
+        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.35s"}}>
           <CardHeader>
-            <CardTitle>Recent Drop Requests</CardTitle>
-            <CardDescription>Your most recent drop & request entries</CardDescription>
+            <CardTitle className="text-foreground neon-glow">Recent Drop Requests</CardTitle>
+            <CardDescription className="text-muted-foreground">Your most recent drop & request entries</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (

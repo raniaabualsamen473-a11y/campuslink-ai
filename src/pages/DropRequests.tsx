@@ -55,8 +55,13 @@ const DropRequests = () => {
           </div>
         </div>
 
-        {/* Active Requests */}
+        {/* Matches */}
         <div className="animate-fade-in" style={{animationDelay: "0.2s"}}>
+          <DropMatchResults refreshTrigger={refreshTrigger} />
+        </div>
+
+        {/* Active Requests */}
+        <div className="animate-fade-in" style={{animationDelay: "0.3s"}}>
           <div className="glass-card p-6 hover:shadow-neon-purple transition-all duration-300">
             <ActiveDropRequestsList 
               requests={activeRequests}
@@ -65,11 +70,6 @@ const DropRequests = () => {
               onDeleteRequest={handleDeleteRequest}
             />
           </div>
-        </div>
-
-        {/* Matches */}
-        <div className="animate-fade-in" style={{animationDelay: "0.3s"}}>
-          <DropMatchResults refreshTrigger={refreshTrigger} />
         </div>
       </div>
     </div>
