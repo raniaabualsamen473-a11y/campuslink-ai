@@ -109,26 +109,8 @@ serve(async (req) => {
               console.log('Match record created successfully');
             }
 
-            // Send notification (integrate with existing webhook)
+            // Send Telegram notification directly
             try {
-              const notificationData = {
-                type: 'drop_match_found',
-                dropper: {
-                  user_id: record.user_id,
-                  telegram_username: record.telegram_username,
-                  course: droppedCourse,
-                  section: droppedSection
-                },
-                requester: {
-                  user_id: match.data.user_id,
-                  telegram_username: match.data.telegram_username,
-                  wanted_course: match.data.request_course || match.data.desired_course,
-                  wanted_section: match.data.request_section_number || match.data.desired_section_number
-                },
-                match_reason: match.match_reason
-              };
-
-              // Send Telegram notification directly
               const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
               if (telegramBotToken && match.data.telegram_username) {
                 try {
@@ -140,10 +122,18 @@ serve(async (req) => {
                     .single();
 
                   if (profileData?.telegram_chat_id) {
+                    // Escape special characters for Telegram Markdown
+                    const escapeMarkdown = (text: string) => {
+                      return text.replace(/[*_`\[\]()~>#+=|{}.!-]/g, '\\$&');
+                    };
+
+                    const courseName = escapeMarkdown(droppedCourse);
+                    const username = escapeMarkdown(record.telegram_username || 'Unknown');
+
                     const message = `🎯 *Match Found!*\n\n` +
-                      `Someone is dropping *${droppedCourse} Section ${droppedSection}* that you wanted!\n\n` +
-                      `💬 Contact: @${record.telegram_username}\n` +
-                      `📚 Course: ${droppedCourse}\n` +
+                      `Someone is dropping "${courseName} Section ${droppedSection}" that you wanted!\n\n` +
+                      `💬 Contact: @${username}\n` +
+                      `📚 Course: ${courseName}\n` +
                       `📝 Section: ${droppedSection}\n\n` +
                       `Reach out to them quickly to coordinate the swap!`;
 
@@ -158,20 +148,19 @@ serve(async (req) => {
                     });
 
                     if (!telegramResponse.ok) {
-                      console.error('Failed to send Telegram message:', await telegramResponse.text());
+                      const errorText = await telegramResponse.text();
+                      console.error('Failed to send Telegram message:', errorText);
                     } else {
                       console.log('Telegram notification sent successfully');
                     }
+                  } else {
+                    console.log('No chat ID found for username:', match.data.telegram_username);
                   }
                 } catch (telegramError) {
                   console.error('Telegram notification error:', telegramError);
                 }
-              }
-
-              if (!webhookResponse.ok) {
-                console.error('Failed to send notification:', await webhookResponse.text());
               } else {
-                console.log('Notification sent successfully');
+                console.log('No Telegram bot token or username available');
               }
             } catch (notificationError) {
               console.error('Error sending notification:', notificationError);
