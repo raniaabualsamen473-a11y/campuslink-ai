@@ -71,8 +71,12 @@ export const SwapRequestForm = ({
   return (
     <Card className="border-campus-purple/20">
       <CardHeader>
-        <CardTitle className="text-campus-darkPurple">
-          {editingRequestId ? "Edit Request" : "New Request"}
+        <CardTitle className="text-campus-darkPurple dark:text-white">
+          {editingRequestId ? "Edit Request" : (
+            <span className="animate-glow-pulse drop-shadow-[0_0_8px_rgba(147,51,234,0.6)] dark:drop-shadow-[0_0_12px_rgba(196,181,253,0.8)]">
+              New Request
+            </span>
+          )}
         </CardTitle>
         <CardDescription className="text-gray-700">
           {editingRequestId 
