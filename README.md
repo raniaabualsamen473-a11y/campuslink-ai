@@ -1,9 +1,8 @@
 <div align="center">
   <img src="logo.png" alt="CampusLink AI" width="120" height="120">
   <h1>CampusLink AI</h1>
-  <p><em>Smart Course Swapping Platform for University Students</em></p>
+  <p><em>Smart Course Swapping Platform for University Students🎓</em></p>
 </div>
-
 A modern web application that helps university students find course swaps and manage drop/add requests efficiently. Built with React, TypeScript, and Supabase, featuring a Telegram bot integration for seamless user experience.
 
 ## 🌐 How to Use
