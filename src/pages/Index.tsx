@@ -99,7 +99,7 @@ const Index = () => {
             </div>
             <h3 className="text-xl font-semibold mb-2 text-foreground">Create an Account</h3>
             <p className="text-muted-foreground">
-              Sign up with your Telegram username for contact.
+              Sign up with your university email and provide your Telegram username for contact.
             </p>
           </div>
           
