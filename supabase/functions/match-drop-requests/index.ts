@@ -702,41 +702,45 @@ async function sendConsolidatedMatchNotification(supabase: any, telegramBotToken
   }
 }
 
-// Helper function to get contact info from profiles when missing
+// Enhanced contact info helper function with better fallback logic
 async function getContactInfo(supabase: any, user: any) {
-  // If we already have complete contact info, return it
-  if (user.telegram_username && user.full_name) {
-    return {
-      telegram_username: user.telegram_username,
-      full_name: user.full_name
-    };
+  if (!user || !user.user_id) {
+    console.log('⚠️ No user or user_id provided to getContactInfo');
+    return { telegram_username: null, full_name: null };
   }
 
-  // Try to fetch from profiles table
   try {
+    // First try profiles table
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('telegram_username, first_name, last_name')
-      .eq('id', user.profile_id || user.user_id)
+      .eq('id', user.user_id)
       .single();
 
-    if (!error && profile) {
-      const fullName = profile.first_name && profile.last_name 
-        ? `${profile.first_name} ${profile.last_name}`.trim()
-        : profile.first_name || profile.last_name || null;
+    if (error) {
+      console.log('⚠️ Profile error for user:', user.user_id, error.message);
+    }
 
+    if (profile) {
+      const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || null;
+      
       return {
-        telegram_username: user.telegram_username || profile.telegram_username || null,
-        full_name: user.full_name || fullName || null
+        telegram_username: profile.telegram_username || user.telegram_username || null,
+        full_name: fullName || user.full_name || null
       };
     }
-  } catch (profileError) {
-    console.error('❌ Error fetching profile info:', profileError);
-  }
 
-  // Fallback to what we have
-  return {
-    telegram_username: user.telegram_username || null,
-    full_name: user.full_name || null
-  };
+    // Fallback to original user record data
+    console.log('⚠️ Profile not found, using fallback data for user:', user.user_id);
+    return { 
+      telegram_username: user.telegram_username || null, 
+      full_name: user.full_name || user.anonymous ? 'Anonymous User' : null 
+    };
+  } catch (error) {
+    console.error('❌ Error fetching contact info:', error);
+    return { 
+      telegram_username: user.telegram_username || null, 
+      full_name: user.full_name || 'Unknown User'
+    };
+  }
 }
