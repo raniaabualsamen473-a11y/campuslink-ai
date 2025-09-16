@@ -66,12 +66,23 @@ serve(async (req) => {
     );
 
     // Find potential matches for this swap request
-    const { data: potentialMatches, error: matchError } = await supabase
+    let query = supabase
       .from('swap_requests')
       .select('*')
       .eq('desired_course', record.desired_course)
       .neq('user_id', record.user_id) // Don't match with self
       .neq('id', record.id); // Don't match with the same request
+    
+    // Add semester type filtering to prevent cross-semester matching
+    if (record.summer_format) {
+      // If current request is summer semester, only match with other summer requests
+      query = query.not('summer_format', 'is', null);
+    } else {
+      // If current request is regular semester, only match with other regular requests
+      query = query.is('summer_format', null);
+    }
+    
+    const { data: potentialMatches, error: matchError } = await query;
 
     if (matchError) {
       console.error("Error finding potential matches:", matchError);

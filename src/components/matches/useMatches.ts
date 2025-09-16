@@ -75,13 +75,23 @@ export const useMatches = (userId: string | undefined, refreshTrigger: number) =
         // 2. Have the section I want (their current = my desired)
         // 3. Want the section I have (their desired = my current)
         // 4. Are not me
-        const { data: potentialMatches, error: matchesError } = await supabase
+        // 5. Are in the same semester type (summer vs regular)
+        let query = supabase
           .from('swap_requests')
           .select('*')
           .neq('user_id', userId) // Not from the same user
-          
-          .eq('desired_course', request.desired_course) // Same course
-          .limit(50);  // Get a reasonable number of potential matches to filter locally
+          .eq('desired_course', request.desired_course); // Same course
+        
+        // Add semester type filtering to prevent cross-semester matching
+        if (request.summer_format) {
+          // If current request is summer semester, only match with other summer requests
+          query = query.not('summer_format', 'is', null);
+        } else {
+          // If current request is regular semester, only match with other regular requests
+          query = query.is('summer_format', null);
+        }
+        
+        const { data: potentialMatches, error: matchesError } = await query.limit(50);  // Get a reasonable number of potential matches to filter locally
           
         if (matchesError) {
           console.error("Error finding matches:", matchesError);
