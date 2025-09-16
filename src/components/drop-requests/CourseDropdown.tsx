@@ -5,57 +5,65 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { COURSE_LIST, COURSE_TRANSLATIONS } from "@/utils/courseList";
 
-interface CourseSelectionFieldsProps {
-  courseName: string;
-  customCourseName: string;
-  courses: string[];
-  setCourseName: (value: string) => void;
-  setCustomCourseName: (value: string) => void;
+interface CourseDropdownProps {
+  label: string;
+  value: string;
+  customValue: string;
+  onChange: (value: string) => void;
+  onCustomChange: (value: string) => void;
+  id: string;
+  placeholder?: string;
+  required?: boolean;
 }
 
-export const CourseSelectionFields = ({
-  courseName,
-  customCourseName,
-  courses,
-  setCourseName,
-  setCustomCourseName
-}: CourseSelectionFieldsProps) => {
+export const CourseDropdown = ({
+  label,
+  value,
+  customValue,
+  onChange,
+  onCustomChange,
+  id,
+  placeholder = "Select a course",
+  required = false
+}: CourseDropdownProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const [filteredCourses, setFilteredCourses] = useState<string[]>(courses);
+  const [filteredCourses, setFilteredCourses] = useState<string[]>(COURSE_LIST);
 
   // Filter courses based on search query
   useEffect(() => {
     if (searchQuery) {
       const lowercaseQuery = searchQuery.toLowerCase();
-      const filtered = courses.filter(course => 
+      const filtered = COURSE_LIST.filter(course => 
         course.toLowerCase().includes(lowercaseQuery) || 
         (COURSE_TRANSLATIONS[course] && COURSE_TRANSLATIONS[course].toLowerCase().includes(lowercaseQuery))
       );
       setFilteredCourses(filtered);
     } else {
-      setFilteredCourses(courses);
+      setFilteredCourses(COURSE_LIST);
     }
-  }, [searchQuery, courses]);
+  }, [searchQuery]);
 
   // Reset search query when dropdown closes
   useEffect(() => {
     if (!isSelectOpen) {
       setSearchQuery("");
-      setFilteredCourses(courses);
+      setFilteredCourses(COURSE_LIST);
     }
-  }, [isSelectOpen, courses]);
+  }, [isSelectOpen]);
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="course" className="text-foreground">Course</Label>
+      <Label htmlFor={id} className="text-foreground">
+        {label} {required && "*"}
+      </Label>
       <Select 
-        value={courseName} 
-        onValueChange={setCourseName}
+        value={value} 
+        onValueChange={onChange}
         onOpenChange={(open) => setIsSelectOpen(open)}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select a course" />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent className="bg-background border border-border text-foreground max-h-[300px] z-50">
           <div className="sticky top-0 p-2 bg-background z-10 border-b">
@@ -79,7 +87,7 @@ export const CourseSelectionFields = ({
             ))
           ) : (
             <div className="p-2 text-sm text-muted-foreground">
-              No match found. You can type in the name of the desired course.
+              No match found. You can add a custom course below.
             </div>
           )}
           
@@ -89,13 +97,13 @@ export const CourseSelectionFields = ({
         </SelectContent>
       </Select>
       
-      {courseName === "other" && (
+      {value === "other" && (
         <div className="mt-2">
-          <Label htmlFor="custom-course" className="text-foreground">Enter Course Name</Label>
+          <Label htmlFor={`${id}-custom`} className="text-foreground">Enter Course Name</Label>
           <Input 
-            id="custom-course" 
-            value={customCourseName}
-            onChange={(e) => setCustomCourseName(e.target.value)}
+            id={`${id}-custom`}
+            value={customValue}
+            onChange={(e) => onCustomChange(e.target.value)}
             placeholder="Enter Course Name"
             className="mt-1 text-foreground" 
           />

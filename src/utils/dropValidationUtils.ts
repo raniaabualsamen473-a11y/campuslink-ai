@@ -21,6 +21,10 @@ export const validateDropRequestFields = (fields: DropValidationFields): string 
     if (!drop_section_number?.trim()) {
       return "Drop section number is required for drop only requests";
     }
+    // Validate section number is a positive integer
+    if (isNaN(parseInt(drop_section_number)) || parseInt(drop_section_number) < 1) {
+      return "Drop section number must be a positive number";
+    }
   }
 
   if (action_type === 'request_only') {
@@ -29,6 +33,11 @@ export const validateDropRequestFields = (fields: DropValidationFields): string 
     }
     if (!any_section_flexible && !request_section_number?.trim()) {
       return "Request section number is required unless 'Any section is fine' is checked";
+    }
+    // Validate section number is a positive integer if provided
+    if (!any_section_flexible && request_section_number?.trim() && 
+        (isNaN(parseInt(request_section_number)) || parseInt(request_section_number) < 1)) {
+      return "Request section number must be a positive number";
     }
   }
 
@@ -44,6 +53,15 @@ export const validateDropRequestFields = (fields: DropValidationFields): string 
     }
     if (!any_section_flexible && !request_section_number?.trim()) {
       return "Request section number is required unless 'Any section is fine' is checked";
+    }
+    
+    // Validate section numbers are positive integers
+    if (isNaN(parseInt(drop_section_number)) || parseInt(drop_section_number) < 1) {
+      return "Drop section number must be a positive number";
+    }
+    if (!any_section_flexible && request_section_number?.trim() && 
+        (isNaN(parseInt(request_section_number)) || parseInt(request_section_number) < 1)) {
+      return "Request section number must be a positive number";
     }
     
     // Check that drop and request courses are different
