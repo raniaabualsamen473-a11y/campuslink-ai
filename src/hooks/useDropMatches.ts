@@ -41,7 +41,7 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
     }
   }, [userId, refreshTrigger]);
 
-  // Set up real-time subscription for matches table
+  // Set up real-time subscription for matches table (simplified like swap matches)
   useEffect(() => {
     if (!userId) return;
 
@@ -52,14 +52,26 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to INSERT, UPDATE, DELETE
+          event: 'INSERT',
           schema: 'public',
           table: 'matches',
-          filter: `or(requester_user_id.eq.${userId},match_user_id.eq.${userId})`
+          filter: `requester_user_id.eq.${userId}`
         },
         (payload) => {
-          console.log('Real-time match change detected:', payload);
-          // Refresh matches when any change happens
+          console.log('New drop match detected for requester:', payload);
+          fetchMatches(userId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'matches',
+          filter: `match_user_id.eq.${userId}`
+        },
+        (payload) => {
+          console.log('New drop match detected for match user:', payload);
           fetchMatches(userId);
         }
       )
@@ -104,8 +116,33 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
         return;
       }
       
-      // Format matches for display - handle async profile lookups
+      // Format matches for display - optimize profile lookups
       const formattedMatches: DropMatch[] = [];
+      
+      // Batch profile lookups to improve performance
+      const requesterUserIds = userMatches
+        .filter(match => match.requester_user_id !== userId)
+        .map(match => match.requester_user_id)
+        .filter(Boolean);
+      
+      let dropperProfiles: Record<string, any> = {};
+      if (requesterUserIds.length > 0) {
+        try {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, telegram_username, first_name, last_name')
+            .in('id', requesterUserIds);
+          
+          if (profiles) {
+            dropperProfiles = profiles.reduce((acc, profile) => {
+              acc[profile.id] = profile;
+              return acc;
+            }, {} as Record<string, any>);
+          }
+        } catch (error) {
+          console.error("Error batch fetching dropper profiles:", error);
+        }
+      }
       
       for (const match of userMatches) {
         console.log("Processing drop match:", match);
@@ -134,6 +171,7 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
         
         if (isDropper) {
           // This user dropped the course, show them who wants it
+          // Use info from edge function (match_telegram and match_full_name are already populated)
           displayInfo = {
             otherUserId: match.match_user_id || "",
             otherUserName: match.match_full_name || "Anonymous Student", 
@@ -143,34 +181,17 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
           };
         } else if (isWanter) {
           // This user wants the course, show them who dropped it
-          // For wanters, we need to get the dropper's info from the database
-          try {
-            const { data: dropperProfile } = await supabase
-              .from('profiles')
-              .select('telegram_username, first_name, last_name')
-              .eq('id', match.requester_user_id)
-              .single();
-
-            displayInfo = {
-              otherUserId: match.requester_user_id || "",
-              otherUserName: dropperProfile ? 
-                `${dropperProfile.first_name || ''} ${dropperProfile.last_name || ''}`.trim() || 
-                dropperProfile.telegram_username || "Course Dropper" 
-                : "Course Dropper",
-              otherUserTelegram: dropperProfile?.telegram_username || null,
-              type: "request",
-              actionType: "Someone dropped a course you want"
-            };
-          } catch (error) {
-            console.error("Error fetching dropper profile:", error);
-            displayInfo = {
-              otherUserId: match.requester_user_id || "",
-              otherUserName: "Course Dropper",
-              otherUserTelegram: null,
-              type: "request",
-              actionType: "Someone dropped a course you want"
-            };
-          }
+          const dropperProfile = dropperProfiles[match.requester_user_id || ""];
+          displayInfo = {
+            otherUserId: match.requester_user_id || "",
+            otherUserName: dropperProfile ? 
+              `${dropperProfile.first_name || ''} ${dropperProfile.last_name || ''}`.trim() || 
+              dropperProfile.telegram_username || "Course Dropper" 
+              : "Course Dropper",
+            otherUserTelegram: dropperProfile?.telegram_username || null,
+            type: "request",
+            actionType: "Someone dropped a course you want"
+          };
         }
 
         const courseName = match.desired_course || "Unknown Course";

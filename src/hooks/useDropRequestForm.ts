@@ -85,6 +85,20 @@ export const useDropRequestForm = ({ user, editingRequestId, onRequestSubmitted,
     });
   };
 
+  const getSuccessMessage = (actionType: ActionType, isUpdate: boolean = false) => {
+    const action = isUpdate ? 'updated' : 'submitted';
+    switch (actionType) {
+      case 'drop_only':
+        return `Drop request ${action} successfully!`;
+      case 'request_only':
+        return `Request ${action} successfully!`;
+      case 'drop_and_request':
+        return `Drop and request ${action} successfully!`;
+      default:
+        return `Drop request ${action} successfully!`;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
@@ -148,7 +162,7 @@ export const useDropRequestForm = ({ user, editingRequestId, onRequestSubmitted,
           .eq('id', editingRequestId);
 
         if (error) throw error;
-        toast.success("Drop request updated successfully!");
+        toast.success(getSuccessMessage(formData.action_type, true));
         onCancelEdit();
       } else {
         const { error } = await supabase
@@ -156,7 +170,7 @@ export const useDropRequestForm = ({ user, editingRequestId, onRequestSubmitted,
           .insert(requestData);
 
         if (error) throw error;
-        toast.success("Drop request submitted successfully!");
+        toast.success(getSuccessMessage(formData.action_type, false));
       }
 
       resetForm();
