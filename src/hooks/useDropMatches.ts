@@ -46,25 +46,27 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
     try {
       console.log("Fetching drop matches for user:", userId);
       
-      // Get all matches and filter on client side since we now have public access
+      // Get only DROP-related matches (not swap matches) 
+      // Drop matches are identified by having null current_section (since droppers don't have a "current" section)
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select('*');
+        .select('*')
+        .is('current_section', null); // Only drop matches, not swap matches
         
       if (matchesError) {
         console.error("Error fetching drop matches:", matchesError);
         throw matchesError;
       }
       
-      console.log("All matches found:", matchesData?.length || 0);
+      console.log("All drop matches found:", matchesData?.length || 0);
       
-      // Filter matches for the current user
+      // Filter for matches relevant to the current user
       const userMatches = matchesData?.filter(match => 
         match.requester_user_id === userId || match.match_user_id === userId
       ) || [];
       
-      console.log("User matches found:", userMatches.length);
-      console.log("Raw user matches data:", userMatches);
+      console.log("User drop matches found:", userMatches.length);
+      console.log("Raw user drop matches data:", userMatches);
       
       if (userMatches.length === 0) {
         setMatches([]);
@@ -74,33 +76,64 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
       
       // Format matches for display
       const formattedMatches: DropMatch[] = userMatches.map(match => {
-        console.log("Processing match:", match);
+        console.log("Processing drop match:", match);
         
-        // Determine if this user is the requester or the match
-        const isRequester = match.requester_user_id === userId;
-        const otherUserId = isRequester ? match.match_user_id : match.requester_user_id;
-        const otherUserName = isRequester ? match.match_full_name : "Course Dropper";
-        const otherUserTelegram = isRequester ? match.match_telegram : null;
+        // In drop matches:
+        // - requester_user_id = person who dropped the course (making it available)
+        // - match_user_id = person who wants the course
+        // - desired_section = what the wanter gets (the dropped course/section)
+        
+        const isDropper = match.requester_user_id === userId;
+        const isWanter = match.match_user_id === userId;
+        
+        let displayInfo: {
+          otherUserId: string;
+          otherUserName: string;
+          otherUserTelegram: string | null;
+          type: "drop" | "request";
+          actionType: string;
+        } = {
+          otherUserId: "",
+          otherUserName: "Unknown",
+          otherUserTelegram: null,
+          type: "drop",
+          actionType: ""
+        };
+        
+        if (isDropper) {
+          // This user dropped the course, show them who wants it
+          displayInfo = {
+            otherUserId: match.match_user_id || "",
+            otherUserName: match.match_full_name || "Anonymous Student", 
+            otherUserTelegram: match.match_telegram,
+            type: "drop",
+            actionType: "Someone wants the course you dropped"
+          };
+        } else if (isWanter) {
+          // This user wants the course, show them who dropped it
+          displayInfo = {
+            otherUserId: match.requester_user_id || "",
+            otherUserName: "Course Dropper", // We don't store dropper's name in match
+            otherUserTelegram: null,
+            type: "request",
+            actionType: "Someone dropped a course you want"
+          };
+        }
 
-        // Use the correct field names from the matches table
         const courseName = match.desired_course || "Unknown Course";
-        const sectionInfo = isRequester 
-          ? (match.current_section || "Unknown Section")
-          : (match.desired_section || "Unknown Section");
+        const sectionInfo = match.desired_section || "Unknown Section";
 
         return {
           id: match.id,
           course: courseName,
           section: sectionInfo,
-          user: otherUserName || "Anonymous Student",
-          isAnonymous: !otherUserName || otherUserName === "Course Dropper",
-          type: isRequester ? "request" : "drop",
+          user: displayInfo.otherUserName,
+          isAnonymous: !displayInfo.otherUserName || displayInfo.otherUserName === "Course Dropper",
+          type: displayInfo.type,
           dateCreated: new Date().toLocaleDateString(),
-          user_id: otherUserId || "",
-          telegram_username: otherUserTelegram,
-          action_type: isRequester 
-            ? "Someone wants to take your spot" 
-            : "Someone is dropping a course you want"
+          user_id: displayInfo.otherUserId,
+          telegram_username: displayInfo.otherUserTelegram,
+          action_type: displayInfo.actionType
         };
       });
       
