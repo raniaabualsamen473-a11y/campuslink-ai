@@ -22,14 +22,13 @@ export const MatchesList = ({ groupedMatches, isLoading }: MatchesListProps) => 
 
   if (Object.keys(groupedMatches).length === 0) {
     return (
-      <div className="text-center py-8 border rounded-lg bg-gray-50 dark:bg-gray-800 p-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
-          <AlertCircle className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+      <div className="text-center py-8">
+        <div className="text-muted-foreground mb-2">
+          <span className="text-4xl">🔍</span>
         </div>
-        <p className="text-gray-700 dark:text-gray-300 font-medium">No potential matches found</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-md mx-auto">
-          Submit a class swap request to find students who want to swap with you. 
-          The more requests you submit, the more likely you'll find matches!
+        <h3 className="font-semibold text-foreground mb-1">No potential matches found</h3>
+        <p className="text-sm text-muted-foreground">
+          Submit a class swap request to find students who want to swap with you
         </p>
       </div>
     );

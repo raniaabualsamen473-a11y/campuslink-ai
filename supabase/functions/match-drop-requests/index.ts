@@ -212,18 +212,24 @@ serve(async (req) => {
       console.log(`🔍 Request-Only: Looking for existing drops of: ${requestedCourse} section ${requestedSection || 'any'}`);
       
       // Find existing processed drop requests that match what this person wants
-      const { data: availableDrops, error: dropError } = await supabase
+      let query = supabase
         .from('drop_requests')
         .select('*')
         .or(`drop_course.ilike.%${requestedCourse}%,drop_course.ilike.%${requestedCourse.replace(/\s+/g, '%')}%`)
-        .and(record.any_section_flexible 
-          ? 'drop_section_number.is.not.null' 
-          : requestedSection 
-            ? `drop_section_number.eq.${requestedSection}` 
-            : 'drop_section_number.is.not.null')
         .in('action_type', ['drop_only', 'drop_and_request'])
         .neq('user_id', record.user_id)
         .not('processed_at', 'is', null); // Only processed drops
+
+      // Add section filtering based on flexibility
+      if (record.any_section_flexible) {
+        query = query.not('drop_section_number', 'is', null);
+      } else if (requestedSection) {
+        query = query.eq('drop_section_number', requestedSection);
+      } else {
+        query = query.not('drop_section_number', 'is', null);
+      }
+
+      const { data: availableDrops, error: dropError } = await query;
 
       if (dropError) {
         console.error('❌ Error checking available drops:', dropError);
@@ -304,18 +310,24 @@ serve(async (req) => {
     if (record.action_type === 'drop_and_request' && record.request_course) {
       console.log(`🔄 Checking if anyone has request_only for what you're requesting: ${record.request_course}`);
       
-      const { data: conflictingRequests, error: conflictError } = await supabase
+      let conflictQuery = supabase
         .from('drop_requests')
         .select('*')
         .or(`request_course.ilike.%${record.request_course}%,request_course.ilike.%${record.request_course.replace(/\s+/g, '%')}%`)
-        .and(record.any_section_flexible 
-          ? 'request_section_number.is.not.null' 
-          : record.request_section_number 
-            ? `request_section_number.eq.${record.request_section_number}` 
-            : 'request_section_number.is.not.null')
         .eq('action_type', 'request_only')
         .neq('user_id', record.user_id)
         .not('processed_at', 'is', null);
+
+      // Add section filtering for bidirectional matching
+      if (record.any_section_flexible) {
+        conflictQuery = conflictQuery.not('request_section_number', 'is', null);
+      } else if (record.request_section_number) {
+        conflictQuery = conflictQuery.eq('request_section_number', record.request_section_number);
+      } else {
+        conflictQuery = conflictQuery.not('request_section_number', 'is', null);
+      }
+
+      const { data: conflictingRequests, error: conflictError } = await conflictQuery;
 
       if (!conflictError && conflictingRequests && conflictingRequests.length > 0) {
         console.log(`⚠️ Found ${conflictingRequests.length} request_only for same course you want!`);
