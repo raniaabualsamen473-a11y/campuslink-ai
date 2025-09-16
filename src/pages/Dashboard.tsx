@@ -231,9 +231,9 @@ const Dashboard = () => {
   console.log('Rendering: Main dashboard');
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
-      {/* Debug info at top */}
-      <div className="mb-4 p-2 bg-black/50 text-green-400 text-xs font-mono rounded">
-        DEBUG: User ID: {user?.id || user?.user_id || user?.telegram_id || 'NONE'} | Requests: {userRequests?.length} | Drops: {userDropRequests?.length} | Loading: {isLoading.toString()}
+      {/* Temporary visibility test - replace galaxy classes with visible ones */}
+      <div className="mb-4 p-2 bg-green-900 border-2 border-green-500 text-white text-sm rounded">
+        ✅ DASHBOARD LOADED: User ID: {user?.id?.slice(0,8)}... | Requests: {userRequests?.length} | Drops: {userDropRequests?.length} | Platform Total: {totalRequests + totalDropRequests}
       </div>
 
       <div className="flex items-center mb-6 animate-fade-in">
