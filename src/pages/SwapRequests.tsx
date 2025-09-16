@@ -21,7 +21,7 @@ const SwapRequests = () => {
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-bold mb-2 text-foreground drop-shadow-[0_0_12px_rgba(147,51,234,0.4)] dark:drop-shadow-[0_0_16px_rgba(196,181,253,0.6)]">Class Swap Requests</h1>
+        <h1 className="text-3xl font-bold mb-2 text-foreground">Class Swap Requests</h1>
         <p className="text-muted-foreground">
           Submit and manage your class section swap requests
         </p>

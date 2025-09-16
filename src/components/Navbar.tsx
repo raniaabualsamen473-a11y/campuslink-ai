@@ -50,12 +50,12 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-1.5">
               <img 
-                src="/assets/logo-hd.png" 
+                src="https://pbqpbupsmzafbzlxccov.supabase.co/storage/v1/object/public/logo//CampusLink.ai(Logo)%20(Logo).png" 
                 alt="CampusLink AI Logo" 
                 className="h-9 w-9 object-contain"
               />
-              <span className="text-xl font-bold text-campus-darkPurple dark:text-white drop-shadow-[0_0_8px_rgba(147,51,234,0.6)] dark:drop-shadow-[0_0_12px_rgba(196,181,253,0.8)]">CampusLink</span>
-              <span className="text-lg font-semibold text-campus-purple drop-shadow-[0_0_6px_rgba(147,51,234,0.8)] dark:drop-shadow-[0_0_10px_rgba(196,181,253,0.9)]">AI</span>
+              <span className="text-xl font-bold text-campus-darkPurple dark:text-white">CampusLink</span>
+              <span className="text-lg font-semibold text-campus-purple">AI</span>
             </Link>
           </div>
 
