@@ -58,6 +58,7 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
       }
       
       console.log("Drop matches found:", matchesData?.length || 0);
+      console.log("Raw matches data:", matchesData);
       
       if (!matchesData || matchesData.length === 0) {
         setMatches([]);
@@ -67,27 +68,37 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
       
       // Format matches for display
       const formattedMatches: DropMatch[] = matchesData.map(match => {
+        console.log("Processing match:", match);
+        
         // Determine if this user is the requester or the match
         const isRequester = match.requester_user_id === userId;
         const otherUserId = isRequester ? match.match_user_id : match.requester_user_id;
         const otherUserName = isRequester ? match.match_full_name : "Course Dropper";
         const otherUserTelegram = isRequester ? match.match_telegram : null;
 
+        // Use the correct field names from the matches table
+        const courseName = match.desired_course || "Unknown Course";
+        const sectionInfo = isRequester 
+          ? (match.current_section || "Unknown Section")
+          : (match.desired_section || "Unknown Section");
+
         return {
           id: match.id,
-          course: match.desired_course || "Unknown Course",
-          section: isRequester ? match.current_section || "Unknown Section" : match.desired_section || "Unknown Section",
+          course: courseName,
+          section: sectionInfo,
           user: otherUserName || "Anonymous Student",
-          isAnonymous: !otherUserName,
+          isAnonymous: !otherUserName || otherUserName === "Course Dropper",
           type: isRequester ? "request" : "drop",
-          dateCreated: new Date().toLocaleDateString(), // matches don't have created_at
+          dateCreated: new Date().toLocaleDateString(),
           user_id: otherUserId || "",
           telegram_username: otherUserTelegram,
-          action_type: isRequester ? "Someone wants to take your spot" : "Someone is dropping a course you want"
+          action_type: isRequester 
+            ? "Someone wants to take your spot" 
+            : "Someone is dropping a course you want"
         };
       });
       
-      console.log("Formatted drop matches:", formattedMatches.length);
+      console.log("Formatted drop matches:", formattedMatches);
       setMatches(formattedMatches);
     } catch (error) {
       console.error("Error fetching drop matches:", error);
