@@ -26,6 +26,7 @@ export type Database = {
           id: string
           normalized_drop_section: string | null
           normalized_request_section: string | null
+          processed_at: string | null
           profile_id: string | null
           request_course: string | null
           request_section_number: number | null
@@ -44,6 +45,7 @@ export type Database = {
           id?: string
           normalized_drop_section?: string | null
           normalized_request_section?: string | null
+          processed_at?: string | null
           profile_id?: string | null
           request_course?: string | null
           request_section_number?: number | null
@@ -62,6 +64,7 @@ export type Database = {
           id?: string
           normalized_drop_section?: string | null
           normalized_request_section?: string | null
+          processed_at?: string | null
           profile_id?: string | null
           request_course?: string | null
           request_section_number?: number | null

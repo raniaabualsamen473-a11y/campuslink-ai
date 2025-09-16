@@ -22,6 +22,29 @@ serve(async (req) => {
     const { record } = await req.json();
     console.log('Processing drop request:', record);
 
+    // Check if this drop request has already been processed to prevent duplicates
+    if (record.processed_at) {
+      console.log('Drop request already processed at:', record.processed_at);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        matches_found: 0,
+        message: 'Request already processed'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Mark this request as processed immediately to prevent duplicate processing
+    try {
+      await supabase
+        .from('drop_requests')
+        .update({ processed_at: new Date().toISOString() })
+        .eq('id', record.id);
+      console.log('Marked request as processed');
+    } catch (updateError) {
+      console.error('Error updating processed_at:', updateError);
+    }
+
     const matches = [];
 
     // Only process if someone is dropping a course
@@ -135,7 +158,7 @@ serve(async (req) => {
                       `💬 Contact: @${username}\n` +
                       `📚 Course: ${courseName}\n` +
                       `📝 Section: ${droppedSection}\n\n` +
-                      `Reach out to them quickly to coordinate the swap!`;
+                      `Reach out to them quickly to take their spot!`;
 
                     const telegramResponse = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
                       method: 'POST',
@@ -164,6 +187,54 @@ serve(async (req) => {
               }
             } catch (notificationError) {
               console.error('Error sending notification:', notificationError);
+            }
+
+            // Send notification to the dropper
+            try {
+              if (telegramBotToken && record.telegram_username) {
+                const { data: dropperProfileData } = await supabase
+                  .from('profiles')
+                  .select('telegram_chat_id')
+                  .eq('telegram_username', record.telegram_username)
+                  .single();
+
+                if (dropperProfileData?.telegram_chat_id) {
+                  const escapeMarkdown = (text: string) => {
+                    return text.replace(/[*_`\[\]()~>#+=|{}.!-]/g, '\\$&');
+                  };
+
+                  const courseName = escapeMarkdown(droppedCourse);
+                  const requesterUsername = escapeMarkdown(match.data.telegram_username || 'Unknown');
+
+                  const dropperMessage = `📢 *Someone Wants Your Course!*\n\n` +
+                    `A student wants the course you're dropping: "${courseName} Section ${droppedSection}"\n\n` +
+                    `💬 Contact: @${requesterUsername}\n` +
+                    `📚 Course: ${courseName}\n` +
+                    `📝 Section: ${droppedSection}\n\n` +
+                    `Reach out to coordinate the transfer!`;
+
+                  const dropperTelegramResponse = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: dropperProfileData.telegram_chat_id,
+                      text: dropperMessage,
+                      parse_mode: 'Markdown'
+                    })
+                  });
+
+                  if (!dropperTelegramResponse.ok) {
+                    const errorText = await dropperTelegramResponse.text();
+                    console.error('Failed to send dropper Telegram message:', errorText);
+                  } else {
+                    console.log('Dropper notification sent successfully');
+                  }
+                } else {
+                  console.log('No chat ID found for dropper username:', record.telegram_username);
+                }
+              }
+            } catch (dropperNotificationError) {
+              console.error('Error sending dropper notification:', dropperNotificationError);
             }
           } catch (error) {
             console.error('Error processing match:', error);
