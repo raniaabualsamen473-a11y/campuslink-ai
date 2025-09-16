@@ -71,3 +71,6 @@ verify_jwt = false
 
 [functions.match-notification-webhook]
 verify_jwt = false
+
+[functions.match-drop-requests]
+verify_jwt = false

@@ -38,7 +38,8 @@ serve(async (req) => {
         .from('swap_requests')
         .select('*')
         .ilike('desired_course', `%${droppedCourse}%`)
-        .eq('desired_section_number', droppedSection);
+        .eq('desired_section_number', droppedSection)
+        .neq('user_id', record.user_id); // Don't match with same user
 
       if (swapError) {
         console.error('Error checking swap matches:', swapError);
@@ -47,7 +48,9 @@ serve(async (req) => {
         matches.push(...swapMatches.map(match => ({
           type: 'swap_request',
           data: match,
-          match_reason: `Wants ${droppedCourse} section ${droppedSection}`
+          match_reason: `Wants ${droppedCourse} section ${droppedSection}`,
+          match_telegram: match.telegram_username,
+          match_full_name: match.full_name
         })));
       }
 
@@ -125,15 +128,45 @@ serve(async (req) => {
                 match_reason: match.match_reason
               };
 
-              // Call existing notification webhook
-              const webhookResponse = await fetch('https://pbqpbupsmzafbzlxccov.supabase.co/functions/v1/match-notification-webhook', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`
-                },
-                body: JSON.stringify(notificationData)
-              });
+              // Send Telegram notification directly
+              const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+              if (telegramBotToken && match.data.telegram_username) {
+                try {
+                  // Get chat ID from telegram username
+                  const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('telegram_chat_id')
+                    .eq('telegram_username', match.data.telegram_username)
+                    .single();
+
+                  if (profileData?.telegram_chat_id) {
+                    const message = `🎯 *Match Found!*\n\n` +
+                      `Someone is dropping *${droppedCourse} Section ${droppedSection}* that you wanted!\n\n` +
+                      `💬 Contact: @${record.telegram_username}\n` +
+                      `📚 Course: ${droppedCourse}\n` +
+                      `📝 Section: ${droppedSection}\n\n` +
+                      `Reach out to them quickly to coordinate the swap!`;
+
+                    const telegramResponse = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        chat_id: profileData.telegram_chat_id,
+                        text: message,
+                        parse_mode: 'Markdown'
+                      })
+                    });
+
+                    if (!telegramResponse.ok) {
+                      console.error('Failed to send Telegram message:', await telegramResponse.text());
+                    } else {
+                      console.log('Telegram notification sent successfully');
+                    }
+                  }
+                } catch (telegramError) {
+                  console.error('Telegram notification error:', telegramError);
+                }
+              }
 
               if (!webhookResponse.ok) {
                 console.error('Failed to send notification:', await webhookResponse.text());
