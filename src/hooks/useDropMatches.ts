@@ -46,28 +46,34 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
     try {
       console.log("Fetching drop matches for user:", userId);
       
-      // Get matches where the user is either the requester or the match_user
+      // Get all matches and filter on client side since we now have public access
       const { data: matchesData, error: matchesError } = await supabase
         .from('matches')
-        .select('*')
-        .or(`requester_user_id.eq.${userId},match_user_id.eq.${userId}`);
+        .select('*');
         
       if (matchesError) {
         console.error("Error fetching drop matches:", matchesError);
         throw matchesError;
       }
       
-      console.log("Drop matches found:", matchesData?.length || 0);
-      console.log("Raw matches data:", matchesData);
+      console.log("All matches found:", matchesData?.length || 0);
       
-      if (!matchesData || matchesData.length === 0) {
+      // Filter matches for the current user
+      const userMatches = matchesData?.filter(match => 
+        match.requester_user_id === userId || match.match_user_id === userId
+      ) || [];
+      
+      console.log("User matches found:", userMatches.length);
+      console.log("Raw user matches data:", userMatches);
+      
+      if (userMatches.length === 0) {
         setMatches([]);
         setIsLoading(false);
         return;
       }
       
       // Format matches for display
-      const formattedMatches: DropMatch[] = matchesData.map(match => {
+      const formattedMatches: DropMatch[] = userMatches.map(match => {
         console.log("Processing match:", match);
         
         // Determine if this user is the requester or the match
