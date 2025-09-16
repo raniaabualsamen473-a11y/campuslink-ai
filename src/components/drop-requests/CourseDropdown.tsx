@@ -8,23 +8,17 @@ import { COURSE_LIST, COURSE_TRANSLATIONS } from "@/utils/courseList";
 interface CourseDropdownProps {
   label: string;
   value: string;
-  customValue: string;
   onChange: (value: string) => void;
-  onCustomChange: (value: string) => void;
   id: string;
   placeholder?: string;
-  required?: boolean;
 }
 
 export const CourseDropdown = ({
   label,
   value,
-  customValue,
   onChange,
-  onCustomChange,
   id,
-  placeholder = "Select a course",
-  required = false
+  placeholder = "Select a course"
 }: CourseDropdownProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSelectOpen, setIsSelectOpen] = useState(false);
@@ -55,60 +49,43 @@ export const CourseDropdown = ({
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-foreground">
-        {label} {required && "*"}
+        {label}
       </Label>
       <Select 
         value={value} 
         onValueChange={onChange}
         onOpenChange={(open) => setIsSelectOpen(open)}
       >
-        <SelectTrigger>
+        <SelectTrigger className="border-2 border-purple-500/30 bg-purple-900/10 hover:border-purple-400/50 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 shadow-lg shadow-purple-500/10">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className="bg-background border border-border text-foreground max-h-[300px] z-50">
-          <div className="sticky top-0 p-2 bg-background z-10 border-b">
+        <SelectContent className="bg-background border-2 border-purple-500/30 text-foreground max-h-[300px] z-50 shadow-2xl shadow-purple-500/20">
+          <div className="sticky top-0 p-2 bg-background z-10 border-b border-purple-500/20">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400" />
               <Input
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search courses..."
-                className="pl-8 text-sm"
+                className="pl-8 text-sm border-purple-500/30 focus:border-purple-400 focus:ring-purple-400/20"
               />
             </div>
           </div>
           
           {filteredCourses.length > 0 ? (
             filteredCourses.map((course) => (
-              <SelectItem key={course} value={course} className="cursor-pointer">
+              <SelectItem key={course} value={course} className="cursor-pointer hover:bg-purple-500/10 focus:bg-purple-500/15">
                 {COURSE_TRANSLATIONS[course] || course}
               </SelectItem>
             ))
           ) : (
             <div className="p-2 text-sm text-muted-foreground">
-              No match found. You can add a custom course below.
+              No courses found matching your search.
             </div>
           )}
-          
-          <SelectItem value="other" className="border-t mt-1 pt-1">
-            + Add New Course
-          </SelectItem>
         </SelectContent>
       </Select>
-      
-      {value === "other" && (
-        <div className="mt-2">
-          <Label htmlFor={`${id}-custom`} className="text-foreground">Enter Course Name</Label>
-          <Input 
-            id={`${id}-custom`}
-            value={customValue}
-            onChange={(e) => onCustomChange(e.target.value)}
-            placeholder="Enter Course Name"
-            className="mt-1 text-foreground" 
-          />
-        </div>
-      )}
     </div>
   );
 };

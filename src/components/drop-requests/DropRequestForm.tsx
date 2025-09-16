@@ -35,15 +35,22 @@ export const DropRequestForm = ({ editingRequestId, user, onRequestSubmitted, on
   const showDropSection = formData.action_type === 'drop_only' || formData.action_type === 'drop_and_request';
   const showRequestSection = formData.action_type === 'request_only' || formData.action_type === 'drop_and_request';
 
+  const getSubmitButtonText = () => {
+    if (formData.action_type === 'drop_only') {
+      return 'Submit Drop';
+    }
+    return 'Submit Request';
+  };
+
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full border-2 border-purple-500/20 bg-gradient-to-br from-purple-900/5 to-blue-900/5 backdrop-blur-sm shadow-2xl shadow-purple-500/10">
+      <CardHeader className="border-b border-purple-500/10">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-semibold">
+            <CardTitle className="text-xl font-semibold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
               {isEditing ? 'Edit Drop Request' : 'New Drop Request'}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-purple-300/80">
               {isEditing ? 'Update your drop request details' : 'Submit a new drop request'}
             </CardDescription>
           </div>
@@ -52,7 +59,7 @@ export const DropRequestForm = ({ editingRequestId, user, onRequestSubmitted, on
               variant="outline"
               size="sm"
               onClick={resetForm}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 border-purple-500/30 text-purple-400 hover:bg-purple-500/10 hover:border-purple-400/50"
             >
               <X className="h-4 w-4" />
               Cancel Edit
@@ -93,9 +100,9 @@ export const DropRequestForm = ({ editingRequestId, user, onRequestSubmitted, on
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="flex-1"
+                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
               >
-                {isSubmitting ? 'Submitting...' : (isEditing ? 'Update Request' : 'Submit Request')}
+                {isSubmitting ? 'Submitting...' : (isEditing ? 'Update Request' : getSubmitButtonText())}
               </Button>
             </div>
           </form>
