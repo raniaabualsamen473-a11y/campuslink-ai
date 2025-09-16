@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      drop_requests: {
+        Row: {
+          action_type: string
+          anonymous: boolean | null
+          any_section_flexible: boolean | null
+          created_at: string | null
+          drop_course: string | null
+          drop_section_number: number | null
+          full_name: string | null
+          id: string
+          normalized_drop_section: string | null
+          normalized_request_section: string | null
+          profile_id: string | null
+          request_course: string | null
+          request_section_number: number | null
+          telegram_username: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          anonymous?: boolean | null
+          any_section_flexible?: boolean | null
+          created_at?: string | null
+          drop_course?: string | null
+          drop_section_number?: number | null
+          full_name?: string | null
+          id?: string
+          normalized_drop_section?: string | null
+          normalized_request_section?: string | null
+          profile_id?: string | null
+          request_course?: string | null
+          request_section_number?: number | null
+          telegram_username?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          anonymous?: boolean | null
+          any_section_flexible?: boolean | null
+          created_at?: string | null
+          drop_course?: string | null
+          drop_section_number?: number | null
+          full_name?: string | null
+          id?: string
+          normalized_drop_section?: string | null
+          normalized_request_section?: string | null
+          profile_id?: string | null
+          request_course?: string | null
+          request_section_number?: number | null
+          telegram_username?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           current_section: string | null

@@ -72,6 +72,10 @@
     --campus-lightPurple: 270 70% 60%;
     --campus-darkPurple: 270 60% 20%;
     --campus-neonPurple: 280 90% 60%;
+    
+    /* Galaxy theme colors for Drop & Request */
+    --pink: 320 90% 60%;
+    --blue: 220 90% 60%;
   }
 }
  
@@ -95,6 +99,28 @@
 
 .btn-glow {
   box-shadow: 0 0 10px theme('colors.purple.500'), 0 0 20px theme('colors.purple.400/50');
+}
+
+/* Glow pulse animation for neon galaxy effect */
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow-pulse {
+  0% {
+    text-shadow: 
+      0 0 10px hsl(var(--pink) / 0.8),
+      0 0 20px hsl(var(--blue) / 0.6),
+      0 0 30px hsl(var(--pink) / 0.4),
+      0 0 40px hsl(var(--blue) / 0.2);
+  }
+  100% {
+    text-shadow: 
+      0 0 20px hsl(var(--pink) / 1),
+      0 0 30px hsl(var(--blue) / 0.8),
+      0 0 40px hsl(var(--pink) / 0.6),
+      0 0 50px hsl(var(--blue) / 0.4);
+  }
 }
 
 .shadow-glass {

@@ -39,6 +39,7 @@ const Navbar = ({ isMobileMenuOpen, setIsMobileMenuOpen }: NavbarProps) => {
     // Removed Home link as requested
     { name: "Dashboard", path: "/dashboard", authRequired: true },
     { name: "Swap Requests", path: "/swap-requests", authRequired: true },
+    { name: "Drop & Request", path: "/drop-requests", authRequired: true },
     
   ];
 
