@@ -243,8 +243,8 @@ serve(async (req) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('Generated 6-digit code for username:', username);
     
-    // Store verification code (expires in 10 minutes)
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    // Store verification code (expires in 5 minutes)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     console.log('Storing verification code in database with expiry:', expiresAt.toISOString());
     
     const { data: insertData, error: dbError } = await supabase
@@ -272,7 +272,7 @@ serve(async (req) => {
     console.log('Verification code stored successfully:', insertData);
 
     // Send verification code via Telegram Bot API
-    const message = `🔐 Your CampusLink AI verification code is: ${verificationCode}\n\nThis code will expire in 10 minutes.`;
+    const message = `🔐 Your CampusLink AI verification code is: ${verificationCode}\n\nThis code will expire in 5 minutes.`;
     console.log('Preparing to send message to chat_id:', chatId, 'for username @' + username);
 
     try {
