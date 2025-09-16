@@ -104,8 +104,10 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
         return;
       }
       
-      // Format matches for display
-      const formattedMatches: DropMatch[] = userMatches.map(match => {
+      // Format matches for display - handle async profile lookups
+      const formattedMatches: DropMatch[] = [];
+      
+      for (const match of userMatches) {
         console.log("Processing drop match:", match);
         
         // In drop matches:
@@ -141,19 +143,40 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
           };
         } else if (isWanter) {
           // This user wants the course, show them who dropped it
-          displayInfo = {
-            otherUserId: match.requester_user_id || "",
-            otherUserName: match.match_full_name || "Course Dropper", // Use actual name if available
-            otherUserTelegram: match.match_telegram, // Use actual telegram from the match
-            type: "request",
-            actionType: "Someone dropped a course you want"
-          };
+          // For wanters, we need to get the dropper's info from the database
+          try {
+            const { data: dropperProfile } = await supabase
+              .from('profiles')
+              .select('telegram_username, first_name, last_name')
+              .eq('id', match.requester_user_id)
+              .single();
+
+            displayInfo = {
+              otherUserId: match.requester_user_id || "",
+              otherUserName: dropperProfile ? 
+                `${dropperProfile.first_name || ''} ${dropperProfile.last_name || ''}`.trim() || 
+                dropperProfile.telegram_username || "Course Dropper" 
+                : "Course Dropper",
+              otherUserTelegram: dropperProfile?.telegram_username || null,
+              type: "request",
+              actionType: "Someone dropped a course you want"
+            };
+          } catch (error) {
+            console.error("Error fetching dropper profile:", error);
+            displayInfo = {
+              otherUserId: match.requester_user_id || "",
+              otherUserName: "Course Dropper",
+              otherUserTelegram: null,
+              type: "request",
+              actionType: "Someone dropped a course you want"
+            };
+          }
         }
 
         const courseName = match.desired_course || "Unknown Course";
         const sectionInfo = match.desired_section || "Unknown Section";
 
-        return {
+        formattedMatches.push({
           id: match.id,
           course: courseName,
           section: sectionInfo,
@@ -164,9 +187,8 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
           user_id: displayInfo.otherUserId,
           telegram_username: displayInfo.otherUserTelegram,
           action_type: displayInfo.actionType
-        };
-      });
-      
+        });
+      }
       console.log("Formatted drop matches:", formattedMatches);
       setMatches(formattedMatches);
     } catch (error) {
