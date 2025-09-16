@@ -71,7 +71,7 @@ export const SwapRequestForm = ({
   return (
     <Card className="border-campus-purple/20">
       <CardHeader>
-        <CardTitle className="text-campus-darkPurple">
+        <CardTitle className={`text-campus-darkPurple ${!editingRequestId ? 'animate-glow-pulse shadow-neon-purple' : ''}`}>
           {editingRequestId ? "Edit Request" : "New Request"}
         </CardTitle>
         <CardDescription className="text-gray-700">
