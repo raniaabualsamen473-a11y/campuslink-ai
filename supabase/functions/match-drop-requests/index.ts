@@ -74,7 +74,7 @@ serve(async (req) => {
       const { data: swapMatches, error: swapError } = await supabase
         .from('swap_requests')
         .select('*')
-        .ilike('desired_course', `%${droppedCourse}%`)
+        .or(`desired_course.ilike.%${droppedCourse}%,desired_course.ilike.%${droppedCourse.replace(/\s+/g, '%')}%`)
         .eq('desired_section_number', droppedSection)
         .neq('user_id', record.user_id);
 
@@ -101,7 +101,7 @@ serve(async (req) => {
       const { data: dropMatches, error: dropError } = await supabase
         .from('drop_requests')
         .select('*')
-        .ilike('request_course', `%${droppedCourse}%`)
+        .or(`request_course.ilike.%${droppedCourse}%,request_course.ilike.%${droppedCourse.replace(/\s+/g, '%')}%`)
         .or(`request_section_number.eq.${droppedSection},any_section_flexible.eq.true`)
         .in('action_type', ['request_only', 'drop_and_request'])
         .neq('user_id', record.user_id);
@@ -206,8 +206,9 @@ serve(async (req) => {
       const { data: availableDrops, error: dropError } = await supabase
         .from('drop_requests')
         .select('*')
-        .ilike('drop_course', `%${requestedCourse}%`)
-        .or(requestedSection ? `drop_section_number.eq.${requestedSection}` : 'drop_section_number.is.not.null')
+        .or(`drop_course.ilike.%${requestedCourse}%,drop_course.ilike.%${requestedCourse.replace(/\s+/g, '%')}%`)
+        .or(record.any_section_flexible ? 'drop_section_number.is.not.null' : 
+            requestedSection ? `drop_section_number.eq.${requestedSection}` : 'drop_section_number.is.not.null')
         .in('action_type', ['drop_only', 'drop_and_request'])
         .neq('user_id', record.user_id)
         .not('processed_at', 'is', null); // Only processed drops
@@ -330,6 +331,34 @@ serve(async (req) => {
           if (courseMatch && sectionMatch) {
             shouldCreateMatch = true;
             matchReason = `Cross-match: You're dropping ${record.drop_course} section ${record.drop_section_number}, they want it`;
+          }
+        }
+        
+        // Scenario 3: Drop-only request wants swapper's current section
+        if (record.action_type === 'drop_only' && record.request_course && swapRequest.current_section) {
+          const courseMatch = record.request_course.toLowerCase().includes(swapRequest.desired_course.toLowerCase()) ||
+                             swapRequest.desired_course.toLowerCase().includes(record.request_course.toLowerCase());
+          
+          const sectionMatch = !record.request_section_number || 
+                              record.any_section_flexible ||
+                              record.request_section_number === swapRequest.current_section_number;
+          
+          if (courseMatch && sectionMatch) {
+            shouldCreateMatch = true;
+            matchReason = `Match: You want ${record.request_course}, they're in ${swapRequest.desired_course} section ${swapRequest.current_section_number}`;
+          }
+        }
+        
+        // Scenario 4: Swapper wants what drop-only student is requesting (direct course match)
+        if (record.action_type === 'drop_only' && record.request_course && swapRequest.desired_course) {
+          const directCourseMatch = record.request_course.toLowerCase().trim() === swapRequest.desired_course.toLowerCase().trim();
+          const sectionMatch = !record.request_section_number || 
+                              record.any_section_flexible ||
+                              record.request_section_number === swapRequest.desired_section_number;
+          
+          if (directCourseMatch && sectionMatch) {
+            shouldCreateMatch = true;
+            matchReason = `Direct match: Both want ${record.request_course}`;
           }
         }
 
