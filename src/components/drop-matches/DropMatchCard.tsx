@@ -72,9 +72,6 @@ export const DropMatchCard = ({ match }: DropMatchCardProps) => {
       </div>
       
       <div className="mt-2">
-        <p className="text-sm font-medium text-adaptive">
-          Posted by: {match.isAnonymous ? "Anonymous Student" : match.user}
-        </p>
         <p className="text-xs text-adaptive-soft">{match.dateCreated}</p>
         <div className="mt-1 text-xs text-adaptive-muted bg-muted/50 rounded px-2 py-1 inline-block">
           {match.action_type} {getMatchIcon()}
