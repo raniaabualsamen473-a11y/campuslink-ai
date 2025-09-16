@@ -236,15 +236,15 @@ const Dashboard = () => {
         ✅ DASHBOARD LOADED: User ID: {user?.id?.slice(0,8)}... | Requests: {userRequests?.length} | Drops: {userDropRequests?.length} | Platform Total: {totalRequests + totalDropRequests}
       </div>
 
-      <div className="flex items-center mb-6 animate-fade-in">
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+      <div className="flex items-center mb-6">
+        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
-        <Card className="galaxy-bg glass-card hover:shadow-neon-purple neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.1s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.1s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-foreground animate-glow-pulse">Your Swaps</CardTitle>
+              <CardTitle className="text-lg font-medium text-white">Your Swaps</CardTitle>
               <div className="rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 p-2 shadow-neon-purple">
                 <Calendar className="h-5 w-5 text-purple-400" />
               </div>
@@ -256,90 +256,90 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="galaxy-bg glass-card hover:shadow-neon-blue neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.15s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.15s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-foreground animate-glow-pulse">Your Drops</CardTitle>
-              <div className="rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 p-2 shadow-neon-blue">
+              <CardTitle className="text-lg font-medium text-white">Your Drops</CardTitle>
+              <div className="rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 p-2">
                 <ArrowDownUp className="h-5 w-5 text-blue-400" />
               </div>
             </div>
-            <CardDescription className="text-muted-foreground">Your drop entries</CardDescription>
+            <CardDescription className="text-slate-400">Your drop entries</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{userDropRequests.length}</p>
           </CardContent>
         </Card>
 
-        <Card className="galaxy-bg glass-card hover:shadow-neon-red neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.2s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.2s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-foreground animate-glow-pulse">Drop Only</CardTitle>
-              <div className="rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 p-2 shadow-neon-red">
+              <CardTitle className="text-sm font-medium text-white">Drop Only</CardTitle>
+              <div className="rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 p-2">
                 <ArrowDownUp className="h-4 w-4 text-red-400" />
               </div>
             </div>
-            <CardDescription className="text-xs text-muted-foreground">Platform drops</CardDescription>
+            <CardDescription className="text-xs text-slate-400">Platform drops</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent">{dropOnlyCount}</p>
           </CardContent>
         </Card>
 
-        <Card className="galaxy-bg glass-card hover:shadow-neon-green neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.25s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.25s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-foreground animate-glow-pulse">Request Only</CardTitle>
-              <div className="rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-2 shadow-neon-green">
+              <CardTitle className="text-sm font-medium text-white">Request Only</CardTitle>
+              <div className="rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-2">
                 <MessageSquare className="h-4 w-4 text-green-400" />
               </div>
             </div>
-            <CardDescription className="text-xs text-muted-foreground">Platform requests</CardDescription>
+            <CardDescription className="text-xs text-slate-400">Platform requests</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">{requestOnlyCount}</p>
           </CardContent>
         </Card>
 
-        <Card className="galaxy-bg glass-card hover:shadow-neon-purple neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.3s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.3s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-foreground animate-glow-pulse">Drop & Request</CardTitle>
-              <div className="rounded-full bg-gradient-to-r from-purple-500/20 to-indigo-500/20 p-2 shadow-neon-purple">
+              <CardTitle className="text-sm font-medium text-white">Drop & Request</CardTitle>
+              <div className="rounded-full bg-gradient-to-r from-purple-500/20 to-indigo-500/20 p-2">
                 <ArrowDownUp className="h-4 w-4 text-purple-400" />
               </div>
             </div>
-            <CardDescription className="text-xs text-muted-foreground">Combined entries</CardDescription>
+            <CardDescription className="text-xs text-slate-400">Combined entries</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">{dropAndRequestCount}</p>
           </CardContent>
         </Card>
         
-        <Card className="galaxy-bg glass-card hover:shadow-neon-blue neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.35s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.35s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-foreground animate-glow-pulse">All Requests</CardTitle>
-              <div className="rounded-full bg-gradient-to-r from-blue-500/20 to-teal-500/20 p-2 shadow-neon-blue">
+              <CardTitle className="text-sm font-medium text-white">All Requests</CardTitle>
+              <div className="rounded-full bg-gradient-to-r from-blue-500/20 to-teal-500/20 p-2">
                 <MessageSquare className="h-4 w-4 text-blue-400" />
               </div>
             </div>
-            <CardDescription className="text-xs text-muted-foreground">Platform total</CardDescription>
+            <CardDescription className="text-xs text-slate-400">Platform total</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-teal-400 bg-clip-text text-transparent">{totalRequests + totalDropRequests}</p>
           </CardContent>
         </Card>
         
-         <Card className="galaxy-bg glass-card hover:shadow-neon-green neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.4s"}}>
+         <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.4s"}}>
            <CardHeader className="pb-2">
              <div className="flex items-center justify-between">
-               <CardTitle className="text-sm font-medium text-foreground animate-glow-pulse">Active Users</CardTitle>
-               <div className="rounded-full bg-gradient-to-r from-green-500/20 to-lime-500/20 p-2 shadow-neon-green">
+               <CardTitle className="text-sm font-medium text-white">Active Users</CardTitle>
+               <div className="rounded-full bg-gradient-to-r from-green-500/20 to-lime-500/20 p-2">
                  <Users className="h-4 w-4 text-green-400" />
                </div>
              </div>
-             <CardDescription className="text-xs text-muted-foreground">Platform users</CardDescription>
+             <CardDescription className="text-xs text-slate-400">Platform users</CardDescription>
            </CardHeader>
            <CardContent>
              <p className="text-2xl font-bold bg-gradient-to-r from-green-400 to-lime-400 bg-clip-text text-transparent">{activeUsers}</p>
@@ -348,23 +348,23 @@ const Dashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="galaxy-bg glass-card hover:shadow-neon-purple neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.5s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.5s"}}>
           <CardHeader>
-            <CardTitle className="text-foreground animate-glow-pulse">Recent Swap Requests</CardTitle>
-            <CardDescription className="text-muted-foreground">Your most recent swap requests</CardDescription>
+            <CardTitle className="text-white">Recent Swap Requests</CardTitle>
+            <CardDescription className="text-slate-400">Your most recent swap requests</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
                <div className="flex justify-center py-6">
-                 <div className="animate-glow-pulse rounded-full h-8 w-8 border-2 border-primary"></div>
+                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-purple-400 border-t-transparent"></div>
                </div>
             ) : userRequests.length > 0 ? (
               <ScrollArea className="h-80">
                 <div className="space-y-4">
                   {userRequests.map((request) => (
-                     <div key={request.id} className="galaxy-bg glass-card p-3 hover:shadow-neon-purple neon-border transition-all duration-300 animate-float">
+                     <div key={request.id} className="bg-slate-700 border border-slate-600 p-3 rounded-lg hover:bg-slate-650 transition-all duration-300">
                        <div className="flex justify-between">
-                         <p className="font-medium text-foreground">{request.desired_course || "Unnamed Course"}</p>
+                         <p className="font-medium text-white">{request.desired_course || "Unnamed Course"}</p>
                         <span 
                           className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30"
                         >
@@ -372,16 +372,16 @@ const Dashboard = () => {
                         </span>
                       </div>
                       {request.current_section && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          <span className="text-muted-foreground">From: </span>
+                        <p className="text-sm text-slate-400 mt-1">
+                          <span className="text-slate-300">From: </span>
                           {request.current_section}
                         </p>
                       )}
-                      <p className="text-sm text-muted-foreground">
-                        <span className="text-muted-foreground">To: </span>
+                      <p className="text-sm text-slate-400">
+                        <span className="text-slate-300">To: </span>
                         {request.desired_section || "Any section"}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-slate-500 mt-1">
                         Created: {formatDate(request.created_at)}
                       </p>
                     </div>
@@ -390,8 +390,8 @@ const Dashboard = () => {
               </ScrollArea>
             ) : (
               <div className="text-center py-6">
-                <p className="text-muted-foreground">No swap requests found</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-slate-400">No swap requests found</p>
+                <p className="text-sm text-slate-500 mt-1">
                   Create a swap request to get started
                 </p>
               </div>
@@ -399,23 +399,23 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="galaxy-bg glass-card hover:shadow-neon-blue neon-border transition-all duration-300 animate-fade-in animate-float" style={{animationDelay: "0.6s"}}>
+        <Card className="bg-slate-800 border-slate-600 hover:bg-slate-700 transition-all duration-300" style={{animationDelay: "0.6s"}}>
           <CardHeader>
-            <CardTitle className="text-foreground animate-glow-pulse">Recent Drop Requests</CardTitle>
-            <CardDescription className="text-muted-foreground">Your most recent drop & request entries</CardDescription>
+            <CardTitle className="text-white">Recent Drop Requests</CardTitle>
+            <CardDescription className="text-slate-400">Your most recent drop & request entries</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="flex justify-center py-6">
-                <div className="animate-glow-pulse rounded-full h-8 w-8 border-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-400 border-t-transparent"></div>
               </div>
             ) : userDropRequests.length > 0 ? (
               <ScrollArea className="h-80">
                 <div className="space-y-4">
                   {userDropRequests.map((request) => (
-                    <div key={request.id} className="galaxy-bg glass-card p-3 hover:shadow-neon-blue neon-border transition-all duration-300 animate-float">
+                    <div key={request.id} className="bg-slate-700 border border-slate-600 p-3 rounded-lg hover:bg-slate-650 transition-all duration-300">
                       <div className="flex justify-between">
-                        <p className="font-medium text-foreground">
+                        <p className="font-medium text-white">
                           {request.drop_course || request.request_course || "Unnamed Course"}
                         </p>
                         <span 
@@ -426,18 +426,18 @@ const Dashboard = () => {
                         </span>
                       </div>
                       {request.drop_course && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          <span className="text-muted-foreground">Dropping: </span>
+                        <p className="text-sm text-slate-400 mt-1">
+                          <span className="text-slate-300">Dropping: </span>
                           {request.drop_course} Section {request.drop_section_number}
                         </p>
                       )}
                       {request.request_course && (
-                        <p className="text-sm text-muted-foreground">
-                          <span className="text-muted-foreground">Requesting: </span>
+                        <p className="text-sm text-slate-400">
+                          <span className="text-slate-300">Requesting: </span>
                           {request.request_course} {request.any_section_flexible ? "(Any Section)" : `Section ${request.request_section_number}`}
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-slate-500 mt-1">
                         Created: {formatDate(request.created_at)}
                       </p>
                     </div>
@@ -446,8 +446,8 @@ const Dashboard = () => {
               </ScrollArea>
             ) : (
               <div className="text-center py-6">
-                <p className="text-muted-foreground">No drop requests found</p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-slate-400">No drop requests found</p>
+                <p className="text-sm text-slate-500 mt-1">
                   Create a drop request to get started
                 </p>
               </div>
