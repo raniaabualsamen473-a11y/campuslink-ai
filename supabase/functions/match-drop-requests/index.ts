@@ -85,13 +85,16 @@ serve(async (req) => {
         swapMatches.forEach(match => {
           console.log(`  - User ${match.user_id} wants ${match.desired_course} section ${match.desired_section_number}`);
         });
-        matches.push(...swapMatches.map(match => ({
-          type: 'swap_request',
-          data: match,
-          match_reason: `Wants ${droppedCourse} section ${droppedSection} (from swap request)`,
-          match_telegram: match.telegram_username,
-          match_full_name: match.full_name
-        })));
+        for (const match of swapMatches) {
+          const swapContactInfo = await getContactInfo(supabase, match);
+          matches.push({
+            type: 'swap_request',
+            data: match,
+            match_reason: `Wants ${droppedCourse} section ${droppedSection} (from swap request)`,
+            match_telegram: swapContactInfo.telegram_username,
+            match_full_name: swapContactInfo.full_name
+          });
+        }
       } else {
         console.log('ℹ️ No swap_request matches found');
       }
@@ -113,15 +116,18 @@ serve(async (req) => {
         dropMatches.forEach(match => {
           console.log(`  - User ${match.user_id} wants ${match.request_course} section ${match.request_section_number || 'any'}`);
         });
-        matches.push(...dropMatches.map(match => ({
-          type: 'drop_request',
-          data: match,
-          match_reason: match.any_section_flexible 
-            ? `Wants ${droppedCourse} (any section)` 
-            : `Wants ${droppedCourse} section ${match.request_section_number}`,
-          match_telegram: match.telegram_username,
-          match_full_name: match.full_name
-        })));
+        for (const match of dropMatches) {
+          const dropContactInfo = await getContactInfo(supabase, match);
+          matches.push({
+            type: 'drop_request',
+            data: match,
+            match_reason: match.any_section_flexible 
+              ? `Wants ${droppedCourse} (any section)` 
+              : `Wants ${droppedCourse} section ${match.request_section_number}`,
+            match_telegram: dropContactInfo.telegram_username,
+            match_full_name: dropContactInfo.full_name
+          });
+        }
       } else {
         console.log('ℹ️ No drop_request matches found');
       }
@@ -154,6 +160,9 @@ serve(async (req) => {
               continue;
             }
 
+            // Get contact info from profiles if missing
+            const matchContactInfo = await getContactInfo(supabase, match.data);
+
             // Create match record - CORRECTED STRUCTURE
             const matchData = {
               requester_user_id: record.user_id,  // The person who dropped (making course available)
@@ -163,8 +172,8 @@ serve(async (req) => {
               desired_section: `${droppedCourse} Section ${droppedSection}`, // What the wanter gets
               normalized_current_section: null,
               normalized_desired_section: `${droppedCourse.toLowerCase()}_${droppedSection}`,
-              match_telegram: match.data.telegram_username,
-              match_full_name: match.data.full_name
+              match_telegram: matchContactInfo.telegram_username,
+              match_full_name: matchContactInfo.full_name
             };
 
             console.log('📝 Creating match with data:', matchData);
@@ -207,8 +216,11 @@ serve(async (req) => {
         .from('drop_requests')
         .select('*')
         .or(`drop_course.ilike.%${requestedCourse}%,drop_course.ilike.%${requestedCourse.replace(/\s+/g, '%')}%`)
-        .or(record.any_section_flexible ? 'drop_section_number.is.not.null' : 
-            requestedSection ? `drop_section_number.eq.${requestedSection}` : 'drop_section_number.is.not.null')
+        .and(record.any_section_flexible 
+          ? 'drop_section_number.is.not.null' 
+          : requestedSection 
+            ? `drop_section_number.eq.${requestedSection}` 
+            : 'drop_section_number.is.not.null')
         .in('action_type', ['drop_only', 'drop_and_request'])
         .neq('user_id', record.user_id)
         .not('processed_at', 'is', null); // Only processed drops
@@ -233,6 +245,9 @@ serve(async (req) => {
               continue;
             }
 
+            // Get contact info from profiles if missing
+            const dropContactInfo = await getContactInfo(supabase, drop);
+
             // Create match record for request-to-drop
             const matchData = {
               requester_user_id: drop.user_id,  // The person who dropped 
@@ -242,8 +257,8 @@ serve(async (req) => {
               desired_section: `${drop.drop_course} Section ${drop.drop_section_number}`,
               normalized_current_section: null,
               normalized_desired_section: `${drop.drop_course.toLowerCase()}_${drop.drop_section_number}`,
-              match_telegram: record.telegram_username,
-              match_full_name: record.full_name
+              match_telegram: dropContactInfo.telegram_username,
+              match_full_name: dropContactInfo.full_name
             };
 
             console.log('📝 Creating request-to-drop match:', matchData);
@@ -271,8 +286,8 @@ serve(async (req) => {
                 type: 'request_to_drop',
                 data: drop,
                 match_reason: `Available drop: ${drop.drop_course} section ${drop.drop_section_number}`,
-                match_telegram: drop.telegram_username,
-                match_full_name: drop.full_name
+                match_telegram: dropContactInfo.telegram_username,
+                match_full_name: dropContactInfo.full_name
               });
             }
           } catch (error) {
@@ -281,6 +296,83 @@ serve(async (req) => {
         }
       } else {
         console.log('ℹ️ No available drops found for request-only');
+      }
+    }
+
+    // PART 2.5: CRITICAL BIDIRECTIONAL MATCHING - Drop-and-Request vs Request-Only
+    // When someone does drop_and_request and another person does request_only for what they're requesting
+    if (record.action_type === 'drop_and_request' && record.request_course) {
+      console.log(`🔄 Checking if anyone has request_only for what you're requesting: ${record.request_course}`);
+      
+      const { data: conflictingRequests, error: conflictError } = await supabase
+        .from('drop_requests')
+        .select('*')
+        .or(`request_course.ilike.%${record.request_course}%,request_course.ilike.%${record.request_course.replace(/\s+/g, '%')}%`)
+        .and(record.any_section_flexible 
+          ? 'request_section_number.is.not.null' 
+          : record.request_section_number 
+            ? `request_section_number.eq.${record.request_section_number}` 
+            : 'request_section_number.is.not.null')
+        .eq('action_type', 'request_only')
+        .neq('user_id', record.user_id)
+        .not('processed_at', 'is', null);
+
+      if (!conflictError && conflictingRequests && conflictingRequests.length > 0) {
+        console.log(`⚠️ Found ${conflictingRequests.length} request_only for same course you want!`);
+        
+        for (const conflictingRequest of conflictingRequests) {
+          try {
+            // Check for duplicates
+            const { data: existingMatch } = await supabase
+              .from('matches')
+              .select('id')
+              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${conflictingRequest.user_id}),and(requester_user_id.eq.${conflictingRequest.user_id},match_user_id.eq.${record.user_id})`)
+              .limit(1);
+
+            if (existingMatch && existingMatch.length > 0) {
+              console.log(`⏭️ Bidirectional match already exists, skipping`);
+              continue;
+            }
+
+            // Get contact info from profiles if missing
+            const conflictContactInfo = await getContactInfo(supabase, conflictingRequest);
+
+            // Create bidirectional match - they both want the same thing but one is dropping something
+            const bidirectionalMatchData = {
+              requester_user_id: record.user_id,
+              match_user_id: conflictingRequest.user_id,
+              desired_course: record.request_course,
+              current_section: record.drop_course ? `${record.drop_course} Section ${record.drop_section_number}` : null,
+              desired_section: `${record.request_course} Section ${record.request_section_number || 'any'}`,
+              normalized_current_section: record.drop_course ? `${record.drop_course.toLowerCase()}_${record.drop_section_number}` : null,
+              normalized_desired_section: `${record.request_course.toLowerCase()}_${record.request_section_number || 'flexible'}`,
+              match_telegram: conflictContactInfo.telegram_username,
+              match_full_name: conflictContactInfo.full_name
+            };
+
+            console.log('📝 Creating bidirectional drop-and-request vs request-only match:', bidirectionalMatchData);
+
+            const { error: matchError } = await supabase
+              .from('matches')
+              .insert(bidirectionalMatchData);
+
+            if (matchError) {
+              console.error('❌ Error creating bidirectional match:', matchError);
+            } else {
+              console.log('✅ Bidirectional match created successfully');
+              
+              matches.push({
+                type: 'bidirectional_request',
+                data: conflictingRequest,
+                match_reason: `Both want ${record.request_course} - you're dropping ${record.drop_course}`,
+                match_telegram: conflictContactInfo.telegram_username,
+                match_full_name: conflictContactInfo.full_name
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error processing bidirectional match:', error);
+          }
+        }
       }
     }
 
@@ -389,8 +481,8 @@ serve(async (req) => {
             desired_section: `${courseName} Section ${sectionInfo}`,
             normalized_current_section: swapRequest.normalized_current_section,
             normalized_desired_section: `${courseName.toLowerCase()}_${sectionInfo}`,
-            match_telegram: swapRequest.telegram_username,
-            match_full_name: swapRequest.full_name
+            match_telegram: swapRequest.telegram_username || null,
+            match_full_name: swapRequest.full_name || null
           };
 
           console.log('📝 Creating cross-match:', crossMatchData);
@@ -403,12 +495,13 @@ serve(async (req) => {
             console.error('❌ Error creating cross-match:', crossMatchError);
           } else {
             console.log('✅ Cross-match created successfully');
+            const swapContactInfo = await getContactInfo(supabase, swapRequest);
             matches.push({
               type: 'cross_match',
               data: swapRequest,
               match_reason: matchReason,
-              match_telegram: swapRequest.telegram_username,
-              match_full_name: swapRequest.full_name
+              match_telegram: swapContactInfo.telegram_username,
+              match_full_name: swapContactInfo.full_name
             });
           }
         }
@@ -515,4 +608,43 @@ async function sendConsolidatedMatchNotification(supabase: any, telegramBotToken
       console.error('❌ Error sending notification to dropper:', error);
     }
   }
+}
+
+// Helper function to get contact info from profiles when missing
+async function getContactInfo(supabase: any, user: any) {
+  // If we already have complete contact info, return it
+  if (user.telegram_username && user.full_name) {
+    return {
+      telegram_username: user.telegram_username,
+      full_name: user.full_name
+    };
+  }
+
+  // Try to fetch from profiles table
+  try {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('telegram_username, first_name, last_name')
+      .eq('id', user.profile_id || user.user_id)
+      .single();
+
+    if (!error && profile) {
+      const fullName = profile.first_name && profile.last_name 
+        ? `${profile.first_name} ${profile.last_name}`.trim()
+        : profile.first_name || profile.last_name || null;
+
+      return {
+        telegram_username: user.telegram_username || profile.telegram_username || null,
+        full_name: user.full_name || fullName || null
+      };
+    }
+  } catch (profileError) {
+    console.error('❌ Error fetching profile info:', profileError);
+  }
+
+  // Fallback to what we have
+  return {
+    telegram_username: user.telegram_username || null,
+    full_name: user.full_name || null
+  };
 }
