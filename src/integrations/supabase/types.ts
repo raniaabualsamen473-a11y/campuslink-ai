@@ -19,6 +19,7 @@ export type Database = {
           current_section: string | null
           desired_course: string | null
           desired_section: string | null
+          id: string
           match_full_name: string | null
           match_telegram: string | null
           match_user_id: string | null
@@ -31,6 +32,7 @@ export type Database = {
           current_section?: string | null
           desired_course?: string | null
           desired_section?: string | null
+          id?: string
           match_full_name?: string | null
           match_telegram?: string | null
           match_user_id?: string | null
@@ -43,6 +45,7 @@ export type Database = {
           current_section?: string | null
           desired_course?: string | null
           desired_section?: string | null
+          id?: string
           match_full_name?: string | null
           match_telegram?: string | null
           match_user_id?: string | null
