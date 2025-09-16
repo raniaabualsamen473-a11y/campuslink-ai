@@ -112,7 +112,7 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="container mx-auto py-8 px-4 sm:px-6 galaxy-bg min-h-screen">
+      <div className="container mx-auto py-8 px-4 sm:px-6">
         <div className="flex items-center justify-center h-64">
           <p className="text-muted-foreground">Please log in to view your dashboard</p>
         </div>
@@ -121,77 +121,77 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 sm:px-6 galaxy-bg min-h-screen">
+    <div className="container mx-auto py-8 px-4 sm:px-6">
       <div className="flex items-center mb-6 animate-fade-in">
-        <h1 className="text-3xl font-bold text-foreground neon-glow">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in bg-card/90 backdrop-blur-sm" style={{animationDelay: "0.1s"}}>
+        <Card className="glass-card hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.1s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-card-foreground">Swap Requests</CardTitle>
-              <div className="rounded-full bg-primary/20 p-2 shadow-neon-purple">
+              <CardTitle className="text-lg font-medium text-foreground">Swap Requests</CardTitle>
+              <div className="rounded-full bg-primary/20 p-2">
                 <Calendar className="h-5 w-5 text-primary" />
               </div>
             </div>
             <CardDescription className="text-muted-foreground">Active swap requests</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-card-foreground">{userRequests.length}</p>
+            <p className="text-3xl font-bold text-foreground">{userRequests.length}</p>
           </CardContent>
         </Card>
 
-        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in bg-card/90 backdrop-blur-sm" style={{animationDelay: "0.15s"}}>
+        <Card className="glass-card hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.15s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-card-foreground">Drop Requests</CardTitle>
-              <div className="rounded-full bg-primary/20 p-2 shadow-neon-purple">
+              <CardTitle className="text-lg font-medium text-foreground">Drop Requests</CardTitle>
+              <div className="rounded-full bg-primary/20 p-2">
                 <ArrowDownUp className="h-5 w-5 text-primary" />
               </div>
             </div>
             <CardDescription className="text-muted-foreground">Drop & request entries</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-card-foreground">{userDropRequests.length}</p>
+            <p className="text-3xl font-bold text-foreground">{userDropRequests.length}</p>
           </CardContent>
         </Card>
         
-        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in bg-card/90 backdrop-blur-sm" style={{animationDelay: "0.2s"}}>
+        <Card className="glass-card hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.2s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium text-card-foreground">Total Requests</CardTitle>
-              <div className="rounded-full bg-primary/20 p-2 shadow-neon-purple">
+              <CardTitle className="text-lg font-medium text-foreground">Total Requests</CardTitle>
+              <div className="rounded-full bg-primary/20 p-2">
                 <MessageSquare className="h-5 w-5 text-primary" />
               </div>
             </div>
             <CardDescription className="text-muted-foreground">Across all students</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-card-foreground">{totalRequests}</p>
+            <p className="text-3xl font-bold text-foreground">{totalRequests}</p>
           </CardContent>
         </Card>
         
-         <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in bg-card/90 backdrop-blur-sm" style={{animationDelay: "0.25s"}}>
+         <Card className="glass-card hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.25s"}}>
            <CardHeader className="pb-2">
              <div className="flex items-center justify-between">
-               <CardTitle className="text-lg font-medium text-card-foreground">Active Users</CardTitle>
-               <div className="rounded-full bg-primary/20 p-2 shadow-neon-purple">
+               <CardTitle className="text-lg font-medium text-foreground">Active Users</CardTitle>
+               <div className="rounded-full bg-primary/20 p-2">
                  <Users className="h-5 w-5 text-primary" />
                </div>
              </div>
              <CardDescription className="text-muted-foreground">Students using ClassSwap</CardDescription>
            </CardHeader>
            <CardContent>
-             <p className="text-3xl font-bold text-card-foreground">{activeUsers}</p>
+             <p className="text-3xl font-bold text-foreground">{activeUsers}</p>
            </CardContent>
          </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in bg-card/90 backdrop-blur-sm" style={{animationDelay: "0.3s"}}>
+        <Card className="glass-card hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.3s"}}>
           <CardHeader>
-            <CardTitle className="text-card-foreground">Recent Swap Requests</CardTitle>
+            <CardTitle className="text-foreground">Recent Swap Requests</CardTitle>
             <CardDescription className="text-muted-foreground">Your most recent swap requests</CardDescription>
           </CardHeader>
           <CardContent>
@@ -203,11 +203,11 @@ const Dashboard = () => {
               <ScrollArea className="h-80">
                 <div className="space-y-4">
                   {userRequests.map((request) => (
-                     <div key={request.id} className="bg-card/70 border border-border/50 p-3 rounded-lg hover:shadow-neon-purple transition-all duration-300">
+                     <div key={request.id} className="glass-card p-3 hover:shadow-neon-purple transition-all duration-300">
                        <div className="flex justify-between">
-                         <p className="font-medium text-card-foreground">{request.desired_course || "Unnamed Course"}</p>
+                         <p className="font-medium text-foreground">{request.desired_course || "Unnamed Course"}</p>
                         <span 
-                          className="text-xs px-2 py-1 rounded-full bg-green-100/50 text-green-800 backdrop-blur-sm"
+                          className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-300 border border-green-500/30"
                         >
                           Swap
                         </span>
@@ -240,9 +240,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        <Card className="glass-card neon-border hover:shadow-neon-purple transition-all duration-300 animate-fade-in bg-card/90 backdrop-blur-sm" style={{animationDelay: "0.35s"}}>
+        <Card className="glass-card hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.35s"}}>
           <CardHeader>
-            <CardTitle className="text-card-foreground">Recent Drop Requests</CardTitle>
+            <CardTitle className="text-foreground">Recent Drop Requests</CardTitle>
             <CardDescription className="text-muted-foreground">Your most recent drop & request entries</CardDescription>
           </CardHeader>
           <CardContent>
@@ -254,13 +254,13 @@ const Dashboard = () => {
               <ScrollArea className="h-80">
                 <div className="space-y-4">
                   {userDropRequests.map((request) => (
-                    <div key={request.id} className="bg-card/70 border border-border/50 p-3 rounded-lg hover:shadow-neon-purple transition-all duration-300">
+                    <div key={request.id} className="glass-card p-3 hover:shadow-neon-purple transition-all duration-300">
                       <div className="flex justify-between">
-                        <p className="font-medium text-card-foreground">
+                        <p className="font-medium text-foreground">
                           {request.drop_course || request.request_course || "Unnamed Course"}
                         </p>
                         <span 
-                          className="text-xs px-2 py-1 rounded-full bg-blue-100/50 text-blue-800 backdrop-blur-sm"
+                          className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
                         >
                           {request.action_type === 'drop_only' ? 'Drop' : 
                            request.action_type === 'request_only' ? 'Request' : 'Drop & Request'}
