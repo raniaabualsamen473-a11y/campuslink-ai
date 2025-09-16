@@ -251,6 +251,7 @@ const Auth = () => {
                       className="mt-1 text-center text-lg tracking-widest"
                       disabled={isAuthenticating}
                       maxLength={6}
+                      autoComplete="one-time-code"
                     />
                   </div>
                   <div className="flex space-x-2">

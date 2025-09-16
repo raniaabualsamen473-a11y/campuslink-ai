@@ -85,7 +85,7 @@ export const SwapRequestForm = ({
           <div className="space-y-6">
             {/* Semester Selection */}
             <div className="space-y-2">
-              <Label htmlFor="semester" className="text-white">Semester</Label>
+              <Label htmlFor="semester" className="text-foreground">Semester</Label>
               <Select defaultValue={semester} value={semester} onValueChange={handleSemesterChange}>
                 <SelectTrigger id="semester">
                   <SelectValue placeholder="Select semester" />
