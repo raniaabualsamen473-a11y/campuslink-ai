@@ -41,6 +41,36 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
     }
   }, [userId, refreshTrigger]);
 
+  // Set up real-time subscription for matches table
+  useEffect(() => {
+    if (!userId) return;
+
+    console.log("Setting up real-time subscription for drop matches");
+    
+    const channel = supabase
+      .channel('drop-matches-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'matches',
+          filter: `or(requester_user_id.eq.${userId},match_user_id.eq.${userId})`
+        },
+        (payload) => {
+          console.log('Real-time match change detected:', payload);
+          // Refresh matches when any change happens
+          fetchMatches(userId);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log("Cleaning up real-time subscription");
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   const fetchMatches = async (userId: string) => {
     setIsLoading(true);
     try {

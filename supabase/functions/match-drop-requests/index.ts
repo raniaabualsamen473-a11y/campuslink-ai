@@ -55,8 +55,11 @@ serve(async (req) => {
 
     const matches = [];
 
-    // CORE LOGIC: Drop-to-Want Matching
-    // When someone drops a course/section, find people who WANT that course/section
+    // BIDIRECTIONAL MATCHING LOGIC
+    // Handle both drop-to-want matching AND request-to-available matching
+    
+    // PART 1: Drop-to-Want Matching
+    // When someone drops a course/section, find people who WANT that course/section  
     if ((record.action_type === 'drop_only' || record.action_type === 'drop_and_request') && 
         record.drop_course && record.drop_section_number && record.user_id) {
       
@@ -177,11 +180,8 @@ serve(async (req) => {
               console.log('✅ Match record created successfully');
             }
 
-            // Send notification to the person who wants the course
-            await sendNotificationToWanter(supabase, telegramBotToken, match.data, record, droppedCourse, droppedSection);
-            
-            // Send notification to the person who dropped the course
-            await sendNotificationToDropper(supabase, telegramBotToken, record, match.data, droppedCourse, droppedSection);
+            // Send ONE consolidated notification to both parties
+            await sendConsolidatedMatchNotification(supabase, telegramBotToken, match.data, record, droppedCourse, droppedSection);
 
           } catch (error) {
             console.error('❌ Error processing match:', error);
@@ -190,86 +190,197 @@ serve(async (req) => {
       } else {
         console.log('ℹ️ No matches found for dropped course');
       }
-    } else {
-      console.log('ℹ️ Request is not a drop action or missing required fields');
     }
 
-    // REVERSE MATCHING: Swap-to-Drop Matching
-    // Check if anyone in swap_requests has a CURRENT section that someone wants to drop
-    console.log('🔄 Checking for reverse matches: swap current sections with drop requests...');
-    
-    const { data: allSwapRequests, error: swapFetchError } = await supabase
-      .from('swap_requests')
-      .select('*')
-      .neq('user_id', record.user_id);
-
-    if (swapFetchError) {
-      console.error('❌ Error fetching swap requests:', swapFetchError);
-    } else if (allSwapRequests && allSwapRequests.length > 0) {
-      console.log(`🔄 Found ${allSwapRequests.length} swap requests to check for reverse matches`);
+    // PART 2: Request-to-Available Matching  
+    // When someone makes a request-only, find existing drops that match what they want
+    if ((record.action_type === 'request_only' || record.action_type === 'drop_and_request') && 
+        record.request_course && record.user_id) {
       
-      for (const swapRequest of allSwapRequests) {
-        // Check if this drop request WANTS what someone is currently in (their current_section)
-        if (record.request_course && swapRequest.current_section && 
-            swapRequest.desired_course && swapRequest.current_section_number) {
-          
-          const swapperCurrentCourse = swapRequest.desired_course; // What course they're in
-          const swapperCurrentSection = swapRequest.current_section_number;
-          
-          // Check if the drop request wants what the swapper currently has
-          const courseMatch = record.request_course.toLowerCase().includes(swapperCurrentCourse.toLowerCase()) ||
-                             swapperCurrentCourse.toLowerCase().includes(record.request_course.toLowerCase());
-          
-          const sectionMatch = record.request_section_number === swapperCurrentSection || 
-                              record.any_section_flexible;
-          
-          if (courseMatch && sectionMatch) {
-            console.log(`🎯 Reverse match found: Drop requester wants ${record.request_course} section ${record.request_section_number || 'any'}, Swapper has ${swapperCurrentCourse} section ${swapperCurrentSection}`);
-            
+      const requestedCourse = record.request_course.trim();
+      const requestedSection = record.request_section_number;
+      
+      console.log(`🔍 Request-Only: Looking for existing drops of: ${requestedCourse} section ${requestedSection || 'any'}`);
+      
+      // Find existing processed drop requests that match what this person wants
+      const { data: availableDrops, error: dropError } = await supabase
+        .from('drop_requests')
+        .select('*')
+        .ilike('drop_course', `%${requestedCourse}%`)
+        .or(requestedSection ? `drop_section_number.eq.${requestedSection}` : 'drop_section_number.is.not.null')
+        .in('action_type', ['drop_only', 'drop_and_request'])
+        .neq('user_id', record.user_id)
+        .not('processed_at', 'is', null); // Only processed drops
+
+      if (dropError) {
+        console.error('❌ Error checking available drops:', dropError);
+      } else if (availableDrops && availableDrops.length > 0) {
+        console.log(`✅ Found ${availableDrops.length} available drops for request-only`);
+        
+        for (const drop of availableDrops) {
+          try {
             // Check for duplicates
             const { data: existingMatch } = await supabase
               .from('matches')
               .select('id')
-              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${swapRequest.user_id}),and(requester_user_id.eq.${swapRequest.user_id},match_user_id.eq.${record.user_id})`)
-              .ilike('desired_course', `%${swapperCurrentCourse}%`)
+              .or(`and(requester_user_id.eq.${drop.user_id},match_user_id.eq.${record.user_id}),and(requester_user_id.eq.${record.user_id},match_user_id.eq.${drop.user_id})`)
+              .ilike('desired_course', `%${requestedCourse}%`)
               .limit(1);
 
             if (existingMatch && existingMatch.length > 0) {
-              console.log(`⏭️ Reverse match already exists, skipping`);
+              console.log(`⏭️ Request-to-drop match already exists, skipping`);
               continue;
             }
 
-            // Create reverse match record
-            const reverseMatchData = {
-              requester_user_id: swapRequest.user_id, // The swapper who has what the drop requester wants
-              match_user_id: record.user_id, // The drop requester who wants it
-              desired_course: swapperCurrentCourse,
-              current_section: swapRequest.current_section, // What the swapper currently has
-              desired_section: `${swapperCurrentCourse} Section ${swapperCurrentSection}`, // What the drop requester gets
-              normalized_current_section: `${swapperCurrentCourse.toLowerCase()}_${swapperCurrentSection}`,
-              normalized_desired_section: `${swapperCurrentCourse.toLowerCase()}_${swapperCurrentSection}`,
+            // Create match record for request-to-drop
+            const matchData = {
+              requester_user_id: drop.user_id,  // The person who dropped 
+              match_user_id: record.user_id,     // The person requesting
+              desired_course: requestedCourse,
+              current_section: null,
+              desired_section: `${drop.drop_course} Section ${drop.drop_section_number}`,
+              normalized_current_section: null,
+              normalized_desired_section: `${drop.drop_course.toLowerCase()}_${drop.drop_section_number}`,
               match_telegram: record.telegram_username,
               match_full_name: record.full_name
             };
 
-            console.log('📝 Creating reverse match with data:', reverseMatchData);
+            console.log('📝 Creating request-to-drop match:', matchData);
 
-            const { error: reverseMatchError } = await supabase
+            const { error: matchError } = await supabase
               .from('matches')
-              .insert(reverseMatchData);
+              .insert(matchData);
 
-            if (reverseMatchError) {
-              console.error('❌ Error creating reverse match record:', reverseMatchError);
+            if (matchError) {
+              console.error('❌ Error creating request-to-drop match:', matchError);
             } else {
-              console.log('✅ Reverse match record created successfully');
+              console.log('✅ Request-to-drop match created successfully');
+              
+              // Send consolidated notification
+              await sendConsolidatedMatchNotification(
+                supabase, 
+                telegramBotToken, 
+                record, // wanter (requester) 
+                drop,   // dropper
+                drop.drop_course, 
+                drop.drop_section_number
+              );
+              
               matches.push({
-                type: 'reverse_match',
-                data: swapRequest,
-                match_reason: `Has ${swapperCurrentCourse} section ${swapperCurrentSection} that you want`,
-                match_telegram: swapRequest.telegram_username,
-                match_full_name: swapRequest.full_name
+                type: 'request_to_drop',
+                data: drop,
+                match_reason: `Available drop: ${drop.drop_course} section ${drop.drop_section_number}`,
+                match_telegram: drop.telegram_username,
+                match_full_name: drop.full_name
               });
             }
+          } catch (error) {
+            console.error('❌ Error processing request-to-drop match:', error);
+          }
+        }
+      } else {
+        console.log('ℹ️ No available drops found for request-only');
+      }
+    }
+
+    // PART 3: ENHANCED Swap-to-Drop Cross-Matching
+    // Check if anyone in swap_requests has a CURRENT section that matches drop requests
+    console.log('🔄 Checking enhanced cross-matching: swap current sections with drop requests...');
+    
+    // More efficient query - only get relevant swap requests
+    const { data: relevantSwapRequests, error: swapFetchError } = await supabase
+      .from('swap_requests')
+      .select('*')
+      .neq('user_id', record.user_id)
+      .not('current_section', 'is', null) // Only swaps with current sections
+      .limit(50); // Limit to prevent performance issues
+
+    if (swapFetchError) {
+      console.error('❌ Error fetching swap requests for cross-matching:', swapFetchError);
+    } else if (relevantSwapRequests && relevantSwapRequests.length > 0) {
+      console.log(`🔄 Found ${relevantSwapRequests.length} swap requests for cross-matching`);
+      
+      for (const swapRequest of relevantSwapRequests) {
+        // Check multiple cross-matching scenarios
+        let shouldCreateMatch = false;
+        let matchReason = '';
+
+        // Scenario 1: Drop request wants what swapper currently has
+        if (record.request_course && swapRequest.current_section && swapRequest.desired_course) {
+          const courseMatch = record.request_course.toLowerCase().includes(swapRequest.desired_course.toLowerCase()) ||
+                             swapRequest.desired_course.toLowerCase().includes(record.request_course.toLowerCase());
+          
+          const sectionMatch = !record.request_section_number || 
+                              record.any_section_flexible ||
+                              record.request_section_number === swapRequest.current_section_number;
+          
+          if (courseMatch && sectionMatch) {
+            shouldCreateMatch = true;
+            matchReason = `Cross-match: You want ${record.request_course}, they have ${swapRequest.desired_course} section ${swapRequest.current_section_number}`;
+          }
+        }
+
+        // Scenario 2: Swapper wants what's being dropped
+        if (record.drop_course && swapRequest.desired_course && record.drop_section_number) {
+          const courseMatch = record.drop_course.toLowerCase().includes(swapRequest.desired_course.toLowerCase()) ||
+                             swapRequest.desired_course.toLowerCase().includes(record.drop_course.toLowerCase());
+          
+          const sectionMatch = swapRequest.desired_section_number === record.drop_section_number;
+          
+          if (courseMatch && sectionMatch) {
+            shouldCreateMatch = true;
+            matchReason = `Cross-match: You're dropping ${record.drop_course} section ${record.drop_section_number}, they want it`;
+          }
+        }
+
+        if (shouldCreateMatch) {
+          console.log(`🎯 ${matchReason}`);
+          
+          // Check for duplicates more efficiently
+          const { data: existingMatch } = await supabase
+            .from('matches')
+            .select('id')
+            .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${swapRequest.user_id}),and(requester_user_id.eq.${swapRequest.user_id},match_user_id.eq.${record.user_id})`)
+            .limit(1);
+
+          if (existingMatch && existingMatch.length > 0) {
+            console.log(`⏭️ Cross-match already exists, skipping`);
+            continue;
+          }
+
+          // Create cross-match record - flexible structure based on scenario
+          const courseName = record.drop_course || record.request_course || swapRequest.desired_course;
+          const sectionInfo = record.drop_section_number || record.request_section_number || swapRequest.current_section_number;
+          
+          const crossMatchData = {
+            requester_user_id: record.user_id,
+            match_user_id: swapRequest.user_id,
+            desired_course: courseName,
+            current_section: swapRequest.current_section,
+            desired_section: `${courseName} Section ${sectionInfo}`,
+            normalized_current_section: swapRequest.normalized_current_section,
+            normalized_desired_section: `${courseName.toLowerCase()}_${sectionInfo}`,
+            match_telegram: swapRequest.telegram_username,
+            match_full_name: swapRequest.full_name
+          };
+
+          console.log('📝 Creating cross-match:', crossMatchData);
+
+          const { error: crossMatchError } = await supabase
+            .from('matches')
+            .insert(crossMatchData);
+
+          if (crossMatchError) {
+            console.error('❌ Error creating cross-match:', crossMatchError);
+          } else {
+            console.log('✅ Cross-match created successfully');
+            matches.push({
+              type: 'cross_match',
+              data: swapRequest,
+              match_reason: matchReason,
+              match_telegram: swapRequest.telegram_username,
+              match_full_name: swapRequest.full_name
+            });
           }
         }
       }
@@ -295,104 +406,84 @@ serve(async (req) => {
   }
 });
 
-// Helper function to send notification to person who wants the course
-async function sendNotificationToWanter(supabase: any, telegramBotToken: string, wanter: any, dropper: any, courseName: string, sectionNumber: number) {
-  if (!telegramBotToken || !wanter.telegram_username) {
-    console.log('⏭️ No Telegram token or username for wanter notification');
+// Helper function to send ONE consolidated notification to both parties
+async function sendConsolidatedMatchNotification(supabase: any, telegramBotToken: string, wanter: any, dropper: any, courseName: string, sectionNumber: number) {
+  if (!telegramBotToken) {
+    console.log('⏭️ No Telegram bot token available');
     return;
   }
 
-  try {
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('telegram_chat_id')
-      .eq('telegram_username', wanter.telegram_username)
-      .single();
+  const escapeMarkdown = (text: string) => text.replace(/[*_`\[\]()~>#+=|{}.!-]/g, '\\$&');
+  const courseNameEscaped = escapeMarkdown(courseName);
 
-    if (!profileData?.telegram_chat_id) {
-      console.log('⏭️ No chat ID found for wanter:', wanter.telegram_username);
-      return;
+  // Notification tracking to prevent duplicates
+  const notificationId = `match_${dropper.user_id}_${wanter.user_id}_${courseName}_${sectionNumber}`;
+  
+  // Send to wanter
+  if (wanter.telegram_username) {
+    try {
+      const { data: wanterProfile } = await supabase
+        .from('profiles')
+        .select('telegram_chat_id')
+        .eq('telegram_username', wanter.telegram_username)
+        .single();
+
+      if (wanterProfile?.telegram_chat_id) {
+        const dropperUsername = escapeMarkdown(dropper.telegram_username || 'Anonymous');
+        const wanterMessage = `🎯 *Match Found!*\n\n` +
+          `Perfect! Someone is dropping "${courseNameEscaped} Section ${sectionNumber}" that you wanted!\n\n` +
+          `👤 Contact: ${dropper.telegram_username ? `@${dropperUsername}` : 'Anonymous user'}\n` +
+          `📚 Course: ${courseNameEscaped}\n` +
+          `📝 Section: ${sectionNumber}\n\n` +
+          `💬 Reach out to coordinate the transfer quickly!`;
+
+        await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: wanterProfile.telegram_chat_id,
+            text: wanterMessage,
+            parse_mode: 'Markdown'
+          })
+        });
+        console.log('✅ Consolidated notification sent to wanter');
+      }
+    } catch (error) {
+      console.error('❌ Error sending notification to wanter:', error);
     }
-
-    const escapeMarkdown = (text: string) => text.replace(/[*_`\[\]()~>#+=|{}.!-]/g, '\\$&');
-    const courseNameEscaped = escapeMarkdown(courseName);
-    const dropperUsername = escapeMarkdown(dropper.telegram_username || 'Unknown');
-
-    const message = `🎯 *Match Found!*\n\n` +
-      `Someone is dropping "${courseNameEscaped} Section ${sectionNumber}" that you wanted!\n\n` +
-      `💬 Contact: @${dropperUsername}\n` +
-      `📚 Course: ${courseNameEscaped}\n` +
-      `📝 Section: ${sectionNumber}\n\n` +
-      `Reach out to them quickly to take their spot!`;
-
-    const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: profileData.telegram_chat_id,
-        text: message,
-        parse_mode: 'Markdown'
-      })
-    });
-
-    if (response.ok) {
-      console.log('✅ Notification sent to wanter');
-    } else {
-      const errorText = await response.text();
-      console.error('❌ Failed to send wanter notification:', errorText);
-    }
-  } catch (error) {
-    console.error('❌ Error sending wanter notification:', error);
-  }
-}
-
-// Helper function to send notification to person who dropped the course  
-async function sendNotificationToDropper(supabase: any, telegramBotToken: string, dropper: any, wanter: any, courseName: string, sectionNumber: number) {
-  if (!telegramBotToken || !dropper.telegram_username) {
-    console.log('⏭️ No Telegram token or username for dropper notification');
-    return;
   }
 
-  try {
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('telegram_chat_id')
-      .eq('telegram_username', dropper.telegram_username)
-      .single();
+  // Send to dropper
+  if (dropper.telegram_username) {
+    try {
+      const { data: dropperProfile } = await supabase
+        .from('profiles')
+        .select('telegram_chat_id')
+        .eq('telegram_username', dropper.telegram_username)
+        .single();
 
-    if (!profileData?.telegram_chat_id) {
-      console.log('⏭️ No chat ID found for dropper:', dropper.telegram_username);
-      return;
+      if (dropperProfile?.telegram_chat_id) {
+        const wanterUsername = escapeMarkdown(wanter.telegram_username || 'Anonymous');
+        const dropperMessage = `📢 *Someone Wants Your Course!*\n\n` +
+          `Great news! A student wants the course you're dropping: "${courseNameEscaped} Section ${sectionNumber}"\n\n` +
+          `👤 Contact: ${wanter.telegram_username ? `@${wanterUsername}` : 'Anonymous user'}\n` +
+          `📚 Course: ${courseNameEscaped}\n` +
+          `📝 Section: ${sectionNumber}\n\n` +
+          `💬 Coordinate with them to transfer your spot!`;
+
+        await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: dropperProfile.telegram_chat_id,
+            text: dropperMessage,
+            parse_mode: 'Markdown'
+          })
+        });
+        console.log('✅ Consolidated notification sent to dropper');
+      }
+    } catch (error) {
+      console.error('❌ Error sending notification to dropper:', error);
     }
-
-    const escapeMarkdown = (text: string) => text.replace(/[*_`\[\]()~>#+=|{}.!-]/g, '\\$&');
-    const courseNameEscaped = escapeMarkdown(courseName);
-    const wanterUsername = escapeMarkdown(wanter.telegram_username || 'Unknown');
-
-    const message = `📢 *Someone Wants Your Course!*\n\n` +
-      `A student wants the course you're dropping: "${courseNameEscaped} Section ${sectionNumber}"\n\n` +
-      `💬 Contact: @${wanterUsername}\n` +
-      `📚 Course: ${courseNameEscaped}\n` +
-      `📝 Section: ${sectionNumber}\n\n` +
-      `Reach out to coordinate the transfer!`;
-
-    const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: profileData.telegram_chat_id,
-        text: message,
-        parse_mode: 'Markdown'
-      })
-    });
-
-    if (response.ok) {
-      console.log('✅ Notification sent to dropper');
-    } else {
-      const errorText = await response.text();
-      console.error('❌ Failed to send dropper notification:', errorText);
-    }
-  } catch (error) {
-    console.error('❌ Error sending dropper notification:', error);
   }
 }
