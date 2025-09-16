@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { generateTimeSlots } from "@/utils/timeSlotUtils";
 import { 
   validateSwapFormFields,
-  checkForDuplicateRequest 
+  checkForDuplicateRequest,
+  checkForCrossRequestConflict 
 } from "@/utils/validationUtils";
 import { 
   prepareRequestData,
@@ -313,7 +314,7 @@ export const useSwapRequestForm = ({
           time: desiredStartTime
         };
 
-        // Check for duplicate requests (only if not editing)
+        // Check for duplicate requests and cross-request conflicts (only if not editing)
         if (!editingRequestId) {
           const isDuplicate = await checkForDuplicateRequest(
             user.id, 
@@ -325,6 +326,23 @@ export const useSwapRequestForm = ({
           if (isDuplicate) {
             toast.error("You've already submitted this exact request", {
               description: "Please edit your existing request instead of creating a duplicate"
+            });
+            setIsLoading(false);
+            return;
+          }
+
+          // Check for cross-request conflict (current section = previous desired section)
+          const hasConflict = await checkForCrossRequestConflict(
+            user.id,
+            finalCourseName,
+            currentSectionNumber,
+            currentDaysPattern,
+            currentStartTime
+          );
+
+          if (hasConflict) {
+            toast.error("Cannot request a swap from a section you previously wanted", {
+              description: "You already have a request wanting this same section for this course"
             });
             setIsLoading(false);
             return;

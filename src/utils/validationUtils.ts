@@ -54,6 +54,36 @@ export const validateSwapFormFields = (
 };
 
 /**
+ * Checks if current section matches any previous desired section to prevent circular swaps
+ */
+export const checkForCrossRequestConflict = async (
+  userId: string,
+  courseName: string,
+  currentSectionNumber: string,
+  currentDaysPattern: string,
+  currentStartTime: string
+): Promise<boolean> => {
+  try {
+    // Check if the new current section matches any previous desired section
+    const { data, error } = await supabase
+      .from('swap_requests')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('desired_course', courseName)
+      .eq('desired_section_number', parseInt(currentSectionNumber))
+      .eq('desired_days_pattern', currentDaysPattern)
+      .eq('desired_start_time', currentStartTime);
+    
+    if (error) throw error;
+    
+    return (data && data.length > 0) || false;
+  } catch (error: any) {
+    console.error("Error checking for cross-request conflicts:", error);
+    return false; // Allow submission if check fails
+  }
+};
+
+/**
  * Checks for duplicate requests to prevent users from submitting the same request multiple times
  */
 export const checkForDuplicateRequest = async (
