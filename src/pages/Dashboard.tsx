@@ -231,11 +231,6 @@ const Dashboard = () => {
   console.log('Rendering: Main dashboard');
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
-      {/* Temporary visibility test - replace galaxy classes with visible ones */}
-      <div className="mb-4 p-2 bg-green-900 border-2 border-green-500 text-white text-sm rounded">
-        ✅ DASHBOARD LOADED: User ID: {user?.id?.slice(0,8)}... | Requests: {userRequests?.length} | Drops: {userDropRequests?.length} | Platform Total: {totalRequests + totalDropRequests}
-      </div>
-
       <div className="flex items-center mb-6">
         <h1 className="text-3xl font-bold text-white">Dashboard</h1>
       </div>
