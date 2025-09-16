@@ -129,6 +129,7 @@ export const useDropRequestForm = ({ user, editingRequestId, onRequestSubmitted,
 
       const requestData = {
         user_id: user.id,
+        profile_id: user.id, // Use the same user id as profile_id for RLS policies
         action_type: formData.action_type,
         drop_course: (formData.action_type === 'drop_only' || formData.action_type === 'drop_and_request') ? formData.drop_course : null,
         drop_section_number: (formData.action_type === 'drop_only' || formData.action_type === 'drop_and_request') ? parseInt(formData.drop_section_number) : null,
@@ -138,7 +139,6 @@ export const useDropRequestForm = ({ user, editingRequestId, onRequestSubmitted,
         telegram_username: formData.telegram_username,
         anonymous: formData.anonymous,
         full_name: formData.anonymous ? null : user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : null,
-        profile_id: user.id,
       };
 
       if (editingRequestId) {
