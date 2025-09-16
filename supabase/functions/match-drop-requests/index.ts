@@ -52,12 +52,12 @@ serve(async (req) => {
 
     // Only process if someone is dropping a course
     if ((record.action_type === 'drop_only' || record.action_type === 'drop_and_request') && 
-        record.drop_course && record.drop_section_number) {
+        record.drop_course && record.drop_section_number && record.user_id) {
       
       const droppedCourse = record.drop_course.toLowerCase();
       const droppedSection = record.drop_section_number;
       
-      console.log(`Looking for matches for dropped course: ${droppedCourse} section ${droppedSection}`);
+      console.log(`Looking for matches for dropped course: ${droppedCourse} section ${droppedSection} by user: ${record.user_id}`);
 
       // 1. Check existing swap_requests for people wanting this course/section
       const { data: swapMatches, error: swapError } = await supabase
@@ -108,18 +108,25 @@ serve(async (req) => {
         
         for (const match of matches) {
           try {
-            // Check if match already exists to prevent duplicates
+            // Enhanced deduplication check - check both directions to prevent any duplicates
             const { data: existingMatch } = await supabase
               .from('matches')
               .select('id')
-              .eq('requester_user_id', record.user_id)
-              .eq('match_user_id', match.data.user_id)
+              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${match.data.user_id}),and(requester_user_id.eq.${match.data.user_id},match_user_id.eq.${record.user_id})`)
               .eq('desired_course', droppedCourse)
-              .eq('normalized_current_section', `${droppedCourse}_${droppedSection}`)
               .limit(1);
 
             if (existingMatch && existingMatch.length > 0) {
-              console.log('Match already exists, skipping duplicate');
+              console.log(`Match already exists between users ${record.user_id} and ${match.data.user_id}, skipping duplicate`);
+              continue;
+            }
+
+            // Validate required data before creating match
+            if (!record.user_id || !match.data.user_id) {
+              console.error('Missing user IDs for match creation:', { 
+                record_user_id: record.user_id, 
+                match_user_id: match.data.user_id 
+              });
               continue;
             }
 
@@ -139,6 +146,8 @@ serve(async (req) => {
               match_telegram: match.data.telegram_username,
               match_full_name: match.data.full_name
             };
+
+            console.log('Creating match with data:', matchData);
 
             const { error: matchError } = await supabase
               .from('matches')
