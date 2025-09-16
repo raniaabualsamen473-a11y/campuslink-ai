@@ -41,7 +41,7 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
     }
   }, [userId, refreshTrigger]);
 
-  // Set up real-time subscription for new matches - simplified and optimized
+  // Set up real-time subscription for matches table (simplified like swap matches)
   useEffect(() => {
     if (!userId) return;
 
@@ -54,15 +54,25 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'matches'
+          table: 'matches',
+          filter: `requester_user_id.eq.${userId}`
         },
         (payload) => {
-          console.log('Real-time: New drop match detected:', payload);
-          if (userId && payload.new && 
-              (payload.new.requester_user_id === userId || payload.new.match_user_id === userId)) {
-            console.log('Match is relevant for current user, refreshing...');
-            setTimeout(() => fetchMatches(userId), 500); // Small delay to ensure DB consistency
-          }
+          console.log('New drop match detected for requester:', payload);
+          fetchMatches(userId);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'matches',
+          filter: `match_user_id.eq.${userId}`
+        },
+        (payload) => {
+          console.log('New drop match detected for match user:', payload);
+          fetchMatches(userId);
         }
       )
       .subscribe();
@@ -161,11 +171,11 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
         
         if (isDropper) {
           // This user dropped the course, show them who wants it
-          // Enhanced fallback: use match record data with improved logic
+          // Use info from edge function (match_telegram and match_full_name are already populated)
           displayInfo = {
             otherUserId: match.match_user_id || "",
-            otherUserName: match.match_full_name || "Course Requester", 
-            otherUserTelegram: match.match_telegram || null,
+            otherUserName: match.match_full_name || "Anonymous Student", 
+            otherUserTelegram: match.match_telegram,
             type: "drop",
             actionType: "Someone wants the course you dropped"
           };
@@ -177,8 +187,8 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
             otherUserName: dropperProfile ? 
               `${dropperProfile.first_name || ''} ${dropperProfile.last_name || ''}`.trim() || 
               dropperProfile.telegram_username || "Course Dropper" 
-              : match.match_full_name || "Course Dropper",
-            otherUserTelegram: dropperProfile?.telegram_username || match.match_telegram || null,
+              : "Course Dropper",
+            otherUserTelegram: dropperProfile?.telegram_username || null,
             type: "request",
             actionType: "Someone dropped a course you want"
           };
