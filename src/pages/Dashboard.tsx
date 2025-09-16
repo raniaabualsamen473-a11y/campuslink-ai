@@ -17,13 +17,19 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && user.id) {
       fetchDashboardData();
+    } else {
+      setIsLoading(false);
     }
   }, [user]);
 
   const fetchDashboardData = async () => {
-    if (!user) return;
+    if (!user || !user.id) {
+      console.log('No authenticated user found');
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     
     try {
@@ -103,6 +109,16 @@ const Dashboard = () => {
       year: 'numeric' 
     });
   };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto py-8 px-4 sm:px-6 galaxy-bg min-h-screen">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Please log in to view your dashboard</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 galaxy-bg min-h-screen">
