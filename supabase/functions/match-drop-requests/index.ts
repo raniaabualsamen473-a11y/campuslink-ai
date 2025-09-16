@@ -305,86 +305,166 @@ serve(async (req) => {
       }
     }
 
-    // PART 2.5: CRITICAL BIDIRECTIONAL MATCHING - Drop-and-Request vs Request-Only
-    // When someone does drop_and_request and another person does request_only for what they're requesting
-    if (record.action_type === 'drop_and_request' && record.request_course) {
-      console.log(`🔄 Checking if anyone has request_only for what you're requesting: ${record.request_course}`);
+    // PART 2.5: CRITICAL BIDIRECTIONAL MATCHING - Drop-and-Request vs Request-Only  
+    // FIX: When someone does drop_and_request, find request_only people who want what they're DROPPING
+    if (record.action_type === 'drop_and_request' && record.drop_course) {
+      console.log(`🔄 FIXED: Checking if anyone has request_only for what you're DROPPING: ${record.drop_course}`);
       
-      let conflictQuery = supabase
+      let dropMatchQuery = supabase
         .from('drop_requests')
         .select('*')
-        .or(`request_course.ilike.%${record.request_course}%,request_course.ilike.%${record.request_course.replace(/\s+/g, '%')}%`)
+        .or(`request_course.ilike.%${record.drop_course}%,request_course.ilike.%${record.drop_course.replace(/\s+/g, '%')}%`)
         .eq('action_type', 'request_only')
         .neq('user_id', record.user_id)
         .not('processed_at', 'is', null);
 
-      // Add section filtering for bidirectional matching
-      if (record.any_section_flexible) {
-        conflictQuery = conflictQuery.not('request_section_number', 'is', null);
-      } else if (record.request_section_number) {
-        conflictQuery = conflictQuery.eq('request_section_number', record.request_section_number);
-      } else {
-        conflictQuery = conflictQuery.not('request_section_number', 'is', null);
+      // Section filtering - match request_only people who want the drop section  
+      if (record.drop_section_number) {
+        dropMatchQuery = dropMatchQuery.or(`request_section_number.eq.${record.drop_section_number},any_section_flexible.eq.true`);
       }
 
-      const { data: conflictingRequests, error: conflictError } = await conflictQuery;
+      const { data: requestOnlyMatches, error: requestError } = await dropMatchQuery;
 
-      if (!conflictError && conflictingRequests && conflictingRequests.length > 0) {
-        console.log(`⚠️ Found ${conflictingRequests.length} request_only for same course you want!`);
+      if (!requestError && requestOnlyMatches && requestOnlyMatches.length > 0) {
+        console.log(`🎯 Found ${requestOnlyMatches.length} request_only people who want what you're dropping!`);
         
-        for (const conflictingRequest of conflictingRequests) {
+        for (const requestOnlyMatch of requestOnlyMatches) {
           try {
             // Check for duplicates
             const { data: existingMatch } = await supabase
               .from('matches')
               .select('id')
-              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${conflictingRequest.user_id}),and(requester_user_id.eq.${conflictingRequest.user_id},match_user_id.eq.${record.user_id})`)
+              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${requestOnlyMatch.user_id}),and(requester_user_id.eq.${requestOnlyMatch.user_id},match_user_id.eq.${record.user_id})`)
               .limit(1);
 
             if (existingMatch && existingMatch.length > 0) {
-              console.log(`⏭️ Bidirectional match already exists, skipping`);
+              console.log(`⏭️ Drop-to-request match already exists, skipping`);
               continue;
             }
 
-            // Get contact info from profiles if missing
-            const conflictContactInfo = await getContactInfo(supabase, conflictingRequest);
+            // Get contact info from profiles
+            const requestContactInfo = await getContactInfo(supabase, requestOnlyMatch);
 
-            // Create bidirectional match - they both want the same thing but one is dropping something
-            const bidirectionalMatchData = {
+            // Create match - dropper has what requester wants
+            const dropToRequestMatchData = {
               requester_user_id: record.user_id,
-              match_user_id: conflictingRequest.user_id,
-              desired_course: record.request_course,
+              match_user_id: requestOnlyMatch.user_id,
+              desired_course: record.drop_course, // What's being dropped = what they want
+              current_section: record.drop_course ? `${record.drop_course} Section ${record.drop_section_number}` : null,
+              desired_section: record.request_course ? `${record.request_course} Section ${record.request_section_number || 'any'}` : null,
+              normalized_current_section: record.drop_course ? `${record.drop_course.toLowerCase()}_${record.drop_section_number}` : null,
+              normalized_desired_section: record.request_course ? `${record.request_course.toLowerCase()}_${record.request_section_number || 'flexible'}` : null,
+              match_telegram: requestContactInfo.telegram_username,
+              match_full_name: requestContactInfo.full_name
+            };
+
+            console.log('📝 Creating drop-to-request match:', dropToRequestMatchData);
+
+            const { error: matchError } = await supabase
+              .from('matches')
+              .insert(dropToRequestMatchData);
+
+            if (matchError) {
+              console.error('❌ Error creating drop-to-request match:', matchError);
+            } else {
+              console.log('✅ Drop-to-request match created successfully');
+              
+              matches.push({
+                type: 'drop_to_request',
+                data: requestOnlyMatch,
+                match_reason: `You're dropping ${record.drop_course} which they want`,
+                match_telegram: requestContactInfo.telegram_username,
+                match_full_name: requestContactInfo.full_name
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error processing drop-to-request match:', error);
+          }
+        }
+      } else {
+        console.log('ℹ️ No request_only matches found for what you are dropping');
+      }
+    }
+
+    // PART 2.6: NEW - Drop-and-Request looking for existing drops of what they want
+    if (record.action_type === 'drop_and_request' && record.request_course) {
+      console.log(`🔄 NEW: Checking for existing drops of what you want: ${record.request_course}`);
+      
+      let wantedDropsQuery = supabase
+        .from('drop_requests')
+        .select('*')
+        .or(`drop_course.ilike.%${record.request_course}%,drop_course.ilike.%${record.request_course.replace(/\s+/g, '%')}%`)
+        .in('action_type', ['drop_only', 'drop_and_request'])
+        .neq('user_id', record.user_id)
+        .not('processed_at', 'is', null);
+
+      // Section filtering for what they want
+      if (record.any_section_flexible) {
+        wantedDropsQuery = wantedDropsQuery.not('drop_section_number', 'is', null);
+      } else if (record.request_section_number) {
+        wantedDropsQuery = wantedDropsQuery.eq('drop_section_number', record.request_section_number);
+      }
+
+      const { data: wantedDrops, error: wantedError } = await wantedDropsQuery;
+
+      if (!wantedError && wantedDrops && wantedDrops.length > 0) {
+        console.log(`🎯 Found ${wantedDrops.length} drops of what you want!`);
+        
+        for (const wantedDrop of wantedDrops) {
+          try {
+            // Check for duplicates
+            const { data: existingMatch } = await supabase
+              .from('matches')
+              .select('id')
+              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${wantedDrop.user_id}),and(requester_user_id.eq.${wantedDrop.user_id},match_user_id.eq.${record.user_id})`)
+              .limit(1);
+
+            if (existingMatch && existingMatch.length > 0) {
+              console.log(`⏭️ Want-to-drop match already exists, skipping`);
+              continue;
+            }
+
+            // Get contact info
+            const dropContactInfo = await getContactInfo(supabase, wantedDrop);
+
+            // Create match - they have what you want
+            const wantToDropMatchData = {
+              requester_user_id: record.user_id,
+              match_user_id: wantedDrop.user_id,
+              desired_course: record.request_course, // What you want
               current_section: record.drop_course ? `${record.drop_course} Section ${record.drop_section_number}` : null,
               desired_section: `${record.request_course} Section ${record.request_section_number || 'any'}`,
               normalized_current_section: record.drop_course ? `${record.drop_course.toLowerCase()}_${record.drop_section_number}` : null,
               normalized_desired_section: `${record.request_course.toLowerCase()}_${record.request_section_number || 'flexible'}`,
-              match_telegram: conflictContactInfo.telegram_username,
-              match_full_name: conflictContactInfo.full_name
+              match_telegram: dropContactInfo.telegram_username,
+              match_full_name: dropContactInfo.full_name
             };
 
-            console.log('📝 Creating bidirectional drop-and-request vs request-only match:', bidirectionalMatchData);
+            console.log('📝 Creating want-to-drop match:', wantToDropMatchData);
 
             const { error: matchError } = await supabase
               .from('matches')
-              .insert(bidirectionalMatchData);
+              .insert(wantToDropMatchData);
 
             if (matchError) {
-              console.error('❌ Error creating bidirectional match:', matchError);
+              console.error('❌ Error creating want-to-drop match:', matchError);
             } else {
-              console.log('✅ Bidirectional match created successfully');
+              console.log('✅ Want-to-drop match created successfully');
               
               matches.push({
-                type: 'bidirectional_request',
-                data: conflictingRequest,
-                match_reason: `Both want ${record.request_course} - you're dropping ${record.drop_course}`,
-                match_telegram: conflictContactInfo.telegram_username,
-                match_full_name: conflictContactInfo.full_name
+                type: 'want_to_drop',
+                data: wantedDrop,
+                match_reason: `They're dropping ${record.request_course} which you want`,
+                match_telegram: dropContactInfo.telegram_username,
+                match_full_name: dropContactInfo.full_name
               });
             }
           } catch (error) {
-            console.error('❌ Error processing bidirectional match:', error);
+            console.error('❌ Error processing want-to-drop match:', error);
           }
         }
+      } else {
+        console.log('ℹ️ No existing drops found for what you want');
       }
     }
 
