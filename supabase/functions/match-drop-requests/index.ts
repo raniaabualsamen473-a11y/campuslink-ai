@@ -18,6 +18,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    
+    // Get bot token at the top level to avoid scope issues
+    const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
 
     const { record } = await req.json();
     console.log('Processing drop request:', record);
@@ -105,6 +108,21 @@ serve(async (req) => {
         
         for (const match of matches) {
           try {
+            // Check if match already exists to prevent duplicates
+            const { data: existingMatch } = await supabase
+              .from('matches')
+              .select('id')
+              .eq('requester_user_id', record.user_id)
+              .eq('match_user_id', match.data.user_id)
+              .eq('desired_course', droppedCourse)
+              .eq('normalized_current_section', `${droppedCourse}_${droppedSection}`)
+              .limit(1);
+
+            if (existingMatch && existingMatch.length > 0) {
+              console.log('Match already exists, skipping duplicate');
+              continue;
+            }
+
             // Create match record in matches table
             const matchData = {
               requester_user_id: record.user_id,
@@ -134,7 +152,6 @@ serve(async (req) => {
 
             // Send Telegram notification directly
             try {
-              const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
               if (telegramBotToken && match.data.telegram_username) {
                 try {
                   // Get chat ID from telegram username

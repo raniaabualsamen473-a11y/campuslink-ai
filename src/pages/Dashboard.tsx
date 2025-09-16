@@ -5,11 +5,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { SwapRequest } from "@/types/swap";
-import { Users, MessageSquare, Calendar } from "lucide-react";
+import { Users, MessageSquare, Calendar, ArrowDownUp } from "lucide-react";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [userRequests, setUserRequests] = useState<SwapRequest[]>([]);
+  const [userDropRequests, setUserDropRequests] = useState<any[]>([]);
   const [totalRequests, setTotalRequests] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
   const [recentRequests, setRecentRequests] = useState<SwapRequest[]>([]);
@@ -26,7 +27,7 @@ const Dashboard = () => {
     setIsLoading(true);
     
     try {
-      // Get user's requests
+      // Get user's swap requests
       const { data: userRequestsData, error: userRequestsError } = await supabase
         .from('swap_requests')
         .select('*')
@@ -35,6 +36,16 @@ const Dashboard = () => {
         .limit(5);
         
       if (userRequestsError) throw userRequestsError;
+
+      // Get user's drop requests
+      const { data: userDropRequestsData, error: userDropRequestsError } = await supabase
+        .from('drop_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+        
+      if (userDropRequestsError) throw userDropRequestsError;
       
       // Get total requests count
       const { count: requestsCount, error: requestsCountError } = await supabase
@@ -72,6 +83,7 @@ const Dashboard = () => {
 
       // Set state with fetched data
       setUserRequests(userRequestsData as SwapRequest[] || []);
+      setUserDropRequests(userDropRequestsData || []);
       setTotalRequests(requestsCount || 0);
       setActiveUsers(distinctUserIds.size || 0);
       setRecentRequests(latestRequests as SwapRequest[] || []);
@@ -98,19 +110,34 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold text-campus-darkPurple">Dashboard</h1>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.1s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-medium">Your Requests</CardTitle>
+              <CardTitle className="text-lg font-medium">Swap Requests</CardTitle>
               <div className="rounded-full bg-campus-purple/10 p-2 neon-glow">
                 <Calendar className="h-5 w-5 text-campus-purple" />
               </div>
             </div>
-            <CardDescription>Active swap requests & petitions</CardDescription>
+            <CardDescription>Active swap requests</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-campus-darkPurple">{userRequests.length}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.15s"}}>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg font-medium">Drop Requests</CardTitle>
+              <div className="rounded-full bg-campus-purple/10 p-2 neon-glow">
+                <ArrowDownUp className="h-5 w-5 text-campus-purple" />
+              </div>
+            </div>
+            <CardDescription>Drop & request entries</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold text-campus-darkPurple">{userDropRequests.length}</p>
           </CardContent>
         </Card>
         
@@ -129,7 +156,7 @@ const Dashboard = () => {
           </CardContent>
         </Card>
         
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.3s"}}>
+        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.25s"}}>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-medium">Active Users</CardTitle>
@@ -146,10 +173,10 @@ const Dashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.4s"}}>
+        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.3s"}}>
           <CardHeader>
-            <CardTitle>Your Recent Requests</CardTitle>
-            <CardDescription>Your most recent swap requests & petitions</CardDescription>
+            <CardTitle>Recent Swap Requests</CardTitle>
+            <CardDescription>Your most recent swap requests</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -188,9 +215,65 @@ const Dashboard = () => {
               </ScrollArea>
             ) : (
               <div className="text-center py-6">
-                <p className="text-muted-foreground">No requests found</p>
+                <p className="text-muted-foreground">No swap requests found</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   Create a swap request to get started
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-campus-purple/20 hover:shadow-neon-purple transition-all duration-300 animate-fade-in" style={{animationDelay: "0.35s"}}>
+          <CardHeader>
+            <CardTitle>Recent Drop Requests</CardTitle>
+            <CardDescription>Your most recent drop & request entries</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center py-6">
+                <div className="animate-glow-pulse rounded-full h-8 w-8 border-2 border-campus-purple"></div>
+              </div>
+            ) : userDropRequests.length > 0 ? (
+              <ScrollArea className="h-80">
+                <div className="space-y-4">
+                  {userDropRequests.map((request) => (
+                    <div key={request.id} className="glass-card p-3 hover:shadow-neon-purple transition-all duration-300">
+                      <div className="flex justify-between">
+                        <p className="font-medium text-foreground">
+                          {request.drop_course || request.request_course || "Unnamed Course"}
+                        </p>
+                        <span 
+                          className="text-xs px-2 py-1 rounded-full bg-blue-100/50 text-blue-800 backdrop-blur-sm"
+                        >
+                          {request.action_type === 'drop_only' ? 'Drop' : 
+                           request.action_type === 'request_only' ? 'Request' : 'Drop & Request'}
+                        </span>
+                      </div>
+                      {request.drop_course && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          <span className="text-muted-foreground">Dropping: </span>
+                          {request.drop_course} Section {request.drop_section_number}
+                        </p>
+                      )}
+                      {request.request_course && (
+                        <p className="text-sm text-muted-foreground">
+                          <span className="text-muted-foreground">Requesting: </span>
+                          {request.request_course} {request.any_section_flexible ? "(Any Section)" : `Section ${request.request_section_number}`}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Created: {formatDate(request.created_at)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground">No drop requests found</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Create a drop request to get started
                 </p>
               </div>
             )}

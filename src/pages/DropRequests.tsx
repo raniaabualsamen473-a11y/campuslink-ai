@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useDropRequests } from "@/hooks/useDropRequests";
 import { DropRequestForm } from "@/components/drop-requests/DropRequestForm";
 import { ActiveDropRequestsList } from "@/components/drop-requests/ActiveDropRequestsList";
+import DropMatchResults from "@/components/DropMatchResults";
 
 const DropRequests = () => {
   const { user } = useAuth();
@@ -64,6 +65,11 @@ const DropRequests = () => {
               onDeleteRequest={handleDeleteRequest}
             />
           </div>
+        </div>
+
+        {/* Matches */}
+        <div className="animate-fade-in" style={{animationDelay: "0.3s"}}>
+          <DropMatchResults refreshTrigger={refreshTrigger} />
         </div>
       </div>
     </div>
