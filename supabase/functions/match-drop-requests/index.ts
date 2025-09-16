@@ -194,6 +194,87 @@ serve(async (req) => {
       console.log('ℹ️ Request is not a drop action or missing required fields');
     }
 
+    // REVERSE MATCHING: Swap-to-Drop Matching
+    // Check if anyone in swap_requests has a CURRENT section that someone wants to drop
+    console.log('🔄 Checking for reverse matches: swap current sections with drop requests...');
+    
+    const { data: allSwapRequests, error: swapFetchError } = await supabase
+      .from('swap_requests')
+      .select('*')
+      .neq('user_id', record.user_id);
+
+    if (swapFetchError) {
+      console.error('❌ Error fetching swap requests:', swapFetchError);
+    } else if (allSwapRequests && allSwapRequests.length > 0) {
+      console.log(`🔄 Found ${allSwapRequests.length} swap requests to check for reverse matches`);
+      
+      for (const swapRequest of allSwapRequests) {
+        // Check if this drop request WANTS what someone is currently in (their current_section)
+        if (record.request_course && swapRequest.current_section && 
+            swapRequest.desired_course && swapRequest.current_section_number) {
+          
+          const swapperCurrentCourse = swapRequest.desired_course; // What course they're in
+          const swapperCurrentSection = swapRequest.current_section_number;
+          
+          // Check if the drop request wants what the swapper currently has
+          const courseMatch = record.request_course.toLowerCase().includes(swapperCurrentCourse.toLowerCase()) ||
+                             swapperCurrentCourse.toLowerCase().includes(record.request_course.toLowerCase());
+          
+          const sectionMatch = record.request_section_number === swapperCurrentSection || 
+                              record.any_section_flexible;
+          
+          if (courseMatch && sectionMatch) {
+            console.log(`🎯 Reverse match found: Drop requester wants ${record.request_course} section ${record.request_section_number || 'any'}, Swapper has ${swapperCurrentCourse} section ${swapperCurrentSection}`);
+            
+            // Check for duplicates
+            const { data: existingMatch } = await supabase
+              .from('matches')
+              .select('id')
+              .or(`and(requester_user_id.eq.${record.user_id},match_user_id.eq.${swapRequest.user_id}),and(requester_user_id.eq.${swapRequest.user_id},match_user_id.eq.${record.user_id})`)
+              .ilike('desired_course', `%${swapperCurrentCourse}%`)
+              .limit(1);
+
+            if (existingMatch && existingMatch.length > 0) {
+              console.log(`⏭️ Reverse match already exists, skipping`);
+              continue;
+            }
+
+            // Create reverse match record
+            const reverseMatchData = {
+              requester_user_id: swapRequest.user_id, // The swapper who has what the drop requester wants
+              match_user_id: record.user_id, // The drop requester who wants it
+              desired_course: swapperCurrentCourse,
+              current_section: swapRequest.current_section, // What the swapper currently has
+              desired_section: `${swapperCurrentCourse} Section ${swapperCurrentSection}`, // What the drop requester gets
+              normalized_current_section: `${swapperCurrentCourse.toLowerCase()}_${swapperCurrentSection}`,
+              normalized_desired_section: `${swapperCurrentCourse.toLowerCase()}_${swapperCurrentSection}`,
+              match_telegram: record.telegram_username,
+              match_full_name: record.full_name
+            };
+
+            console.log('📝 Creating reverse match with data:', reverseMatchData);
+
+            const { error: reverseMatchError } = await supabase
+              .from('matches')
+              .insert(reverseMatchData);
+
+            if (reverseMatchError) {
+              console.error('❌ Error creating reverse match record:', reverseMatchError);
+            } else {
+              console.log('✅ Reverse match record created successfully');
+              matches.push({
+                type: 'reverse_match',
+                data: swapRequest,
+                match_reason: `Has ${swapperCurrentCourse} section ${swapperCurrentSection} that you want`,
+                match_telegram: swapRequest.telegram_username,
+                match_full_name: swapRequest.full_name
+              });
+            }
+          }
+        }
+      }
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       matches_found: matches.length,

@@ -84,7 +84,7 @@ export const DropMatchCard = ({ match }: DropMatchCardProps) => {
       <Separator className="my-3" />
       
       <div className="mt-2 flex justify-end">
-        {match.telegram_username && (
+        {match.telegram_username ? (
           <Button 
             size="sm" 
             variant="telegram"
@@ -93,6 +93,16 @@ export const DropMatchCard = ({ match }: DropMatchCardProps) => {
           >
             <MessageSquare size={16} className="mr-1" />
             Chat on Telegram
+          </Button>
+        ) : (
+          <Button 
+            size="sm" 
+            variant="outline" 
+            disabled
+            title="Contact information not available"
+          >
+            <MessageSquare size={16} className="mr-1" />
+            No Contact Info
           </Button>
         )}
       </div>

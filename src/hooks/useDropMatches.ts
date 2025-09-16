@@ -113,8 +113,8 @@ export const useDropMatches = (userId: string | undefined, refreshTrigger: numbe
           // This user wants the course, show them who dropped it
           displayInfo = {
             otherUserId: match.requester_user_id || "",
-            otherUserName: "Course Dropper", // We don't store dropper's name in match
-            otherUserTelegram: null,
+            otherUserName: match.match_full_name || "Course Dropper", // Use actual name if available
+            otherUserTelegram: match.match_telegram, // Use actual telegram from the match
             type: "request",
             actionType: "Someone dropped a course you want"
           };
