@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,56 +19,106 @@ const Dashboard = () => {
   const [recentRequests, setRecentRequests] = useState<SwapRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Debug logging
+  console.log('Dashboard Debug - Full User Object:', JSON.stringify(user, null, 2));
+  console.log('Dashboard Debug - User ID Properties:', {
+    id: user?.id,
+    user_id: user?.user_id,
+    telegram_id: user?.telegram_id,
+    sub: user?.sub,
+    uid: user?.uid
+  });
+
   useEffect(() => {
-    if (user && user.id) {
-      fetchDashboardData();
+    console.log('Dashboard useEffect - User:', user);
+    
+    if (user === null) {
+      // User is definitely not logged in
+      console.log('User is null - not logged in');
+      setIsLoading(false);
+    } else if (user === undefined) {
+      // User state is still loading
+      console.log('User is undefined - still loading auth state');
+      setIsLoading(true);
+    } else if (user) {
+      // User exists - try multiple ID properties for different auth systems
+      const userId = user.id || user.user_id || user.sub || user.uid || user.telegram_id;
+      console.log('User found. ID properties check:', {
+        id: user.id,
+        user_id: user.user_id,
+        sub: user.sub,
+        uid: user.uid,
+        telegram_id: user.telegram_id,
+        resolved_userId: userId
+      });
+      
+      if (userId) {
+        console.log('Using resolved user ID:', userId);
+        fetchDashboardData(userId);
+      } else {
+        console.log('No valid user ID found, but showing dashboard anyway with empty data');
+        setIsLoading(false);
+      }
     } else {
+      console.log('Unexpected user state:', user);
       setIsLoading(false);
     }
   }, [user]);
 
-  const fetchDashboardData = async () => {
-    if (!user || !user.id) {
-      console.log('No authenticated user found');
+  const fetchDashboardData = async (userId?: string) => {
+    const resolvedUserId = userId || user?.id || user?.user_id || user?.sub || user?.uid || user?.telegram_id;
+    
+    if (!user) {
+      console.log('fetchDashboardData: No user found');
       setIsLoading(false);
       return;
     }
+    
+    console.log('fetchDashboardData: Starting data fetch for user ID:', resolvedUserId);
     setIsLoading(true);
     
     try {
       // Get user's swap requests
+      console.log('Fetching swap requests...');
       const { data: userRequestsData, error: userRequestsError } = await supabase
         .from('swap_requests')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', resolvedUserId || 'no-user-id')
         .order('created_at', { ascending: false })
         .limit(5);
         
-      if (userRequestsError) throw userRequestsError;
+      console.log('Swap requests result:', userRequestsData, userRequestsError);
+      if (userRequestsError) console.error('Swap requests error:', userRequestsError);
 
       // Get user's drop requests
+      console.log('Fetching drop requests...');
       const { data: userDropRequestsData, error: userDropRequestsError } = await supabase
         .from('drop_requests')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', resolvedUserId || 'no-user-id')
         .order('created_at', { ascending: false })
         .limit(5);
         
-      if (userDropRequestsError) throw userDropRequestsError;
+      console.log('Drop requests result:', userDropRequestsData, userDropRequestsError);
+      if (userDropRequestsError) console.error('Drop requests error:', userDropRequestsError);
       
       // Get total requests count
+      console.log('Fetching total requests count...');
       const { count: requestsCount, error: requestsCountError } = await supabase
         .from('swap_requests')
         .select('*', { count: 'exact', head: true });
         
-      if (requestsCountError) throw requestsCountError;
+      console.log('Total requests count:', requestsCount, requestsCountError);
+      if (requestsCountError) console.error('Total requests error:', requestsCountError);
 
       // Get total drop requests count
+      console.log('Fetching total drop requests count...');
       const { count: dropRequestsCount, error: dropRequestsCountError } = await supabase
         .from('drop_requests')
         .select('*', { count: 'exact', head: true });
         
-      if (dropRequestsCountError) throw dropRequestsCountError;
+      console.log('Total drop requests count:', dropRequestsCount, dropRequestsCountError);
+      if (dropRequestsCountError) console.error('Total drop requests error:', dropRequestsCountError);
 
       // Get drop request breakdowns
       const { count: dropOnlyCountData, error: dropOnlyError } = await supabase
@@ -87,9 +136,9 @@ const Dashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('action_type', 'drop_and_request');
 
-      if (dropOnlyError) throw dropOnlyError;
-      if (requestOnlyError) throw requestOnlyError;
-      if (dropAndRequestError) throw dropAndRequestError;
+      if (dropOnlyError) console.error('Drop only error:', dropOnlyError);
+      if (requestOnlyError) console.error('Request only error:', requestOnlyError);
+      if (dropAndRequestError) console.error('Drop and request error:', dropAndRequestError);
       
       // Get latest requests
       const { data: latestRequests, error: latestRequestsError } = await supabase
@@ -98,7 +147,7 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(10);
         
-      if (latestRequestsError) throw latestRequestsError;
+      if (latestRequestsError) console.error('Latest requests error:', latestRequestsError);
       
       // Get count of unique users that have created requests
       const { data: uniqueUsers, error: uniqueUsersError } = await supabase
@@ -106,7 +155,7 @@ const Dashboard = () => {
         .select('user_id', { count: 'exact', head: false })
         .not('user_id', 'is', null);
         
-      if (uniqueUsersError) throw uniqueUsersError;
+      if (uniqueUsersError) console.error('Unique users error:', uniqueUsersError);
       
       // Count distinct user_ids
       const distinctUserIds = new Set();
@@ -118,6 +167,7 @@ const Dashboard = () => {
         });
       }
 
+      console.log('Setting state with fetched data...');
       // Set state with fetched data
       setUserRequests(userRequestsData as SwapRequest[] || []);
       setUserDropRequests(userDropRequestsData || []);
@@ -128,10 +178,13 @@ const Dashboard = () => {
       setDropAndRequestCount(dropAndRequestCountData || 0);
       setActiveUsers(distinctUserIds.size || 0);
       setRecentRequests(latestRequests as SwapRequest[] || []);
+      
+      console.log('Data fetch completed successfully');
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
       setIsLoading(false);
+      console.log('fetchDashboardData: Loading set to false');
     }
   };
 
@@ -145,18 +198,44 @@ const Dashboard = () => {
     });
   };
 
-  if (!user) {
+  console.log('Dashboard Render - User state:', user);
+  console.log('Dashboard Render - Is Loading:', isLoading);
+
+  if (user === null) {
+    console.log('Rendering: User not logged in');
     return (
       <div className="container mx-auto py-8 px-4 sm:px-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Please log in to view your dashboard</p>
+          <div className="text-center">
+            <p className="text-muted-foreground text-lg">Please log in to view your dashboard</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  if (user === undefined) {
+    console.log('Rendering: Authentication loading');
+    return (
+      <div className="container mx-auto py-8 px-4 sm:px-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-glow-pulse rounded-full h-12 w-12 border-4 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading authentication...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('Rendering: Main dashboard');
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
+      {/* Debug info at top */}
+      <div className="mb-4 p-2 bg-black/50 text-green-400 text-xs font-mono rounded">
+        DEBUG: User ID: {user?.id || user?.user_id || user?.telegram_id || 'NONE'} | Requests: {userRequests?.length} | Drops: {userDropRequests?.length} | Loading: {isLoading.toString()}
+      </div>
+
       <div className="flex items-center mb-6 animate-fade-in">
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
       </div>
