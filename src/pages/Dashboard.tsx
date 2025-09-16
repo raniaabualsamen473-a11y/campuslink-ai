@@ -22,6 +22,7 @@ const Dashboard = () => {
   // Debug logging
   console.log('Dashboard Debug - User:', user);
   console.log('Dashboard Debug - User ID:', user?.id);
+  console.log('Dashboard Debug - Full User Object:', JSON.stringify(user, null, 2));
   console.log('Dashboard Debug - Is Loading:', isLoading);
   console.log('Dashboard Debug - User Requests Length:', userRequests?.length);
   console.log('Dashboard Debug - User Drop Requests Length:', userDropRequests?.length);
@@ -39,25 +40,42 @@ const Dashboard = () => {
       // User state is still loading
       console.log('User is undefined - still loading auth state');
       setIsLoading(true);
-    } else if (user && user.id) {
-      // User is logged in with valid ID
-      console.log('User is logged in with ID:', user.id);
-      fetchDashboardData();
+    } else if (user) {
+      // User exists - try multiple ID properties for different auth systems
+      const userId = user.id || user.user_id || user.sub || user.uid || user.telegram_id;
+      console.log('User is logged in. Checking ID properties:', {
+        id: user.id,
+        user_id: user.user_id,
+        sub: user.sub,
+        uid: user.uid,
+        telegram_id: user.telegram_id,
+        resolved_id: userId
+      });
+      
+      if (userId) {
+        console.log('Using user ID:', userId);
+        fetchDashboardData();
+      } else {
+        console.log('No valid user ID found, showing empty dashboard');
+        setIsLoading(false);
+      }
     } else {
-      // User exists but no ID (edge case)
-      console.log('User exists but no ID:', user);
+      // Fallback
+      console.log('Unexpected user state:', user);
       setIsLoading(false);
     }
   }, [user]);
 
   const fetchDashboardData = async () => {
-    if (!user || !user.id) {
-      console.log('fetchDashboardData: No authenticated user found');
+    const userId = user?.id || user?.user_id || user?.sub || user?.uid || user?.telegram_id;
+    
+    if (!user || !userId) {
+      console.log('fetchDashboardData: No authenticated user found. User:', user, 'UserId:', userId);
       setIsLoading(false);
       return;
     }
     
-    console.log('fetchDashboardData: Starting data fetch for user:', user.id);
+    console.log('fetchDashboardData: Starting data fetch for user:', userId);
     setIsLoading(true);
     
     try {
@@ -66,7 +84,7 @@ const Dashboard = () => {
       const { data: userRequestsData, error: userRequestsError } = await supabase
         .from('swap_requests')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(5);
         
@@ -78,7 +96,7 @@ const Dashboard = () => {
       const { data: userDropRequestsData, error: userDropRequestsError } = await supabase
         .from('drop_requests')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(5);
         
