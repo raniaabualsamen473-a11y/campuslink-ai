@@ -3,9 +3,62 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const SUPABASE_URL = "https://pbqpbupsmzafbzlxccov.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBicXBidXBzbXphZmJ6bHhjY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4ODA3MjcsImV4cCI6MjA2MjQ1NjcyN30.14wg8bj756NrgxX-CvpW1NLYU5Z9m3S7_yaTbZ4KJAU";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBicXBidXBzbXphZmJ6bHhjY292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY4ODA3MjcsImV4cCI6MjA2MjQ1NjcyN0.14wg8bj756NrgxX-CvpW1NLYU5Z9m3S7_yaTbZ4KJAU";
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Create a base Supabase client
+const supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+// Create a custom client that includes session token for custom RLS
+const createCustomClient = () => {
+  const sessionToken = localStorage.getItem('telegram_session_token');
+  
+  if (sessionToken) {
+    // Create client with custom JWT claims containing the session token
+    const customJWT = btoa(JSON.stringify({
+      iss: 'supabase',
+      ref: 'pbqpbupsmzafbzlxccov',
+      role: 'anon',
+      session_token: sessionToken,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600
+    }));
+    
+    return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: {
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          'apikey': SUPABASE_PUBLISHABLE_KEY,
+          'x-client-info': 'supabase-js-web/2.49.4'
+        }
+      },
+      db: {
+        schema: 'public'
+      },
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      },
+      realtime: {
+        headers: {
+          'session_token': sessionToken
+        }
+      }
+    });
+  }
+  
+  return supabaseClient;
+};
+
+// Proxy object that creates a fresh client on each access
+export const supabase = new Proxy({} as typeof supabaseClient, {
+  get(target, prop) {
+    const client = createCustomClient();
+    const value = (client as any)[prop];
+    
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    
+    return value;
+  }
+});
