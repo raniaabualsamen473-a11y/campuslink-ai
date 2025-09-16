@@ -139,10 +139,10 @@ export const SwapRequestForm = ({
         
         {/* Warning Message */}
         <div className="px-6 pb-4">
-          <Alert className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
-            <TriangleAlert className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium">
-              <strong>Important:</strong> Matches are made by course and section number only. Same sections should have identical schedules - any data entry errors are your responsibility.
+          <Alert className="glass-card border-2 border-red-500/30 bg-gradient-to-r from-red-500/10 via-purple-500/10 to-blue-500/10 backdrop-blur-md shadow-neon-red dark:shadow-[0_0_20px_rgba(239,68,68,0.3),0_0_40px_rgba(59,130,246,0.2)] animate-glow-pulse">
+            <TriangleAlert className="h-4 w-4 text-red-400 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+            <AlertDescription className="text-red-100 dark:text-red-200 font-semibold drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
+              <strong>Important:</strong> Matches are made by course and section number only. Same sections should have identical day and time patterns.
             </AlertDescription>
           </Alert>
         </div>
