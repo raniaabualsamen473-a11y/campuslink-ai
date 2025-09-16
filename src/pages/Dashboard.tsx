@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,24 +19,50 @@ const Dashboard = () => {
   const [recentRequests, setRecentRequests] = useState<SwapRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Debug logging
+  console.log('Dashboard Debug - User:', user);
+  console.log('Dashboard Debug - User ID:', user?.id);
+  console.log('Dashboard Debug - Is Loading:', isLoading);
+  console.log('Dashboard Debug - User Requests Length:', userRequests?.length);
+  console.log('Dashboard Debug - User Drop Requests Length:', userDropRequests?.length);
+
   useEffect(() => {
-    if (user && user.id) {
+    console.log('Dashboard useEffect - User:', user);
+    console.log('Dashboard useEffect - User ID:', user?.id);
+    
+    // Fixed authentication check - handle all user states properly
+    if (user === null) {
+      // User is definitely not logged in
+      console.log('User is null - not logged in');
+      setIsLoading(false);
+    } else if (user === undefined) {
+      // User state is still loading
+      console.log('User is undefined - still loading auth state');
+      setIsLoading(true);
+    } else if (user && user.id) {
+      // User is logged in with valid ID
+      console.log('User is logged in with ID:', user.id);
       fetchDashboardData();
     } else {
+      // User exists but no ID (edge case)
+      console.log('User exists but no ID:', user);
       setIsLoading(false);
     }
   }, [user]);
 
   const fetchDashboardData = async () => {
     if (!user || !user.id) {
-      console.log('No authenticated user found');
+      console.log('fetchDashboardData: No authenticated user found');
       setIsLoading(false);
       return;
     }
+    
+    console.log('fetchDashboardData: Starting data fetch for user:', user.id);
     setIsLoading(true);
     
     try {
       // Get user's swap requests
+      console.log('Fetching swap requests...');
       const { data: userRequestsData, error: userRequestsError } = await supabase
         .from('swap_requests')
         .select('*')
@@ -45,9 +70,11 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(5);
         
+      console.log('Swap requests result:', userRequestsData, userRequestsError);
       if (userRequestsError) throw userRequestsError;
 
       // Get user's drop requests
+      console.log('Fetching drop requests...');
       const { data: userDropRequestsData, error: userDropRequestsError } = await supabase
         .from('drop_requests')
         .select('*')
@@ -55,20 +82,25 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(5);
         
+      console.log('Drop requests result:', userDropRequestsData, userDropRequestsError);
       if (userDropRequestsError) throw userDropRequestsError;
       
       // Get total requests count
+      console.log('Fetching total requests count...');
       const { count: requestsCount, error: requestsCountError } = await supabase
         .from('swap_requests')
         .select('*', { count: 'exact', head: true });
         
+      console.log('Total requests count:', requestsCount, requestsCountError);
       if (requestsCountError) throw requestsCountError;
 
       // Get total drop requests count
+      console.log('Fetching total drop requests count...');
       const { count: dropRequestsCount, error: dropRequestsCountError } = await supabase
         .from('drop_requests')
         .select('*', { count: 'exact', head: true });
         
+      console.log('Total drop requests count:', dropRequestsCount, dropRequestsCountError);
       if (dropRequestsCountError) throw dropRequestsCountError;
 
       // Get drop request breakdowns
@@ -118,6 +150,7 @@ const Dashboard = () => {
         });
       }
 
+      console.log('Setting state with fetched data...');
       // Set state with fetched data
       setUserRequests(userRequestsData as SwapRequest[] || []);
       setUserDropRequests(userDropRequestsData || []);
@@ -128,10 +161,13 @@ const Dashboard = () => {
       setDropAndRequestCount(dropAndRequestCountData || 0);
       setActiveUsers(distinctUserIds.size || 0);
       setRecentRequests(latestRequests as SwapRequest[] || []);
+      
+      console.log('Data fetch completed successfully');
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
       setIsLoading(false);
+      console.log('fetchDashboardData: Loading set to false');
     }
   };
 
@@ -145,18 +181,51 @@ const Dashboard = () => {
     });
   };
 
-  if (!user) {
+  // Enhanced debugging for render states
+  console.log('Dashboard Render - User state:', user);
+  console.log('Dashboard Render - Is Loading:', isLoading);
+
+  if (user === null) {
+    console.log('Rendering: User not logged in');
     return (
       <div className="container mx-auto py-8 px-4 sm:px-6">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Please log in to view your dashboard</p>
+          <div className="text-center">
+            <p className="text-muted-foreground text-lg">Please log in to view your dashboard</p>
+            <p className="text-muted-foreground text-sm mt-2">DEBUG: User is null</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  if (user === undefined || isLoading) {
+    console.log('Rendering: Loading state');
+    return (
+      <div className="container mx-auto py-8 px-4 sm:px-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-glow-pulse rounded-full h-12 w-12 border-4 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">
+              {user === undefined ? 'Loading authentication...' : 'Loading dashboard data...'}
+            </p>
+            <p className="text-muted-foreground text-sm mt-2">
+              DEBUG: User={user === undefined ? 'undefined' : 'defined'}, Loading={isLoading}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('Rendering: Main dashboard');
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6">
+      {/* Debug info at top */}
+      <div className="mb-4 p-2 bg-black/50 text-green-400 text-xs font-mono rounded">
+        DEBUG: User ID: {user?.id} | Requests: {userRequests?.length} | Drops: {userDropRequests?.length} | Loading: {isLoading.toString()}
+      </div>
+
       <div className="flex items-center mb-6 animate-fade-in">
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
       </div>
