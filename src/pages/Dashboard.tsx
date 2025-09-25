@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useDropRequestsSecure } from "@/hooks/useDropRequestsSecure";
 import { SwapRequest } from "@/types/swap";
 import { Users, MessageSquare, Calendar, ArrowDownUp } from "lucide-react";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [userRequests, setUserRequests] = useState<SwapRequest[]>([]);
-  const [userDropRequests, setUserDropRequests] = useState<any[]>([]);
+  const { requests: userDropRequests, isLoading: dropRequestsLoading } = useDropRequestsSecure(user?.id);
   const [totalRequests, setTotalRequests] = useState(0);
   const [totalDropRequests, setTotalDropRequests] = useState(0);
   const [dropOnlyCount, setDropOnlyCount] = useState(0);
@@ -23,10 +24,8 @@ const Dashboard = () => {
   console.log('Dashboard Debug - Full User Object:', JSON.stringify(user, null, 2));
   console.log('Dashboard Debug - User ID Properties:', {
     id: user?.id,
-    user_id: user?.user_id,
-    telegram_id: user?.telegram_id,
-    sub: user?.sub,
-    uid: user?.uid
+    profile_id: user?.profile_id,
+    telegram_user_id: user?.telegram_user_id
   });
 
   useEffect(() => {
@@ -41,14 +40,12 @@ const Dashboard = () => {
       console.log('User is undefined - still loading auth state');
       setIsLoading(true);
     } else if (user) {
-      // User exists - try multiple ID properties for different auth systems
-      const userId = user.id || user.user_id || user.sub || user.uid || user.telegram_id;
+      // User exists - use correct profile_id property
+      const userId = user.id || user.profile_id;
       console.log('User found. ID properties check:', {
         id: user.id,
-        user_id: user.user_id,
-        sub: user.sub,
-        uid: user.uid,
-        telegram_id: user.telegram_id,
+        profile_id: user.profile_id,
+        telegram_user_id: user.telegram_user_id,
         resolved_userId: userId
       });
       
@@ -66,7 +63,7 @@ const Dashboard = () => {
   }, [user]);
 
   const fetchDashboardData = async (userId?: string) => {
-    const resolvedUserId = userId || user?.id || user?.user_id || user?.sub || user?.uid || user?.telegram_id;
+    const resolvedUserId = userId || user?.id || user?.profile_id;
     
     if (!user) {
       console.log('fetchDashboardData: No user found');
@@ -90,17 +87,8 @@ const Dashboard = () => {
       console.log('Swap requests result:', userRequestsData, userRequestsError);
       if (userRequestsError) console.error('Swap requests error:', userRequestsError);
 
-      // Get user's drop requests
-      console.log('Fetching drop requests...');
-      const { data: userDropRequestsData, error: userDropRequestsError } = await supabase
-        .from('drop_requests')
-        .select('*')
-        .eq('user_id', resolvedUserId || 'no-user-id')
-        .order('created_at', { ascending: false })
-        .limit(5);
-        
-      console.log('Drop requests result:', userDropRequestsData, userDropRequestsError);
-      if (userDropRequestsError) console.error('Drop requests error:', userDropRequestsError);
+      // Get user's drop requests - now handled by secure hook
+      console.log('Drop requests managed by secure hook, count:', userDropRequests.length);
       
       // Get total requests count
       console.log('Fetching total requests count...');
@@ -170,7 +158,6 @@ const Dashboard = () => {
       console.log('Setting state with fetched data...');
       // Set state with fetched data
       setUserRequests(userRequestsData as SwapRequest[] || []);
-      setUserDropRequests(userDropRequestsData || []);
       setTotalRequests(requestsCount || 0);
       setTotalDropRequests(dropRequestsCount || 0);
       setDropOnlyCount(dropOnlyCountData || 0);
@@ -400,14 +387,14 @@ const Dashboard = () => {
             <CardDescription className="text-slate-400">Your most recent drop & request entries</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
+            {(isLoading || dropRequestsLoading) ? (
               <div className="flex justify-center py-6">
                 <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-400 border-t-transparent"></div>
               </div>
             ) : userDropRequests.length > 0 ? (
               <ScrollArea className="h-80">
                 <div className="space-y-4">
-                  {userDropRequests.map((request) => (
+                  {userDropRequests.slice(0, 5).map((request) => (
                     <div key={request.id} className="bg-slate-700 border border-slate-600 p-3 rounded-lg hover:bg-slate-650 transition-all duration-300">
                       <div className="flex justify-between">
                         <p className="font-medium text-white">
