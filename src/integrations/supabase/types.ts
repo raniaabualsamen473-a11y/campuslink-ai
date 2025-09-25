@@ -328,6 +328,105 @@ export type Database = {
       }
     }
     Views: {
+      secure_drop_requests: {
+        Row: {
+          action_type: string | null
+          anonymous: boolean | null
+          any_section_flexible: boolean | null
+          contact_username: string | null
+          created_at: string | null
+          drop_course: string | null
+          drop_section_number: number | null
+          full_name: string | null
+          id: string | null
+          normalized_drop_section: string | null
+          normalized_request_section: string | null
+          request_course: string | null
+          request_section_number: number | null
+        }
+        Insert: {
+          action_type?: string | null
+          anonymous?: boolean | null
+          any_section_flexible?: boolean | null
+          contact_username?: never
+          created_at?: string | null
+          drop_course?: string | null
+          drop_section_number?: number | null
+          full_name?: never
+          id?: string | null
+          normalized_drop_section?: string | null
+          normalized_request_section?: string | null
+          request_course?: string | null
+          request_section_number?: number | null
+        }
+        Update: {
+          action_type?: string | null
+          anonymous?: boolean | null
+          any_section_flexible?: boolean | null
+          contact_username?: never
+          created_at?: string | null
+          drop_course?: string | null
+          drop_section_number?: number | null
+          full_name?: never
+          id?: string | null
+          normalized_drop_section?: string | null
+          normalized_request_section?: string | null
+          request_course?: string | null
+          request_section_number?: number | null
+        }
+        Relationships: []
+      }
+      secure_swap_requests: {
+        Row: {
+          anonymous: boolean | null
+          contact_username: string | null
+          created_at: string | null
+          current_days_pattern: string | null
+          current_section_number: number | null
+          current_start_time: string | null
+          desired_course: string | null
+          desired_days_pattern: string | null
+          desired_section_number: number | null
+          desired_start_time: string | null
+          full_name: string | null
+          id: string | null
+          normalized_current_section: string | null
+          normalized_desired_section: string | null
+        }
+        Insert: {
+          anonymous?: boolean | null
+          contact_username?: never
+          created_at?: string | null
+          current_days_pattern?: string | null
+          current_section_number?: number | null
+          current_start_time?: string | null
+          desired_course?: string | null
+          desired_days_pattern?: string | null
+          desired_section_number?: number | null
+          desired_start_time?: string | null
+          full_name?: never
+          id?: string | null
+          normalized_current_section?: string | null
+          normalized_desired_section?: string | null
+        }
+        Update: {
+          anonymous?: boolean | null
+          contact_username?: never
+          created_at?: string | null
+          current_days_pattern?: string | null
+          current_section_number?: number | null
+          current_start_time?: string | null
+          desired_course?: string | null
+          desired_days_pattern?: string | null
+          desired_section_number?: number | null
+          desired_start_time?: string | null
+          full_name?: never
+          id?: string | null
+          normalized_current_section?: string | null
+          normalized_desired_section?: string | null
+        }
+        Relationships: []
+      }
       swap_request_matches: {
         Row: {
           current_section: string | null
@@ -356,6 +455,10 @@ export type Database = {
       bytea_to_text: {
         Args: { data: string }
         Returns: string
+      }
+      cleanup_expired_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       cleanup_expired_verification_codes: {
         Args: Record<PropertyKey, never>
