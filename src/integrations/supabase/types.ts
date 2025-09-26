@@ -481,6 +481,41 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_secure_drop_request: {
+        Args: { request_id: string; requesting_user_profile_id: string }
+        Returns: {
+          action_type: string
+          anonymous: boolean
+          any_section_flexible: boolean
+          contact_username: string
+          created_at: string
+          drop_course: string
+          drop_section_number: number
+          full_name: string
+          id: string
+          normalized_drop_section: string
+          normalized_request_section: string
+          request_course: string
+          request_section_number: number
+        }[]
+      }
+      get_secure_swap_request: {
+        Args: { request_id: string; requesting_user_profile_id: string }
+        Returns: {
+          anonymous: boolean
+          contact_username: string
+          created_at: string
+          current_section_number: number
+          desired_course: string
+          desired_days_pattern: string
+          desired_section_number: number
+          desired_start_time: string
+          full_name: string
+          id: string
+          normalized_current_section: string
+          normalized_desired_section: string
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
