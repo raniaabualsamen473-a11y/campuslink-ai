@@ -184,18 +184,26 @@ Let's make class scheduling easier together! 🚀`;
       if ('id' in body && 'auth_date' in body && 'hash' in body) {
         const loginData: TelegramLoginData = body;
         
-        console.log('Telegram login attempt:', loginData);
+        console.log('Telegram login attempt:', { 
+          id: loginData.id, 
+          username: loginData.username, 
+          auth_date: loginData.auth_date 
+        });
 
-        // Verify the authentication data
-        if (!verifyTelegramAuth(loginData, telegramBotToken)) {
+        // Verify the authentication data with proper HMAC-SHA256
+        const isValid = await verifyTelegramAuth(loginData, telegramBotToken);
+        if (!isValid) {
+          console.error('Authentication verification failed for user:', loginData.username || loginData.id);
           return new Response(
-            JSON.stringify({ error: 'Invalid authentication data' }),
+            JSON.stringify({ error: 'Authentication verification failed' }),
             { 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 401 
             }
           );
         }
+
+        console.log('Authentication verified successfully for user:', loginData.username || loginData.id);
 
         // Create or update user session
         const { data: sessionData, error } = await supabase
@@ -273,33 +281,86 @@ Let's make class scheduling easier together! 🚀`;
   }
 });
 
-// Verify Telegram authentication data
-function verifyTelegramAuth(data: TelegramLoginData, botToken: string): boolean {
-  const { hash, ...authData } = data;
+// Verify Telegram authentication data with proper HMAC-SHA256
+async function verifyTelegramAuth(data: TelegramLoginData, botToken: string): Promise<boolean> {
+  // Input validation
+  if (!data || !botToken) {
+    console.error('Missing data or bot token for verification');
+    return false;
+  }
+
+  // Validate required fields
+  const requiredFields = ['id', 'auth_date', 'hash'];
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      console.error(`Missing required field: ${field}`);
+      return false;
+    }
+  }
+
+  // Check if auth_date is recent (within 1 day) to prevent replay attacks
+  const authDate = parseInt(data.auth_date.toString());
+  const currentTime = Math.floor(Date.now() / 1000);
+  const timeDiff = currentTime - authDate;
   
-  // Create data check string
-  const dataCheckArr = Object.entries(authData)
-    .map(([key, value]) => `${key}=${value}`)
-    .sort()
-    .join('\n');
+  if (isNaN(authDate) || timeDiff > 86400) { // 24 hours
+    console.error('Auth data too old or invalid:', { authDate, timeDiff });
+    return false;
+  }
   
-  // Create secret key from bot token
-  const encoder = new TextEncoder();
-  const secretKeyData = encoder.encode(botToken);
-  
-  // In a real implementation, you would use crypto.subtle.importKey and crypto.subtle.sign
-  // For simplicity, we're doing basic validation here
-  // You should implement proper HMAC-SHA256 verification in production
-  
-  console.log('Auth data to verify:', dataCheckArr);
-  console.log('Received hash:', hash);
-  
-  // For now, just check if auth_date is recent (within 24 hours)
-  const authDate = data.auth_date;
-  const now = Math.floor(Date.now() / 1000);
-  const maxAge = 24 * 60 * 60; // 24 hours
-  
-  return (now - authDate) <= maxAge;
+  try {
+    // Create secret key by hashing bot token with SHA256
+    const encoder = new TextEncoder();
+    const botTokenBytes = encoder.encode(botToken);
+    
+    // Create the secret key using SHA-256 of bot token
+    const secretKeyMaterial = await crypto.subtle.digest('SHA-256', botTokenBytes);
+    
+    // Import the secret key for HMAC
+    const secretKey = await crypto.subtle.importKey(
+      'raw',
+      secretKeyMaterial,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    // Create data check string by sorting keys (except hash) and joining with newlines
+    const { hash, ...authData } = data;
+    const dataCheckString = Object.keys(authData)
+      .sort()
+      .map(key => `${key}=${authData[key]}`)
+      .join('\n');
+    
+    console.log('Verification data check string:', dataCheckString);
+    
+    // Generate HMAC-SHA256
+    const dataBytes = encoder.encode(dataCheckString);
+    const signature = await crypto.subtle.sign('HMAC', secretKey, dataBytes);
+    
+    // Convert to hex string
+    const hashArray = Array.from(new Uint8Array(signature));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    // Compare with provided hash
+    const isValid = hashHex === data.hash.toLowerCase();
+    
+    if (!isValid) {
+      console.error('HMAC verification failed:', {
+        expected: data.hash.toLowerCase(),
+        calculated: hashHex,
+        dataCheckString
+      });
+    } else {
+      console.log('HMAC verification successful for user:', data.username || data.id);
+    }
+    
+    return isValid;
+    
+  } catch (error) {
+    console.error('Telegram auth verification error:', error);
+    return false;
+  }
 }
 
 // Send message via Telegram Bot API

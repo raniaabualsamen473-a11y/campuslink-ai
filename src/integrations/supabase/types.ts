@@ -381,9 +381,7 @@ export type Database = {
           anonymous: boolean | null
           contact_username: string | null
           created_at: string | null
-          current_days_pattern: string | null
           current_section_number: number | null
-          current_start_time: string | null
           desired_course: string | null
           desired_days_pattern: string | null
           desired_section_number: number | null
@@ -397,9 +395,7 @@ export type Database = {
           anonymous?: boolean | null
           contact_username?: never
           created_at?: string | null
-          current_days_pattern?: string | null
           current_section_number?: number | null
-          current_start_time?: string | null
           desired_course?: string | null
           desired_days_pattern?: string | null
           desired_section_number?: number | null
@@ -413,9 +409,7 @@ export type Database = {
           anonymous?: boolean | null
           contact_username?: never
           created_at?: string | null
-          current_days_pattern?: string | null
           current_section_number?: number | null
-          current_start_time?: string | null
           desired_course?: string | null
           desired_days_pattern?: string | null
           desired_section_number?: number | null
