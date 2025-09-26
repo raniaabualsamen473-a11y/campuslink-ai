@@ -328,6 +328,74 @@ export type Database = {
       }
     }
     Views: {
+      drop_requests_for_matching: {
+        Row: {
+          action_type: string | null
+          anonymous: boolean | null
+          any_section_flexible: boolean | null
+          created_at: string | null
+          drop_course: string | null
+          drop_section_number: number | null
+          full_name: string | null
+          id: string | null
+          normalized_drop_section: string | null
+          normalized_request_section: string | null
+          processed_at: string | null
+          profile_id: string | null
+          request_course: string | null
+          request_section_number: number | null
+          telegram_username: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type?: string | null
+          anonymous?: boolean | null
+          any_section_flexible?: boolean | null
+          created_at?: string | null
+          drop_course?: string | null
+          drop_section_number?: number | null
+          full_name?: never
+          id?: string | null
+          normalized_drop_section?: string | null
+          normalized_request_section?: string | null
+          processed_at?: string | null
+          profile_id?: string | null
+          request_course?: string | null
+          request_section_number?: number | null
+          telegram_username?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string | null
+          anonymous?: boolean | null
+          any_section_flexible?: boolean | null
+          created_at?: string | null
+          drop_course?: string | null
+          drop_section_number?: number | null
+          full_name?: never
+          id?: string | null
+          normalized_drop_section?: string | null
+          normalized_request_section?: string | null
+          processed_at?: string | null
+          profile_id?: string | null
+          request_course?: string | null
+          request_section_number?: number | null
+          telegram_username?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secure_drop_requests: {
         Row: {
           action_type: string | null

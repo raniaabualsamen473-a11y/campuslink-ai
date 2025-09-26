@@ -113,7 +113,7 @@ serve(async (req) => {
       // 2. Find people in drop_requests who WANT this course/section (request_course/request_section)
       console.log('🔍 Checking drop_requests for people wanting this course...');
       const { data: dropMatches, error: dropError } = await supabase
-        .from('drop_requests')
+        .from('drop_requests_for_matching')
         .select('*')
         .or(`request_course.ilike.%${droppedCourse}%,request_course.ilike.%${droppedCourse.replace(/\s+/g, '%')}%`)
         .or(`request_section_number.eq.${droppedSection},any_section_flexible.eq.true`)
@@ -224,7 +224,7 @@ serve(async (req) => {
       
       // Find existing processed drop requests that match what this person wants
       let query = supabase
-        .from('drop_requests')
+        .from('drop_requests_for_matching')
         .select('*')
         .or(`drop_course.ilike.%${requestedCourse}%,drop_course.ilike.%${requestedCourse.replace(/\s+/g, '%')}%`)
         .in('action_type', ['drop_only', 'drop_and_request'])
@@ -322,7 +322,7 @@ serve(async (req) => {
       console.log(`🔄 FIXED: Checking if anyone has request_only for what you're DROPPING: ${record.drop_course}`);
       
       let dropMatchQuery = supabase
-        .from('drop_requests')
+        .from('drop_requests_for_matching')
         .select('*')
         .or(`request_course.ilike.%${record.drop_course}%,request_course.ilike.%${record.drop_course.replace(/\s+/g, '%')}%`)
         .eq('action_type', 'request_only')
@@ -402,7 +402,7 @@ serve(async (req) => {
       console.log(`🔄 NEW: Checking for existing drops of what you want: ${record.request_course}`);
       
       let wantedDropsQuery = supabase
-        .from('drop_requests')
+        .from('drop_requests_for_matching')
         .select('*')
         .or(`drop_course.ilike.%${record.request_course}%,drop_course.ilike.%${record.request_course.replace(/\s+/g, '%')}%`)
         .in('action_type', ['drop_only', 'drop_and_request'])
