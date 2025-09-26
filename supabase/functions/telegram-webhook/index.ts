@@ -73,7 +73,7 @@ serve(async (req) => {
           console.log(`Received message from ${username || firstName}: ${text}`);
           
           // Handle /start command
-          if (text.startsWith('/start')) {
+          if (text && text.startsWith('/start')) {
             console.log(`Processing /start command from user_id: ${userId}, chat_id: ${chatId}, username: ${username || 'NO_USERNAME'}`);
             
             // Handle users without username
@@ -290,16 +290,13 @@ async function verifyTelegramAuth(data: TelegramLoginData, botToken: string): Pr
   }
 
   // Validate required fields
-  const requiredFields = ['id', 'auth_date', 'hash'];
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      console.error(`Missing required field: ${field}`);
-      return false;
-    }
+  if (!data.id || !data.auth_date || !data.hash) {
+    console.error('Missing required fields in login data');
+    return false;
   }
 
   // Check if auth_date is recent (within 1 day) to prevent replay attacks
-  const authDate = parseInt(data.auth_date.toString());
+  const authDate = Number(data.auth_date);
   const currentTime = Math.floor(Date.now() / 1000);
   const timeDiff = currentTime - authDate;
   
@@ -309,11 +306,10 @@ async function verifyTelegramAuth(data: TelegramLoginData, botToken: string): Pr
   }
   
   try {
-    // Create secret key by hashing bot token with SHA256
     const encoder = new TextEncoder();
-    const botTokenBytes = encoder.encode(botToken);
     
-    // Create the secret key using SHA-256 of bot token
+    // Create secret key from bot token using SHA-256
+    const botTokenBytes = encoder.encode(botToken);
     const secretKeyMaterial = await crypto.subtle.digest('SHA-256', botTokenBytes);
     
     // Import the secret key for HMAC
@@ -329,7 +325,10 @@ async function verifyTelegramAuth(data: TelegramLoginData, botToken: string): Pr
     const { hash, ...authData } = data;
     const dataCheckString = Object.keys(authData)
       .sort()
-      .map(key => `${key}=${authData[key]}`)
+      .map(key => {
+        const value = authData[key as keyof typeof authData];
+        return `${key}=${value}`;
+      })
       .join('\n');
     
     console.log('Verification data check string:', dataCheckString);

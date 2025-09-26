@@ -20,6 +20,17 @@ serve(async (req) => {
     );
     
     const telegramBotToken = Deno.env.get('TELEGRAM_BOT_TOKEN');
+    
+    if (!telegramBotToken) {
+      console.error('❌ TELEGRAM_BOT_TOKEN not configured');
+      return new Response(
+        JSON.stringify({ error: 'Telegram bot token not configured' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     const { record } = await req.json();
     console.log('🔍 Processing drop request:', {
@@ -610,8 +621,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('💥 Error in match-drop-requests function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: errorMessage,
       success: false 
     }), {
       status: 500,

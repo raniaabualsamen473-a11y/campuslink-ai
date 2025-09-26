@@ -399,10 +399,14 @@ serve(async (req) => {
       );
 
     } catch (telegramError) {
+      const errorName = telegramError instanceof Error ? telegramError.name : 'Unknown';
+      const errorMessage = telegramError instanceof Error ? telegramError.message : 'Unknown error';
+      const errorStack = telegramError instanceof Error ? telegramError.stack : 'No stack trace';
+      
       console.error('Telegram request failed with exception:', {
-        name: telegramError.name,
-        message: telegramError.message,
-        stack: telegramError.stack
+        name: errorName,
+        message: errorMessage,
+        stack: errorStack
       });
       
       // Clean up the verification code if we can't send it
@@ -424,10 +428,14 @@ serve(async (req) => {
     }
 
   } catch (error) {
+    const errorName = error instanceof Error ? error.name : 'Unknown';
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    
     console.error('Send verification function error:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: errorName,
+      message: errorMessage,
+      stack: errorStack
     });
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
