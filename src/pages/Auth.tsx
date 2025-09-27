@@ -68,7 +68,17 @@ const Auth = () => {
 
       if (!data.success) {
         const errorMessage = data.error || "Failed to send verification code";
-        toast.error(errorMessage);
+        
+        // Provide more helpful error messages
+        if (errorMessage.includes('wait')) {
+          const match = errorMessage.match(/(\d+)\s+seconds?/);
+          const seconds = match ? match[1] : '90';
+          toast.error(`Please wait ${seconds} seconds before requesting another code`);
+        } else if (errorMessage.includes('register') || errorMessage.includes('/start')) {
+          toast.error(`Please send /start to @${botUsername} first to register your account`);
+        } else {
+          toast.error(errorMessage);
+        }
         
         // Update bot username from response if available
         if (data.botUsername) {

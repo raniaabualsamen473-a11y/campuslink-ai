@@ -207,20 +207,23 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting - check if user requested code recently (within 1 minute)
+    // Rate limiting - check if user requested code recently (within 90 seconds for better UX)
     console.log('Checking rate limiting for username:', username);
     const { data: recentCodes, error: rateCheckError } = await supabase
       .from('verification_codes')
       .select('created_at')
       .eq('telegram_username', username)
-      .gte('created_at', new Date(Date.now() - 60000).toISOString()) // Last minute
+      .gte('created_at', new Date(Date.now() - 90000).toISOString()) // Last 90 seconds
       .order('created_at', { ascending: false })
       .limit(1);
 
     if (rateCheckError) {
       console.error('Rate check database error:', rateCheckError);
       return new Response(
-        JSON.stringify({ error: 'Database error during rate check' }),
+        JSON.stringify({ 
+          error: 'Database error during rate check',
+          details: 'Please try again in a moment'
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -232,13 +235,14 @@ serve(async (req) => {
 
     if (recentCodes && recentCodes.length > 0) {
       const lastRequestTime = new Date(recentCodes[0].created_at);
-      const timeUntilNext = 60000 - (Date.now() - lastRequestTime.getTime()); // 1 minute cooldown
+      const timeUntilNext = 90000 - (Date.now() - lastRequestTime.getTime()); // 90 second cooldown
       const secondsLeft = Math.ceil(timeUntilNext / 1000);
       
       console.log('Rate limit hit for username:', username, 'seconds left:', secondsLeft);
       return new Response(
         JSON.stringify({ 
-          error: `Please wait ${secondsLeft} seconds before requesting another code` 
+          error: `Please wait ${secondsLeft} seconds before requesting another code`,
+          details: 'You can request a new code every 90 seconds'
         }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

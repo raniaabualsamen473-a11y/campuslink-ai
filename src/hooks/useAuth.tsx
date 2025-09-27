@@ -149,15 +149,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Verification error:', error);
         // Extract the actual error message from the edge function response
         const errorMessage = error.message || 'An unexpected error occurred';
+        
+        // Handle specific error cases
         if (errorMessage.includes('non-2xx status code')) {
           return { success: false, error: 'Invalid or expired verification code' };
+        } else if (errorMessage.includes('6 digits')) {
+          return { success: false, error: 'Verification code must be exactly 6 digits' };
+        } else if (errorMessage.includes('expired')) {
+          return { success: false, error: 'Verification code has expired. Please request a new one.' };
+        } else if (errorMessage.includes('bot first')) {
+          return { success: false, error: 'Please send /start to the bot first to link your account' };
+        } else if (errorMessage.includes('session')) {
+          return { success: false, error: 'Failed to create session. Please try again.' };
         }
+        
         return { success: false, error: errorMessage };
       }
 
       if (!data?.success) {
         console.error('Verification failed:', data);
-        return { success: false, error: data?.error || 'Verification failed' };
+        const errorMessage = data?.error || 'Verification failed';
+        
+        // Handle specific error cases from the response
+        if (errorMessage.includes('expired')) {
+          return { success: false, error: 'Verification code has expired. Please request a new one.' };
+        } else if (errorMessage.includes('6 digits')) {
+          return { success: false, error: 'Verification code must be exactly 6 digits' };
+        } else if (errorMessage.includes('bot first')) {
+          return { success: false, error: 'Please send /start to the bot first to link your account' };
+        }
+        
+        return { success: false, error: errorMessage };
       }
 
       // Store session token
@@ -184,7 +206,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { success: true };
     } catch (error) {
       console.error('Verification sign in error:', error);
-      return { success: false, error: 'An unexpected error occurred' };
+      return { success: false, error: 'Network error. Please check your connection and try again.' };
     }
   };
 
