@@ -207,7 +207,7 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting - check if user requested code recently
+    // Rate limiting - check if user requested code recently (within 1 minute)
     console.log('Checking rate limiting for username:', username);
     const { data: recentCodes, error: rateCheckError } = await supabase
       .from('verification_codes')
@@ -231,9 +231,15 @@ serve(async (req) => {
     });
 
     if (recentCodes && recentCodes.length > 0) {
-      console.log('Rate limit hit for username:', username);
+      const lastRequestTime = new Date(recentCodes[0].created_at);
+      const timeUntilNext = 60000 - (Date.now() - lastRequestTime.getTime()); // 1 minute cooldown
+      const secondsLeft = Math.ceil(timeUntilNext / 1000);
+      
+      console.log('Rate limit hit for username:', username, 'seconds left:', secondsLeft);
       return new Response(
-        JSON.stringify({ error: 'Please wait before requesting another code (1 minute cooldown)' }),
+        JSON.stringify({ 
+          error: `Please wait ${secondsLeft} seconds before requesting another code` 
+        }),
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -243,8 +249,8 @@ serve(async (req) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     console.log('Generated 6-digit code for username:', username);
     
-    // Store verification code (expires in 5 minutes)
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    // Store verification code (expires in 10 minutes)
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     console.log('Storing verification code in database with expiry:', expiresAt.toISOString());
     
     const { data: insertData, error: dbError } = await supabase
@@ -272,7 +278,7 @@ serve(async (req) => {
     console.log('Verification code stored successfully:', insertData);
 
     // Send verification code via Telegram Bot API
-    const message = `🔐 Your CampusLink AI verification code is: ${verificationCode}\n\nThis code will expire in 5 minutes.`;
+    const message = `🔐 Your CampusLink AI verification code is: ${verificationCode}\n\nThis code will expire in 10 minutes.`;
     console.log('Preparing to send message to chat_id:', chatId, 'for username @' + username);
 
     try {

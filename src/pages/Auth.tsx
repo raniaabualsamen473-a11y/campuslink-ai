@@ -98,8 +98,8 @@ const Auth = () => {
       return;
     }
 
-    if (verificationCode.length !== 6) {
-      toast.error("Verification code must be 6 digits");
+    if (!/^\d{6}$/.test(verificationCode.trim())) {
+      toast.error("Verification code must be exactly 6 digits");
       return;
     }
 
@@ -110,7 +110,16 @@ const Auth = () => {
         toast.success("Successfully verified and signed in!");
         navigate("/swap-requests", { replace: true });
       } else {
-        toast.error(result.error || "Verification failed");
+        const errorMessage = result.error || "Verification failed";
+        if (errorMessage.includes('Invalid or expired')) {
+          toast.error("The verification code is invalid or has expired. Please request a new code.");
+          setStep('username'); // Go back to username step
+          setVerificationCode('');
+        } else if (errorMessage.includes('wait')) {
+          toast.error(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
       }
     } catch (error) {
       console.error('Verification error:', error);

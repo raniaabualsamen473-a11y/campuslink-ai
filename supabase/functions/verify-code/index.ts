@@ -31,7 +31,16 @@ serve(async (req) => {
     // Clean up expired codes first
     await supabase.rpc('cleanup_expired_verification_codes');
 
-    // Find and validate verification code
+    // Input validation for verification code
+    if (!/^\d{6}$/.test(verification_code)) {
+      console.error('Invalid verification code format:', verification_code);
+      return new Response(
+        JSON.stringify({ error: 'Verification code must be exactly 6 digits' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Find and validate verification code - use maybeSingle to handle missing records gracefully
     const { data: codeData, error: codeError } = await supabase
       .from('verification_codes')
       .select('*')
@@ -41,10 +50,18 @@ serve(async (req) => {
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
-    if (codeError || !codeData) {
-      console.error('Code validation error:', codeError);
+    if (codeError) {
+      console.error('Database error during code validation:', codeError);
+      return new Response(
+        JSON.stringify({ error: 'Database error occurred. Please try again.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!codeData) {
+      console.error('Code validation failed for username:', username, 'code:', verification_code);
       return new Response(
         JSON.stringify({ error: 'Invalid or expired verification code' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -82,10 +99,18 @@ serve(async (req) => {
         p_last_name: profileData.last_name
       });
 
-    if (sessionError || !sessionData || sessionData.length === 0) {
+    if (sessionError) {
       console.error('Session creation error:', sessionError);
       return new Response(
-        JSON.stringify({ error: 'Failed to create user session' }),
+        JSON.stringify({ error: 'Failed to create user session. Please try again.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!sessionData || sessionData.length === 0) {
+      console.error('No session data returned from create_user_session function');
+      return new Response(
+        JSON.stringify({ error: 'Session creation failed. Please contact support.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
